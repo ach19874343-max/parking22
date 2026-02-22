@@ -53,6 +53,331 @@ body{
   padding-bottom:6px;
   margin-bottom:12px;
 }
+.date-box input{
+  font-size:16px;
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  text-align:center;
+}
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:6px;
+}
+.line-label{
+  width:60px;
+  font-weight:700;
+  font-size:17px;
+  background:#2c5364;
+  color:#fff;
+  border-radius:6px;
+  padding:8px 4px;
+  text-align:center;
+}
+.cells-wrapper{
+  display:flex;
+  gap:6px;
+  margin-left:6px;
+  position:relative;
+  cursor:grab;
+}
+.cells-wrapper:active{cursor:grabbing;}
+.cell{
+  width:70px;
+  height:45px;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(145deg,#f8fafc,#e2e8f0);
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  border:1px solid #cbd5e1;
+  transition:.2s;
+  overflow:hidden;
+}
+.cell.active{
+  background:linear-gradient(145deg,#ffe082,#ffca28);
+  border:1px solid #f57f17;
+}
+.cell select{
+  width:100%;
+  height:100%;
+  border:none;
+  background:transparent;
+  font-size:18px;
+  font-weight:700;
+  text-align:center;
+  appearance:none;
+}
+.footer{
+  display:flex;
+  flex-direction:column;
+  margin-top:8px;      /* ↓ */
+  font-size:13px;
+  width:100%;
+  border-top:2px solid #2c5364;
+  padding-top:6px;     /* ↓ */
+}
+.footer pre{
+  margin:4px 0;     /* 위아래 숨 좀 쉬게 */
+  line-height:1.5;  /* 글줄 간격 */
+}
+.footer .highlight{
+  color:#f57f17;
+  font-weight:700;
+  display:inline-block;
+  margin:4px 0;
+}
+.footer .copyright{
+  margin-top:4px;      /* ↓ */
+  margin-bottom:0;     /* 핵심 */
+  font-size:11px;
+  color:#888;
+  text-align:center;
+}
+.date-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;   /* ← 거리 여기서 조절 */
+}
+
+.date-row button{
+  margin:0;
+}
+
+#adminLoginBtn{
+  padding:6px 10px;
+  border-radius:6px;
+  border:none;
+  background:#2c5364;
+  color:#fff;
+  font-weight:700;
+  white-space:nowrap;
+}
+.date-box{
+  font-size:18px;
+  font-weight:700;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+</style>
+</head>
+
+<body>
+<div class="board">
+
+
+
+  <!-- 제목 -->
+  <div class="title">보영운수 22번 주차도 관리시스템</div>
+
+<div class="header">
+  <div class="date-box date-row">
+    <button id="adminLoginBtn">관리자 로그인</button>
+    <span>📅 날짜 :</span>
+    <input type="date" id="datePicker">
+  </div>
+</div>
+
+  <!-- 주차표 -->
+  <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">3R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">4R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">5R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">6R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">7R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+
+  <div class="footer">
+    <pre>
+※ 보영운수 22번 주차도 (노란색 = 당일휴차)
+※ 원하는 날짜를 선택하시면 그날 주차도를 불러옵니다.</pre>
+<pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
+<div class="copyright">Copyright (c) 2026 ChangHai AN. All rights reserved.</div>
+  </div>
+</div>
+
+<!-- 관리자 로그인 모달 -->
+<div id="adminModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+">
+  <div style="background:#fff; padding:20px; border-radius:12px; width:260px;">
+    <h3>관리자 로그인</h3>
+    <input type="password" id="adminPw" placeholder="비밀번호"
+      style="width:100%; padding:8px; margin-bottom:10px;">
+    <button id="adminLoginOk"
+      style="width:100%; padding:8px; background:#2c5364; color:#fff; border:none; border-radius:6px;">
+      로그인
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+const firebaseConfig={
+apiKey:"AIzaSyAcaIcwlhwAOgKPD5BKD3mAuXiAqLKHTu4",
+databaseURL:"https://parking22-886c6-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+
+let isAdmin=false;
+
+const busNumbers=["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
+const selects=document.querySelectorAll('.cell select');
+const cells=document.querySelectorAll('.cell');
+const wrappers=document.querySelectorAll('.cells-wrapper');
+const datePicker=document.getElementById('datePicker');
+
+function refreshOptions(){
+  const selected=[...selects].map(s=>s.value).filter(v=>v);
+  selects.forEach(select=>{
+    const current=select.value;
+    select.innerHTML='<option value=""></option>';
+    busNumbers.forEach(num=>{
+      if(!selected.includes(num)||num===current){
+        const opt=document.createElement('option');
+        opt.value=num;
+        opt.textContent=num;
+        if(num===current) opt.selected=true;
+        select.appendChild(opt);
+      }
+    });
+  });
+}
+
+async function loadData(date){
+  if(!date) return;
+  selects.forEach(s=>{
+    s.innerHTML='<option value=""></option>';
+    busNumbers.forEach(num=>{
+      const opt=document.createElement('option');
+      opt.value=num;
+      opt.textContent=num;
+      s.appendChild(opt);
+    });
+    s.value="";
+  });
+  cells.forEach(c=>c.classList.remove("active"));
+  wrappers.forEach(w=>w.style.transform="translateX(0px)");
+
+  const snapshot=await get(ref(db,'parking/'+date));
+  const data=snapshot.val();
+  if(data){
+    selects.forEach((s,i)=>s.value=data.values?.[i]||"");
+    cells.forEach((c,i)=>c.classList.toggle("active",data.active?.[i]));
+    wrappers.forEach((w,i)=>w.style.transform=`translateX(${data.drag?.[i]||0}px)`);
+  }
+  refreshOptions();
+}
+
+function saveData(){
+  if(!isAdmin) return;
+  const date=datePicker.value;
+  if(!date) return;
+  const values={},active={},drag={};
+  selects.forEach((s,i)=>values[i]=s.value);
+  cells.forEach((c,i)=>active[i]=c.classList.contains("active"));
+  wrappers.forEach((w,i)=>{
+    const m=w.style.transform.match(/-?\d+/);
+    drag[i]=m?parseInt(m[0]):0;
+  });
+  set(ref(db,'parking/'+date),{values,active,drag});
+}
+
+selects.forEach(s=>s.addEventListener("change",()=>{if(isAdmin){refreshOptions();saveData();}}));
+datePicker.addEventListener("change",()=>loadData(datePicker.value));
+
+cells.forEach(cell=>{
+  let timer;
+  cell.addEventListener("mousedown",()=>{
+    timer=setTimeout(()=>{
+      if(!isAdmin) return;
+      cell.classList.toggle("active");
+      saveData();
+    },600);
+  });
+  cell.addEventListener("mouseup",()=>clearTimeout(timer));
+  cell.addEventListener("mouseleave",()=>clearTimeout(timer));
+});
+
+wrappers.forEach(wrapper=>{
+  let startX=0,isDragging=false;
+  wrapper.addEventListener("mousedown",e=>{
+    if(!isAdmin || e.target.tagName==="SELECT") return;
+    isDragging=true;
+    startX=e.clientX-(parseInt(wrapper.style.transform.replace(/\D/g,''))||0);
+  });
+  document.addEventListener("mousemove",e=>{
+    if(!isDragging) return;
+    let x=e.clientX-startX;
+    x=Math.max(0,Math.min(18,x));
+    wrapper.style.transform=`translateX(${x}px)`;
+  });
+  document.addEventListener("mouseup",()=>{
+    if(isDragging){
+      isDragging=false;
+      saveData();
+    }
+  });
+});
+
+refreshOptions();
+
+/* 관리자 로그인 */
+adminLoginBtn.onclick=()=>adminModal.style.display="flex";
+adminLoginOk.onclick=async()=>{
+  const pw=document.getElementById("adminPw").value;
+  const snap=await get(ref(db,"admin/password"));
+  if(snap.exists() && String(snap.val()) === String(pw)){
+    isAdmin=true;
+    adminModal.style.display="none";
+    alert("관리자 로그인 완료");
+  }else{
+    alert("비밀번호 오류");
+  }
+};
+const adminModal = document.getElementById("adminModal");
+const adminCloseBtn = document.getElementById("adminCloseBtn");
+
+adminCloseBtn.addEventListener("click", () => {
+  adminModal.style.display = "none";
+});
+</script>
+</body>
+</html>  align-items:center;
+}
+.title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:12px;
+  color:#2c5364;
+  text-align:center;
+  letter-spacing:1px;
+}
+.header{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  border-bottom:2px solid #2c5364;
+  padding-bottom:6px;
+  margin-bottom:12px;
+}
 .date-box{
   font-size:18px;
   font-weight:700;
