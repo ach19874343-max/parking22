@@ -304,15 +304,28 @@ datePicker.addEventListener("change",()=>loadData(datePicker.value));
 
 cells.forEach(cell=>{
   let timer;
-  cell.addEventListener("mousedown",()=>{
-    timer=setTimeout(()=>{
-      if(!isAdmin) return;
+
+  const startPress = () => {
+    timer = setTimeout(() => {
+      if (!isAdmin) return;
       cell.classList.toggle("active");
       saveData();
-    },600);
-  });
-  cell.addEventListener("mouseup",()=>clearTimeout(timer));
-  cell.addEventListener("mouseleave",()=>clearTimeout(timer));
+    }, 600); // 꾹 누르기 시간
+  };
+
+  const endPress = () => {
+    clearTimeout(timer);
+  };
+
+  // PC
+  cell.addEventListener("mousedown", startPress);
+  cell.addEventListener("mouseup", endPress);
+  cell.addEventListener("mouseleave", endPress);
+
+  // 모바일
+  cell.addEventListener("touchstart", startPress, { passive:true });
+  cell.addEventListener("touchend", endPress);
+  cell.addEventListener("touchcancel", endPress);
 });
 
 wrappers.forEach(wrapper=>{
