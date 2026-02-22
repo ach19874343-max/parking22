@@ -3,7 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>보영운수 22번 주차도</title>
+<title>보영운수 22번 주차도 관리시스템</title>
+
+<!-- favicon -->
+<link rel="icon" href="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" type="image/png">
+
+<!-- SNS 공유용 메타 -->
+<meta property="og:title" content="보영운수 22번 주차도 관리시스템">
+<meta property="og:description" content="보영운수 22번 주차도를 쉽게 확인하고 관리할 수 있습니다.">
+<meta property="og:image" content="https://ach19874343-max.github.io/parking22/share-image.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+
 <style>
 *{box-sizing:border-box;}
 body{
@@ -16,30 +27,38 @@ body{
 .board{
   background:#fff;
   width:100%;
-  max-width:420px;
-  border-radius:14px;
-  padding:18px;
-  box-shadow:0 15px 30px rgba(0,0,0,.25);
+  max-width:480px;
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
   margin:0 auto;
   display:flex;
   flex-direction:column;
   align-items:center;
 }
+.title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:12px;
+  color:#2c5364;
+  text-align:center;
+  letter-spacing:1px;
+}
 .header{
   display:flex;
   flex-direction:column;
   align-items:center;
-  margin-bottom:12px;
+  width:100%;
   border-bottom:2px solid #2c5364;
   padding-bottom:6px;
-  width:100%; /* 경계선 전체 폭 */
+  margin-bottom:12px;
 }
 .date-box{
   font-size:18px;
   font-weight:700;
   text-align:center;
   margin-bottom:6px;
-  width:100%; /* 가운데 유지 */
+  width:100%;
 }
 .date-box input{
   font-size:16px;
@@ -84,7 +103,7 @@ body{
   align-items:center;
   justify-content:center;
   background:linear-gradient(145deg,#f8fafc,#e2e8f0);
-  box-shadow:0 2px 4px rgba(0,0,0,.08);
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
   border:1px solid #cbd5e1;
   transition:.2s;
   overflow:hidden;
@@ -107,16 +126,23 @@ body{
 }
 .cell select:focus{outline:none;}
 
+/* Footer 스타일 개선 */
 .footer{
   display:flex;
   flex-direction:column;
   align-items:flex-start;
   justify-content:center;
   text-align:left;
-  margin-top:12px;
-  font-size:12px;
-  color:#777;
+  margin-top:18px;
+  font-size:13px;
+  color:#555;
   width:100%;
+  border-top:2px solid #2c5364;
+  padding-top:8px;
+}
+.footer pre{
+  margin:0;
+  line-height:1.5;
 }
 .footer .highlight {
   color: #f57f17;
@@ -125,10 +151,26 @@ body{
   padding:2px 4px;
   border-radius:4px;
 }
+.footer .copyright{
+  margin-top:6px;
+  font-size:11px;
+  color:#888;
+  text-align:center;
+  width:100%;
+}
+hr{
+  width:100%;
+  border:none;
+  border-top:2px solid #2c5364;
+  margin:12px 0;
+}
 </style>
 </head>
 <body>
 <div class="board">
+  <!-- 제목 -->
+  <div class="title">보영운수 22번 주차도 관리시스템</div>
+
   <div class="header">
     <div class="date-box">📅 날짜 : <input type="date" id="datePicker" placeholder="날짜를 선택해주세요"></div>
   </div>
@@ -144,12 +186,14 @@ body{
   <!-- footer -->
   <div class="footer">
     <pre>
-      ※ 보영운수 22번 주차도 (노란색 = 당일휴차)
-      ※ 원하는 날짜를 선택하시면 그날 주차도를 불러옵니다.</pre>
+※ 보영운수 22번 주차도 (노란색 = 당일휴차)
+※ 원하는 날짜를 선택하시면 그날 주차도를 불러옵니다.</pre>
 <pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
+<div class="copyright">Copyright (c) 2026 ChangHai AN. All rights reserved.</div>
   </div>
 </div>
 
+<!-- Firebase + 기능 JS -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
@@ -213,9 +257,7 @@ async function loadData(date){
       cells.forEach((c,i)=>c.classList.toggle("active",data.active?.[i]||false));
       wrappers.forEach((w,i)=>w.style.transform=`translateX(${data.drag?.[i]||0}px)`);
     }
-  } catch(e){
-    console.error("Firebase load error:", e);
-  }
+  } catch(e){console.error("Firebase load error:", e);}
   refreshOptions();
 }
 
@@ -235,6 +277,7 @@ function saveData(){
 selects.forEach(s=>s.addEventListener("change",()=>{refreshOptions();saveData();}));
 datePicker.addEventListener("change",()=>loadData(datePicker.value));
 
+/* 꾹 눌러 휴차 */
 cells.forEach(cell=>{
   let timer,startX=0,startY=0;
   const startPress=(e)=>{
@@ -259,6 +302,7 @@ cells.forEach(cell=>{
   cell.addEventListener("touchend",()=>clearTimeout(timer));
 });
 
+/* 좌우 드래그 제한 0~18px */
 wrappers.forEach(wrapper=>{
   let startX=0,currentX=0,isDragging=false;
   const move=(clientX)=>{
