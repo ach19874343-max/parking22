@@ -112,6 +112,7 @@ body{
   appearance:none;
 }
 .footer{
+  position: relative; /* 필수 */
   display:flex;
   flex-direction:column;
   margin-top:8px;      /* ↓ */
@@ -166,6 +167,14 @@ body{
   justify-content:center;
   gap:6px;
 }
+.version {
+  position: absolute;   /* 부모 기준 */
+  right: 0px;           /* 오른쪽 끝 */
+  bottom: 0px;          /* footer 안쪽 아래 */
+  font-size: 8px;
+  color: #888;
+  font-weight: 600;
+}
 </style>
 </head>
 
@@ -196,10 +205,11 @@ body{
   <div class="footer">
     <pre>
 ※ 보영운수 22번 주차도 (노란색 = 당일휴차)
-※ 원하는 날짜를 선택하시면 그날 주차도를 불러옵니다.</pre>
+※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
 <pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
 <div class="copyright">Copyright (c) 2026 ChangHai AN. All rights reserved.</div>
-  </div>
+  <div class="version">Version 1.0.0.7</div>
+ </div>
 </div>
 
 <!-- 관리자 로그인 모달 -->
@@ -323,7 +333,7 @@ cells.forEach(cell=>{
   cell.addEventListener("mouseleave", endPress);
 
   // 모바일
-  cell.addEventListener("touchstart", startPress, { passive:true });
+  cell.addEventListener("touchstart", startPress, { passive:false });
   cell.addEventListener("touchend", endPress);
   cell.addEventListener("touchcancel", endPress);
 });
