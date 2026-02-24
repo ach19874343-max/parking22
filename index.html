@@ -412,6 +412,21 @@ wrappers.forEach(wrapper=>{
 
 refreshOptions();
 
+// ✅ 페이지 최초 진입 시: 오늘 날짜 자동 선택 + 데이터 로드
+(function initToday() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  // 날짜 input에 표시
+  datePicker.value = todayStr;
+
+  // 해당 날짜 데이터 불러오기
+  loadData(todayStr);
+})();
+
 /* 관리자 로그인 */
 adminLoginBtn.onclick=()=>adminModal.style.display="flex";
 adminLoginOk.onclick=async()=>{
