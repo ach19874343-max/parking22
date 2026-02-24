@@ -11,7 +11,7 @@
 <!-- SNS 공유용 메타 -->
 <meta property="og:title" content="보영운수 22번 주차도 관리시스템">
 <meta property="og:description" content="보영운수 22번 주차도를 쉽게 확인하고 관리할 수 있습니다.">
-<meta property="og:image" content="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png">
+<meta property="og:image" content="https://ach19874343-max.github.io/parking22/123456789.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 
@@ -260,6 +260,34 @@ select:disabled {
       0 2px 6px rgba(245,127,23,.4);
   }
 }
+/* 관리자 로그인 모달 헤더 */
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+
+.modal-header h3{
+  margin:0;
+  font-size:17px;
+  font-weight:800;
+  color:#2c5364;
+}
+
+.modal-header button{
+  border:none;
+  background:transparent;
+  font-size:20px;
+  font-weight:700;
+  color:#888;
+  cursor:pointer;
+  padding:4px;
+}
+
+.modal-header button:active{
+  transform:scale(0.9);
+}
 </style>
 </head>
 
@@ -273,7 +301,7 @@ select:disabled {
 
 <div class="header">
   <div class="date-box date-row">
-    <button id="adminLoginBtn">관리자 로그인</button>
+    <button id="adminLoginBtn">게스트 모드</button>
     <span>📅 날짜 :</span>
     <input type="date" id="datePicker">
   </div>
@@ -308,7 +336,10 @@ select:disabled {
   z-index:999;
 ">
   <div style="background:#fff; padding:20px; border-radius:12px; width:260px;">
-    <h3>관리자 로그인</h3>
+    <div class="modal-header">
+  <h3>관리자 비밀번호 입력</h3>
+  <button id="adminCloseBtn" aria-label="닫기">✕</button>
+</div>
     <input type="password" id="adminPw" placeholder="비밀번호"
       style="width:100%; padding:8px; margin-bottom:10px;">
     <button id="adminLoginOk"
@@ -319,6 +350,14 @@ select:disabled {
 </div>
 
 <script type="module">
+
+function updateAdminButton() {
+  if (isAdmin) {
+    adminLoginBtn.textContent = "관리자 모드";
+  } else {
+    adminLoginBtn.textContent = "게스트 모드";
+  }
+}
 
 function applyPermissionUI() {
   if (!isAdmin) {
@@ -367,7 +406,7 @@ databaseURL:"https://parking22-886c6-default-rtdb.asia-southeast1.firebasedataba
 const app=initializeApp(firebaseConfig);
 const db=getDatabase(app);
 
-let isAdmin=false;
+let isAdmin = sessionStorage.getItem("isAdmin") === "1";
 
 const busNumbers=["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
 const selects=document.querySelectorAll('.cell select');
@@ -499,26 +538,41 @@ refreshOptions();
 })();
 // 🔒 최초 진입 시 관리자 아니므로 무조건 잠금
 applyPermissionUI();
-
+updateAdminButton();
 /* 관리자 로그인 */
-adminLoginBtn.onclick=()=>adminModal.style.display="flex";
+adminLoginBtn.onclick = () => {
+  if (isAdmin) {
+    // 🔓 로그아웃
+    isAdmin = false;
+    sessionStorage.removeItem("isAdmin");
+    applyPermissionUI();
+    updateAdminButton();
+    alert("관리자 로그아웃 되었습니다");
+  } else {
+    // 🔐 로그인
+    adminModal.style.display = "flex";
+  }
+};
 adminLoginOk.onclick=async()=>{
   const pw=document.getElementById("adminPw").value;
   const snap=await get(ref(db,"admin/password"));
   if(snap.exists() && String(snap.val()) === String(pw)){
   isAdmin = true;
+  sessionStorage.setItem("isAdmin", "1"); // ✅ 추가
   adminModal.style.display = "none";
   applyPermissionUI(); // 🔥 관리자 모드 ON
+  updateAdminButton(); // ✅ 추가
   alert("관리자 로그인 완료");
   }else{
     alert("비밀번호 오류");
   }
 };
 const adminModal = document.getElementById("adminModal");
-const adminCloseBtn = document.getElementById("adminCloseBtn");
 
-adminCloseBtn.addEventListener("click", () => {
-  adminModal.style.display = "none";
+document.addEventListener("click", (e) => {
+  if (e.target.id === "adminCloseBtn") {
+    adminModal.style.display = "none";
+  }
 });
 </script>
 </body>
