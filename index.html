@@ -112,18 +112,18 @@ body{
   appearance:none;
 }
 .footer{
-  position: relative; /* 필수 */
+  position: relative;
   display:flex;
   flex-direction:column;
-  margin-top:8px;      /* ↓ */
+  margin-top:8px;
   font-size:13px;
   width:100%;
   border-top:2px solid #2c5364;
-  padding-top:6px;     /* ↓ */
+  padding-top:6px;
 }
 .footer pre{
-  margin:4px 0;     /* 위아래 숨 좀 쉬게 */
-  line-height:1.5;  /* 글줄 간격 */
+  margin:4px 0;
+  line-height:1.5;
 }
 .footer .highlight{
   color:#f57f17;
@@ -132,18 +132,18 @@ body{
   margin:4px 0;
 }
 .footer .copyright{
-  margin-top:4px;      /* ↓ */
-  margin-bottom:0;     /* 핵심 */
+  margin-top:4px;
+  margin-bottom:0;
   font-size:11px;
   color:#888;
-  text-align:left;    /* ← 여기만 변경 */
-  padding-left:4px;   /* ← 살짝 여백 (선택) */
+  text-align:left;
+  padding-left:4px;
 }
 .date-row{
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:6px;   /* ← 거리 여기서 조절 */
+  gap:6px;
 }
 
 .date-row button{
@@ -169,98 +169,288 @@ body{
   gap:6px;
 }
 .version {
-  position: absolute;   /* 부모 기준 */
-  right: 0px;           /* 오른쪽 끝 */
-  bottom: 0px;          /* footer 안쪽 아래 */
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
   font-size: 8px;
   color: #888;
   font-weight: 600;
 }
-/* 📱 모바일 최적화 */
-@media (max-width: 480px) {
 
+/* 현재차량상황 패널 스타일 */
+#vehiclePanel {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 3px solid #2c5364;
+  box-shadow: 0 -5px 20px rgba(0,0,0,.2);
+  z-index: 1000;
+  max-height: 50vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.vehicle-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  position: sticky;
+  top: 0;
+}
+
+.vehicle-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c5364;
+}
+
+.vehicle-panel-header button {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.vehicle-panel-header button:hover {
+  color: #333;
+}
+
+.vehicle-list {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vehicle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: grab;
+  transition: 0.2s;
+}
+
+.vehicle-item:active {
+  cursor: grabbing;
+  background: #f0f0f0;
+}
+
+.vehicle-item.dragging {
+  opacity: 0.5;
+  background: #e8e8e8;
+}
+
+.vehicle-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.vehicle-item-drag-handle {
+  color: #999;
+  font-size: 14px;
+  cursor: grab;
+}
+
+.vehicle-item-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  min-width: 40px;
+}
+
+.vehicle-item-delete {
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.vehicle-item-delete:hover {
+  background: #ff5252;
+}
+
+.vehicle-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  gap: 6px;
+  margin-bottom: 8px;
+  transition: 0.2s;
+}
+
+.vehicle-add-btn:hover {
+  background: #1e3a47;
+}
+
+.vehicle-add-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.vehicle-add-input-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.vehicle-add-input-container button {
+  padding: 8px 16px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.vehicle-add-input-container button:hover {
+  background: #1e3a47;
+}
+
+#currentVehicleBtn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #2c5364;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-left: 6px;
+}
+
+#currentVehicleBtn:hover {
+  background: #1e3a47;
+}
+
+#currentVehicleBtn.active {
+  background: #ff9800;
+}
+
+@media (max-width: 480px) {
   .board {
     padding: 16px;
   }
-
   .title {
     font-size: 18px;
     letter-spacing: 0.5px;
   }
-
   .line-label {
     width: 52px;
     font-size: 15px;
     padding: 6px 2px;
   }
-
   .cell {
     width: 70px;
     height: 50px;
   }
-
   .cell select {
     font-size: 16px;
     font-weight: 800;
   }
-
   .date-box span {
     font-size: 14px;
   }
-
   #adminLoginBtn {
     font-size: 13px;
     padding: 5px 8px;
   }
-
   .footer pre {
     font-size: 12px;
     line-height: 1.4;
   }
-
   .footer .highlight {
     font-size: 12px;
   }
-
   .version {
     font-size: 9px;
   }
+  #vehiclePanel {
+    max-height: 60vh;
+  }
+  .date-row {
+    flex-wrap: wrap;
+  }
+  #currentVehicleBtn {
+    margin-left: 0;
+    margin-top: 6px;
+    flex-basis: 100%;
+  }
 }
-/* 🔒 보기전용( disabled )여도 선명하게 */
+
 select:disabled {
   opacity: 1 !important;
   color: #333;
   background: transparent;
-  -webkit-text-fill-color: #333; /* 모바일 사파리 필수 */
+  -webkit-text-fill-color: #333;
 }
-/* 📱 iOS 전용 보정 */
-@supports (-webkit-touch-callout: none) {
 
+@supports (-webkit-touch-callout: none) {
   .cell select {
-    text-align-last: center;   /* 핵심 */
+    text-align-last: center;
     padding-left: 0;
     padding-right: 0;
   }
-
   .cell select option {
     text-align: center;
   }
 }
-@supports (-webkit-touch-callout: none) {
 
+@supports (-webkit-touch-callout: none) {
   .cell {
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.7),
       0 2px 4px rgba(0,0,0,.12);
   }
-
   .cell.active {
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.5),
       0 2px 6px rgba(245,127,23,.4);
   }
 }
-/* 관리자 로그인 모달 헤더 */
+
 .modal-header{
   display:flex;
   align-items:center;
@@ -293,10 +483,6 @@ select:disabled {
 
 <body>
 <div class="board">
-
-
-
-  <!-- 제목 -->
   <div class="title">보영운수 22번 주차도 관리시스템</div>
 
 <div class="header">
@@ -304,10 +490,10 @@ select:disabled {
     <button id="adminLoginBtn">게스트 모드</button>
     <span>📅 날짜 :</span>
     <input type="date" id="datePicker">
+    <button id="currentVehicleBtn" style="display:none;">현재차량상황</button>
   </div>
 </div>
 
-  <!-- 주차표 -->
   <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
   <div class="row"><div class="line-label">3R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
   <div class="row"><div class="line-label">4R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
@@ -321,11 +507,27 @@ select:disabled {
 ※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
 <pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
 <div class="copyright">Copyright (c) 2026 ChangHai AN. All rights reserved.</div>
-  <div class="version">Version 1.0.1.0</div>
+  <div class="version">Version 1.0.2.0</div>
  </div>
 </div>
 
-<!-- 관리자 로그인 모달 -->
+<!-- 현재차량상황 패널 -->
+<div id="vehiclePanel">
+  <div class="vehicle-panel-header">
+    <h3>현재차량상황</h3>
+    <button id="vehiclePanelCloseBtn">✕</button>
+  </div>
+  <div class="vehicle-list">
+    <button class="vehicle-add-btn" id="vehicleAddBtn">+ 차량번호 추가</button>
+    <div id="vehicleAddInputContainer" style="display:none;" class="vehicle-add-input-container">
+      <input type="text" id="vehicleAddInput" placeholder="차량번호 입력" maxlength="4">
+      <button id="vehicleAddConfirmBtn">추가</button>
+      <button id="vehicleAddCancelBtn" style="background:#999;">취소</button>
+    </div>
+    <div id="vehicleListContainer"></div>
+  </div>
+</div>
+
 <div id="adminModal" style="
   display:none;
   position:fixed;
@@ -349,231 +551,430 @@ select:disabled {
   </div>
 </div>
 
-<script type="module">
+<script>
+let isAdmin = sessionStorage.getItem("isAdmin") === "1";
+let adminLoginBtn, adminModal, adminLoginOk;
+let db, ref, set, get;
+let currentBusList = [];
+let draggedItem = null;
 
 function updateAdminButton() {
   if (isAdmin) {
     adminLoginBtn.textContent = "관리자 모드";
+    document.getElementById('currentVehicleBtn').style.display = 'inline-block';
   } else {
     adminLoginBtn.textContent = "게스트 모드";
+    document.getElementById('currentVehicleBtn').style.display = 'none';
+    document.getElementById('vehiclePanel').style.display = 'none';
   }
 }
 
-function applyPermissionUI() {
+function applyPermissionUI(cells, selects, wrappers) {
   if (!isAdmin) {
-    // 셀 클릭 완전 차단
     cells.forEach(cell => {
       cell.style.pointerEvents = "none";
       cell.style.opacity = "1";
     });
-
-    // 차량 선택 완전 차단 + 안 보이게
     selects.forEach(sel => {
       sel.disabled = true;
     });
-
-    // 드래그 차단
     wrappers.forEach(w => {
       w.style.pointerEvents = "none";
     });
-
   } else {
-    // 관리자일 때 다시 활성화
     cells.forEach(cell => {
       cell.style.pointerEvents = "auto";
       cell.style.opacity = "1";
     });
-
     selects.forEach(sel => {
       sel.disabled = false;
       sel.style.display = "block";
     });
-
     wrappers.forEach(w => {
       w.style.pointerEvents = "auto";
     });
   }
 }
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+async function loadBusListFromDB() {
+  try {
+    console.log('busList 로드 시작...');
+    const snapshot = await get(ref(db, 'busList'));
+    console.log('Firebase snapshot:', snapshot);
+    console.log('snapshot.exists():', snapshot.exists());
+    
+    if (snapshot.exists()) {
+      currentBusList = snapshot.val() || [];
+      console.log('Firebase에서 로드된 busList:', currentBusList);
+      if (!Array.isArray(currentBusList)) {
+        currentBusList = Object.values(currentBusList);
+        console.log('객체를 배열로 변환:', currentBusList);
+      }
+    } else {
+      console.log('Firebase에 busList가 없음. 기본값 사용');
+      currentBusList = ["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
+    }
+    console.log('최종 busList:', currentBusList);
+    return currentBusList;
+  } catch (err) {
+    console.error("busList 로드 실패:", err);
+    console.error("에러 메시지:", err.message);
+    console.error("에러 코드:", err.code);
+    currentBusList = ["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
+    return currentBusList;
+  }
+}
 
-const firebaseConfig={
-apiKey:"AIzaSyAcaIcwlhwAOgKPD5BKD3mAuXiAqLKHTu4",
-databaseURL:"https://parking22-886c6-default-rtdb.asia-southeast1.firebasedatabase.app"
-};
+async function saveBusListToDB() {
+  try {
+    await set(ref(db, 'busList'), currentBusList);
+  } catch (err) {
+    console.error("busList 저장 실패:", err);
+  }
+}
 
-const app=initializeApp(firebaseConfig);
-const db=getDatabase(app);
+function renderVehicleList() {
+  const container = document.getElementById('vehicleListContainer');
+  container.innerHTML = '';
+  
+  currentBusList.forEach((bus, index) => {
+    const item = document.createElement('div');
+    item.className = 'vehicle-item';
+    item.draggable = true;
+    item.dataset.index = index;
+    
+    item.innerHTML = `
+      <div class="vehicle-item-content">
+        <span class="vehicle-item-drag-handle">⋮⋮</span>
+        <span class="vehicle-item-number">${bus}</span>
+      </div>
+      <button class="vehicle-item-delete">-</button>
+    `;
+    
+    const deleteBtn = item.querySelector('.vehicle-item-delete');
+    deleteBtn.addEventListener('click', () => {
+      currentBusList.splice(index, 1);
+      saveBusListToDB();
+      renderVehicleList();
+      refreshOptions(document.querySelectorAll('.cell select'));
+    });
+    
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+    });
+    
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (draggedItem && draggedItem !== item) {
+        const allItems = Array.from(container.querySelectorAll('.vehicle-item'));
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(item);
+        
+        if (draggedIndex < targetIndex) {
+          item.parentNode.insertBefore(draggedItem, item.nextSibling);
+        } else {
+          item.parentNode.insertBefore(draggedItem, item);
+        }
+      }
+    });
+    
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+    });
+    
+    container.appendChild(item);
+  });
+  
+  container.addEventListener('dragend', () => {
+    const items = Array.from(container.querySelectorAll('.vehicle-item'));
+    const newOrder = items.map(item => currentBusList[item.dataset.index]);
+    currentBusList = newOrder;
+    saveBusListToDB();
+  });
+}
 
-let isAdmin = sessionStorage.getItem("isAdmin") === "1";
-
-const busNumbers=["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
-const selects=document.querySelectorAll('.cell select');
-const cells=document.querySelectorAll('.cell');
-const wrappers=document.querySelectorAll('.cells-wrapper');
-const datePicker=document.getElementById('datePicker');
-
-function refreshOptions(){
-  const selected=[...selects].map(s=>s.value).filter(v=>v);
-  selects.forEach(select=>{
-    const current=select.value;
-    select.innerHTML='<option value=""></option>';
-    busNumbers.forEach(num=>{
-      if(!selected.includes(num)||num===current){
-        const opt=document.createElement('option');
-        opt.value=num;
-        opt.textContent=num;
-        if(num===current) opt.selected=true;
+function refreshOptions(selects) {
+  const selected = [...selects].map(s => s.value).filter(v => v);
+  selects.forEach(select => {
+    const current = select.value;
+    select.innerHTML = '<option value=""></option>';
+    currentBusList.forEach(num => {
+      if (!selected.includes(num) || num === current) {
+        const opt = document.createElement('option');
+        opt.value = num;
+        opt.textContent = num;
+        if (num === current) opt.selected = true;
         select.appendChild(opt);
       }
     });
   });
 }
 
-async function loadData(date){
-  if(!date) return;
-  selects.forEach(s=>{
-    s.innerHTML='<option value=""></option>';
-    busNumbers.forEach(num=>{
-      const opt=document.createElement('option');
-      opt.value=num;
-      opt.textContent=num;
+async function initFirebase() {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js");
+    const { getDatabase, ref: dbRef, set: dbSet, get: dbGet } = await import("https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcaIcwlhwAOgKPD5BKD3mAuXiAqLKHTu4",
+      databaseURL: "https://parking22-886c6-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    ref = dbRef;
+    set = dbSet;
+    get = dbGet;
+
+    const selects = document.querySelectorAll('.cell select');
+    const cells = document.querySelectorAll('.cell');
+    const wrappers = document.querySelectorAll('.cells-wrapper');
+    const datePicker = document.getElementById('datePicker');
+    
+    adminLoginBtn = document.getElementById('adminLoginBtn');
+    adminModal = document.getElementById('adminModal');
+    adminLoginOk = document.getElementById('adminLoginOk');
+
+    // busList 로드
+    await loadBusListFromDB();
+
+async function loadData(date) {
+  if (!date) return;
+
+  // 1. 기본 초기화
+  selects.forEach(s => {
+    s.innerHTML = '<option value=""></option>';
+    currentBusList.forEach(num => {
+      const opt = document.createElement('option');
+      opt.value = num;
+      opt.textContent = num;
       s.appendChild(opt);
     });
-    s.value="";
+    s.value = "";
   });
-  cells.forEach(c=>c.classList.remove("active"));
-  wrappers.forEach(w=>w.style.transform="translateX(0px)");
+  cells.forEach(c => c.classList.remove("active"));
+  wrappers.forEach(w => w.style.transform = "translateX(0px)");
 
-  const snapshot=await get(ref(db,'parking/'+date));
-  const data=snapshot.val();
-  if(data){
-    selects.forEach((s,i)=>s.value=data.values?.[i]||"");
-    cells.forEach((c,i)=>c.classList.toggle("active",data.active?.[i]));
-    wrappers.forEach((w,i)=>w.style.transform=`translateX(${data.drag?.[i]||0}px)`);
-  }
-  refreshOptions();
-}
+  // 2. Firebase에서 불러오기
+  try {
+    const snapshot = await get(ref(db, 'parking/' + date));
+    const data = snapshot.val();
+    console.log('로드된 parking 데이터:', data);
 
-function saveData(){
-  if(!isAdmin) return;
-  const date=datePicker.value;
-  if(!date) return;
-  const values={},active={},drag={};
-  selects.forEach((s,i)=>values[i]=s.value);
-  cells.forEach((c,i)=>active[i]=c.classList.contains("active"));
-  wrappers.forEach((w,i)=>{
-    const m=w.style.transform.match(/-?\d+/);
-    drag[i]=m?parseInt(m[0]):0;
-  });
-  set(ref(db,'parking/'+date),{values,active,drag});
-}
-
-selects.forEach(s=>s.addEventListener("change",()=>{if(isAdmin){refreshOptions();saveData();}}));
-datePicker.addEventListener("change",()=>loadData(datePicker.value));
-
-cells.forEach(cell=>{
-  let timer;
-
-  const startPress = () => {
-    timer = setTimeout(() => {
-      if (!isAdmin) return;
-      cell.classList.toggle("active");
-      saveData();
-    }, 600); // 꾹 누르기 시간
-  };
-
-  const endPress = () => {
-    clearTimeout(timer);
-  };
-
-  // PC
-  cell.addEventListener("mousedown", startPress);
-  cell.addEventListener("mouseup", endPress);
-  cell.addEventListener("mouseleave", endPress);
-
-  // 모바일
-  cell.addEventListener("touchstart", startPress, { passive:false });
-  cell.addEventListener("touchend", endPress);
-  cell.addEventListener("touchcancel", endPress);
-});
-
-wrappers.forEach(wrapper=>{
-  let startX=0,isDragging=false;
-  wrapper.addEventListener("mousedown",e=>{
-    if(!isAdmin || e.target.tagName==="SELECT") return;
-    isDragging=true;
-    startX=e.clientX-(parseInt(wrapper.style.transform.replace(/\D/g,''))||0);
-  });
-  document.addEventListener("mousemove",e=>{
-    if(!isDragging) return;
-    let x=e.clientX-startX;
-    x=Math.max(0,Math.min(18,x));
-    wrapper.style.transform=`translateX(${x}px)`;
-  });
-  document.addEventListener("mouseup",()=>{
-    if(isDragging){
-      isDragging=false;
-      saveData();
+    if (data && data.values) {
+      // 객체 → 배열로 변환 (안정적으로)
+      const valuesArray = Array.isArray(data.values) ? data.values : Object.values(data.values);
+      
+      selects.forEach((s, i) => {
+        const val = valuesArray[i] ?? "";
+        if (currentBusList.includes(val) || val === "") {
+          s.value = val;
+        } else {
+          // 기존 busList에 없는 값이면 option 추가
+          const opt = document.createElement('option');
+          opt.value = val;
+          opt.textContent = val;
+          s.appendChild(opt);
+          s.value = val;
+        }
+      });
     }
-  });
-});
 
-refreshOptions();
+    // active, drag 값 처리
+    if (data && data.active) {
+      const activeArray = Array.isArray(data.active) ? data.active : Object.values(data.active);
+      cells.forEach((c, i) => c.classList.toggle("active", !!activeArray[i]));
+    }
+    if (data && data.drag) {
+      const dragArray = Array.isArray(data.drag) ? data.drag : Object.values(data.drag);
+      wrappers.forEach((w, i) => w.style.transform = `translateX(${dragArray[i] || 0}px)`);
+    }
 
-// ✅ 페이지 최초 진입 시: 오늘 날짜 자동 선택 + 데이터 로드
-(function initToday() {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  const todayStr = `${yyyy}-${mm}-${dd}`;
+  } catch(err) {
+    console.error("데이터 로드 실패:", err);
+  }
 
-  // 날짜 input에 표시
-  datePicker.value = todayStr;
+  // 3. 옵션 새로고침
+  refreshOptions(selects);
+}
 
-  // 해당 날짜 데이터 불러오기
-  loadData(todayStr);
-})();
-// 🔒 최초 진입 시 관리자 아니므로 무조건 잠금
-applyPermissionUI();
-updateAdminButton();
-/* 관리자 로그인 */
-adminLoginBtn.onclick = () => {
-  if (isAdmin) {
-    // 🔓 로그아웃
-    isAdmin = false;
-    sessionStorage.removeItem("isAdmin");
-    applyPermissionUI();
+    function saveData() {
+      if (!isAdmin) return;
+      const date = datePicker.value;
+      if (!date) return;
+      const values = {}, active = {}, drag = {};
+      selects.forEach((s, i) => values[i] = s.value);
+      cells.forEach((c, i) => active[i] = c.classList.contains("active"));
+      wrappers.forEach((w, i) => {
+        const m = w.style.transform.match(/-?\d+/);
+        drag[i] = m ? parseInt(m[0]) : 0;
+      });
+      set(ref(db, 'parking/' + date), { values, active, drag });
+    }
+
+    selects.forEach(s => s.addEventListener("change", () => {
+      if (isAdmin) {
+        refreshOptions(selects);
+        saveData();
+      }
+    }));
+    
+    datePicker.addEventListener("change", () => loadData(datePicker.value));
+
+    cells.forEach(cell => {
+      let timer;
+      const startPress = () => {
+        timer = setTimeout(() => {
+          if (!isAdmin) return;
+          cell.classList.toggle("active");
+          saveData();
+        }, 600);
+      };
+      const endPress = () => {
+        clearTimeout(timer);
+      };
+      cell.addEventListener("mousedown", startPress);
+      cell.addEventListener("mouseup", endPress);
+      cell.addEventListener("mouseleave", endPress);
+      cell.addEventListener("touchstart", startPress, { passive: false });
+      cell.addEventListener("touchend", endPress);
+      cell.addEventListener("touchcancel", endPress);
+    });
+
+    wrappers.forEach(wrapper => {
+      let startX = 0, isDragging = false;
+      wrapper.addEventListener("mousedown", e => {
+        if (!isAdmin || e.target.tagName === "SELECT") return;
+        isDragging = true;
+        startX = e.clientX - (parseInt(wrapper.style.transform.replace(/\D/g, '')) || 0);
+      });
+      document.addEventListener("mousemove", e => {
+        if (!isDragging) return;
+        let x = e.clientX - startX;
+        x = Math.max(0, Math.min(18, x));
+        wrapper.style.transform = `translateX(${x}px)`;
+      });
+      document.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          saveData();
+        }
+      });
+    });
+
+    // 현재차량상황 패널 이벤트
+    const vehiclePanel = document.getElementById('vehiclePanel');
+    const currentVehicleBtn = document.getElementById('currentVehicleBtn');
+    const vehiclePanelCloseBtn = document.getElementById('vehiclePanelCloseBtn');
+    const vehicleAddBtn = document.getElementById('vehicleAddBtn');
+    const vehicleAddInputContainer = document.getElementById('vehicleAddInputContainer');
+    const vehicleAddInput = document.getElementById('vehicleAddInput');
+    const vehicleAddConfirmBtn = document.getElementById('vehicleAddConfirmBtn');
+    const vehicleAddCancelBtn = document.getElementById('vehicleAddCancelBtn');
+
+    currentVehicleBtn.addEventListener('click', () => {
+      vehiclePanel.style.display = vehiclePanel.style.display === 'none' ? 'block' : 'none';
+      currentVehicleBtn.classList.toggle('active');
+    });
+
+    vehiclePanelCloseBtn.addEventListener('click', () => {
+      vehiclePanel.style.display = 'none';
+      currentVehicleBtn.classList.remove('active');
+    });
+
+    vehicleAddBtn.addEventListener('click', () => {
+      vehicleAddBtn.style.display = 'none';
+      vehicleAddInputContainer.style.display = 'flex';
+      vehicleAddInput.focus();
+    });
+
+    vehicleAddConfirmBtn.addEventListener('click', () => {
+      const newBus = vehicleAddInput.value.trim();
+      if (newBus && !currentBusList.includes(newBus)) {
+        currentBusList.push(newBus);
+        saveBusListToDB();
+        renderVehicleList();
+        refreshOptions(selects);
+        vehicleAddInput.value = '';
+        vehicleAddBtn.style.display = 'block';
+        vehicleAddInputContainer.style.display = 'none';
+      } else if (currentBusList.includes(newBus)) {
+        alert('이미 존재하는 차량번호입니다.');
+      } else {
+        alert('차량번호를 입력해주세요.');
+      }
+    });
+
+    vehicleAddCancelBtn.addEventListener('click', () => {
+      vehicleAddInput.value = '';
+      vehicleAddBtn.style.display = 'block';
+      vehicleAddInputContainer.style.display = 'none';
+    });
+
+    vehicleAddInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        vehicleAddConfirmBtn.click();
+      }
+    });
+
+    renderVehicleList();
+    refreshOptions(selects);
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    datePicker.value = todayStr;
+    loadData(todayStr);
+
+    applyPermissionUI(cells, selects, wrappers);
     updateAdminButton();
-    alert("관리자 로그아웃 되었습니다");
-  } else {
-    // 🔐 로그인
-    adminModal.style.display = "flex";
-  }
-};
-adminLoginOk.onclick=async()=>{
-  const pw=document.getElementById("adminPw").value;
-  const snap=await get(ref(db,"admin/password"));
-  if(snap.exists() && String(snap.val()) === String(pw)){
-  isAdmin = true;
-  sessionStorage.setItem("isAdmin", "1"); // ✅ 추가
-  adminModal.style.display = "none";
-  applyPermissionUI(); // 🔥 관리자 모드 ON
-  updateAdminButton(); // ✅ 추가
-  alert("관리자 로그인 완료");
-  }else{
-    alert("비밀번호 오류");
-  }
-};
-const adminModal = document.getElementById("adminModal");
 
-document.addEventListener("click", (e) => {
-  if (e.target.id === "adminCloseBtn") {
-    adminModal.style.display = "none";
+    adminLoginBtn.addEventListener('click', () => {
+      if (isAdmin) {
+        isAdmin = false;
+        sessionStorage.removeItem("isAdmin");
+        applyPermissionUI(cells, selects, wrappers);
+        updateAdminButton();
+        alert("관리자 로그아웃 되었습니다");
+      } else {
+        adminModal.style.display = "flex";
+      }
+    });
+
+    adminLoginOk.addEventListener('click', async () => {
+      const pw = document.getElementById("adminPw").value;
+      const snap = await get(ref(db, "admin/password"));
+      if (snap.exists() && String(snap.val()) === String(pw)) {
+        isAdmin = true;
+        sessionStorage.setItem("isAdmin", "1");
+        adminModal.style.display = "none";
+        applyPermissionUI(cells, selects, wrappers);
+        updateAdminButton();
+        alert("관리자 로그인 완료");
+      } else {
+        alert("비밀번호 오류");
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.id === "adminCloseBtn") {
+        adminModal.style.display = "none";
+      }
+    });
+  } catch (err) {
+    console.error("Firebase 초기화 실패:", err);
+    alert("Firebase 연결에 실패했습니다. 인터넷 연결을 확인해주세요.");
   }
-});
+}
+
+initFirebase();
 </script>
 </body>
 </html>
