@@ -136,7 +136,8 @@ body{
   margin-bottom:0;     /* 핵심 */
   font-size:11px;
   color:#888;
-  text-align:center;
+  text-align:left;    /* ← 여기만 변경 */
+  padding-left:4px;   /* ← 살짝 여백 (선택) */
 }
 .date-row{
   display:flex;
@@ -188,18 +189,19 @@ body{
   }
 
   .line-label {
-    width: 48px;
-    font-size: 14px;
+    width: 52px;
+    font-size: 15px;
     padding: 6px 2px;
   }
 
   .cell {
-    width: 56px;
-    height: 40px;
+    width: 62px;
+    height: 44px;
   }
 
   .cell select {
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 800;
   }
 
   .date-box span {
