@@ -233,6 +233,33 @@ select:disabled {
   background: transparent;
   -webkit-text-fill-color: #333; /* 모바일 사파리 필수 */
 }
+/* 📱 iOS 전용 보정 */
+@supports (-webkit-touch-callout: none) {
+
+  .cell select {
+    text-align-last: center;   /* 핵심 */
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .cell select option {
+    text-align: center;
+  }
+}
+@supports (-webkit-touch-callout: none) {
+
+  .cell {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.7),
+      0 2px 4px rgba(0,0,0,.12);
+  }
+
+  .cell.active {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.5),
+      0 2px 6px rgba(245,127,23,.4);
+  }
+}
 </style>
 </head>
 
