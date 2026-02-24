@@ -285,6 +285,43 @@ body{
 </div>
 
 <script type="module">
+
+function applyPermissionUI() {
+  if (!isAdmin) {
+    // 셀 클릭 완전 차단
+    cells.forEach(cell => {
+      cell.style.pointerEvents = "none";
+      cell.style.opacity = "0.6";
+    });
+
+    // 차량 선택 완전 차단 + 안 보이게
+    selects.forEach(sel => {
+      sel.disabled = true;
+    });
+
+    // 드래그 차단
+    wrappers.forEach(w => {
+      w.style.pointerEvents = "none";
+    });
+
+  } else {
+    // 관리자일 때 다시 활성화
+    cells.forEach(cell => {
+      cell.style.pointerEvents = "auto";
+      cell.style.opacity = "1";
+    });
+
+    selects.forEach(sel => {
+      sel.disabled = false;
+      sel.style.display = "block";
+    });
+
+    wrappers.forEach(w => {
+      w.style.pointerEvents = "auto";
+    });
+  }
+}
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
@@ -426,6 +463,8 @@ refreshOptions();
   // 해당 날짜 데이터 불러오기
   loadData(todayStr);
 })();
+// 🔒 최초 진입 시 관리자 아니므로 무조건 잠금
+applyPermissionUI();
 
 /* 관리자 로그인 */
 adminLoginBtn.onclick=()=>adminModal.style.display="flex";
@@ -433,9 +472,10 @@ adminLoginOk.onclick=async()=>{
   const pw=document.getElementById("adminPw").value;
   const snap=await get(ref(db,"admin/password"));
   if(snap.exists() && String(snap.val()) === String(pw)){
-    isAdmin=true;
-    adminModal.style.display="none";
-    alert("관리자 로그인 완료");
+  isAdmin = true;
+  adminModal.style.display = "none";
+  applyPermissionUI(); // 🔥 관리자 모드 ON
+  alert("관리자 로그인 완료");
   }else{
     alert("비밀번호 오류");
   }
