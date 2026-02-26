@@ -26,8 +26,8 @@ body{
 }
 .board{
   background:#fff;
-  width:100%;
-  max-width:480px;
+  width:90%;
+  max-width:none;
   border-radius:16px;
   padding:24px;
   box-shadow:0 20px 40px rgba(0,0,0,.3);
@@ -120,16 +120,24 @@ body{
   width:100%;
   border-top:2px solid #2c5364;
   padding-top:6px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .footer pre{
   margin:4px 0;
   line-height:1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: inherit;
 }
 .footer .highlight{
   color:#f57f17;
   font-weight:700;
-  display:inline-block;
+  display: block;
   margin:4px 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .footer .copyright{
   margin-top:4px;
@@ -138,6 +146,8 @@ body{
   color:#888;
   text-align:left;
   padding-left:4px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 .date-row{
   display:flex;
@@ -369,9 +379,10 @@ body{
   background: #ff9800;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .board {
     padding: 16px;
+    width: 95%;
   }
   .title {
     font-size: 18px;
@@ -397,18 +408,40 @@ body{
     font-size: 13px;
     padding: 5px 8px;
   }
+  .bulletin-posts {
+    max-height: 200px;
+  }
   .footer pre {
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 3px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
   .footer .highlight {
-    font-size: 12px;
+    font-size: 11px;
+    display: block;
+    margin: 3px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  .footer .copyright {
+    font-size: 10px;
+    margin-top: 2px;
   }
   .version {
     font-size: 9px;
   }
   #vehiclePanel {
     max-height: 60vh;
+  }
+  .bulletin-board {
+    margin-top: 12px;
+    padding: 12px;
+  }
+  .bulletin-input-container textarea {
+    min-height: 50px;
   }
   .date-row {
     flex-wrap: wrap;
@@ -417,6 +450,21 @@ body{
     margin-left: 0;
     margin-top: 6px;
     flex-basis: 100%;
+  }
+  #resetBtn {
+    margin-left: 0;
+    margin-top: 6px;
+    flex-basis: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .board {
+    width: 85%;
+    max-width: 700px;
+  }
+  .bulletin-posts {
+    max-height: 260px;
   }
 }
 
@@ -478,6 +526,148 @@ select:disabled {
 .modal-header button:active{
   transform:scale(0.9);
 }
+
+#resetBtn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #ff6b6b;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-left: 6px;
+}
+
+#resetBtn:hover {
+  background: #ff5252;
+}
+
+#resetBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.bulletin-board {
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid #2c5364;
+  padding-top: 16px;
+}
+
+.bulletin-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2c5364;
+  margin-bottom: 12px;
+}
+
+.bulletin-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bulletin-input-container textarea {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Segoe UI', sans-serif;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 120px;
+}
+
+.bulletin-input-container button {
+  padding: 8px 16px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.bulletin-input-container button:hover {
+  background: #1e3a47;
+}
+
+.bulletin-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.bulletin-post {
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.bulletin-post-content {
+  flex: 1;
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.bulletin-post-time {
+  font-size: 11px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.bulletin-post-delete {
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.bulletin-post-delete:hover {
+  background: #ff5252;
+}
+
+@media (max-width: 480px) {
+  #resetBtn {
+    margin-left: 0;
+    margin-top: 6px;
+    flex-basis: 100%;
+  }
+  .bulletin-input-container {
+    flex-direction: column;
+  }
+  .bulletin-input-container button {
+    align-self: stretch;
+  }
+}
 </style>
 </head>
 
@@ -490,7 +680,8 @@ select:disabled {
     <button id="adminLoginBtn">게스트 모드</button>
     <span>📅 날짜 :</span>
     <input type="date" id="datePicker">
-    <button id="currentVehicleBtn" style="display:none;">현재차량상황</button>
+    <button id="currentVehicleBtn" style="display:none;">현재 차량 목록</button>
+    <button id="resetBtn" style="display:none;">현재 설정 초기화</button>
   </div>
 </div>
 
@@ -501,20 +692,32 @@ select:disabled {
   <div class="row"><div class="line-label">6R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
   <div class="row"><div class="line-label">7R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
 
+  <hr style="width:100%; border:none; border-top:2px solid #2c5364; margin:12px 0; opacity:0.3;">
+
+  <!-- 게시판 -->
+  <div class="bulletin-board">
+    <div class="bulletin-title">📝 특이사항 메모</div>
+    <div class="bulletin-input-container">
+      <textarea id="bulletinInput" placeholder="당일 특이사항이 있을경우  메모 해주세요..."></textarea>
+      <button id="bulletinSubmitBtn">작성</button>
+    </div>
+    <div class="bulletin-posts" id="bulletinPosts"></div>
+  </div>
+
   <div class="footer">
     <pre>
 ※ 보영운수 22번 주차도 (노란색 = 당일휴차)
 ※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
 <pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
 <div class="copyright">Copyright (c) 2026 ChangHai AN. All rights reserved.</div>
-  <div class="version">Version 1.0.2.0</div>
+  <div class="version">Version 1.0.1.0</div>
  </div>
 </div>
 
 <!-- 현재차량상황 패널 -->
 <div id="vehiclePanel">
   <div class="vehicle-panel-header">
-    <h3>현재차량상황</h3>
+    <h3>현재 차량 목록</h3>
     <button id="vehiclePanelCloseBtn">✕</button>
   </div>
   <div class="vehicle-list">
@@ -562,9 +765,11 @@ function updateAdminButton() {
   if (isAdmin) {
     adminLoginBtn.textContent = "관리자 모드";
     document.getElementById('currentVehicleBtn').style.display = 'inline-block';
+    document.getElementById('resetBtn').style.display = 'inline-block';
   } else {
     adminLoginBtn.textContent = "게스트 모드";
     document.getElementById('currentVehicleBtn').style.display = 'none';
+    document.getElementById('resetBtn').style.display = 'none';
     document.getElementById('vehiclePanel').style.display = 'none';
   }
 }
@@ -743,65 +948,35 @@ async function initFirebase() {
     // busList 로드
     await loadBusListFromDB();
 
-async function loadData(date) {
-  if (!date) return;
-
-  // 1. 기본 초기화
-  selects.forEach(s => {
-    s.innerHTML = '<option value=""></option>';
-    currentBusList.forEach(num => {
-      const opt = document.createElement('option');
-      opt.value = num;
-      opt.textContent = num;
-      s.appendChild(opt);
-    });
-    s.value = "";
-  });
-  cells.forEach(c => c.classList.remove("active"));
-  wrappers.forEach(w => w.style.transform = "translateX(0px)");
-
-  // 2. Firebase에서 불러오기
-  try {
-    const snapshot = await get(ref(db, 'parking/' + date));
-    const data = snapshot.val();
-    console.log('로드된 parking 데이터:', data);
-
-    if (data && data.values) {
-      // 객체 → 배열로 변환 (안정적으로)
-      const valuesArray = Array.isArray(data.values) ? data.values : Object.values(data.values);
-      
-      selects.forEach((s, i) => {
-        const val = valuesArray[i] ?? "";
-        if (currentBusList.includes(val) || val === "") {
-          s.value = val;
-        } else {
-          // 기존 busList에 없는 값이면 option 추가
+    async function loadData(date) {
+      if (!date) return;
+      selects.forEach(s => {
+        s.innerHTML = '<option value=""></option>';
+        currentBusList.forEach(num => {
           const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = val;
+          opt.value = num;
+          opt.textContent = num;
           s.appendChild(opt);
-          s.value = val;
-        }
+        });
+        s.value = "";
       });
-    }
+      cells.forEach(c => c.classList.remove("active"));
+      wrappers.forEach(w => w.style.transform = "translateX(0px)");
 
-    // active, drag 값 처리
-    if (data && data.active) {
-      const activeArray = Array.isArray(data.active) ? data.active : Object.values(data.active);
-      cells.forEach((c, i) => c.classList.toggle("active", !!activeArray[i]));
+      const snapshot = await get(ref(db, 'parking/' + date));
+      const data = snapshot.val();
+      console.log('로드된 parking 데이터:', data);
+      if (data) {
+        const valuesArray = data.values ? Object.values(data.values) : [];
+        console.log('변환된 values 배열:', valuesArray);
+        selects.forEach((s, i) => {
+          s.value = valuesArray[i] || "";
+        });
+        cells.forEach((c, i) => c.classList.toggle("active", data.active?.[i]));
+        wrappers.forEach((w, i) => w.style.transform = `translateX(${data.drag?.[i] || 0}px)`);
+      }
+      refreshOptions(selects);
     }
-    if (data && data.drag) {
-      const dragArray = Array.isArray(data.drag) ? data.drag : Object.values(data.drag);
-      wrappers.forEach((w, i) => w.style.transform = `translateX(${dragArray[i] || 0}px)`);
-    }
-
-  } catch(err) {
-    console.error("데이터 로드 실패:", err);
-  }
-
-  // 3. 옵션 새로고침
-  refreshOptions(selects);
-}
 
     function saveData() {
       if (!isAdmin) return;
@@ -942,7 +1117,7 @@ async function loadData(date) {
         sessionStorage.removeItem("isAdmin");
         applyPermissionUI(cells, selects, wrappers);
         updateAdminButton();
-        alert("관리자 로그아웃 되었습니다");
+        alert("게스트 모드로 전환 되었습니다");
       } else {
         adminModal.style.display = "flex";
       }
@@ -957,7 +1132,7 @@ async function loadData(date) {
         adminModal.style.display = "none";
         applyPermissionUI(cells, selects, wrappers);
         updateAdminButton();
-        alert("관리자 로그인 완료");
+        alert("관리자 모드로 전환 되었습니다");
       } else {
         alert("비밀번호 오류");
       }
@@ -968,6 +1143,115 @@ async function loadData(date) {
         adminModal.style.display = "none";
       }
     });
+
+    // 초기화 버튼 기능
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.addEventListener('click', () => {
+      if (!isAdmin) return;
+      const date = datePicker.value;
+      if (!date) {
+        alert('날짜를 선택해주세요.');
+        return;
+      }
+      if (confirm('선택된 날짜의 차량 번호 설정을 초기화하시겠습니까?')) {
+        set(ref(db, 'parking/' + date), null);
+        loadData(date);
+        alert('초기화 완료되었습니다.');
+      }
+    });
+
+    // 게시판 기능
+    const bulletinInput = document.getElementById('bulletinInput');
+    const bulletinSubmitBtn = document.getElementById('bulletinSubmitBtn');
+    const bulletinPosts = document.getElementById('bulletinPosts');
+
+    async function loadBulletinPosts(date) {
+      try {
+        const snapshot = await get(ref(db, 'bulletin/' + date));
+        bulletinPosts.innerHTML = '';
+        if (snapshot.exists()) {
+          const posts = snapshot.val();
+          const postsArray = Array.isArray(posts) ? posts : Object.values(posts);
+          postsArray.reverse().forEach((post, index) => {
+            if (post) {
+              const postEl = document.createElement('div');
+              postEl.className = 'bulletin-post';
+              const time = new Date(post.time).toLocaleTimeString('ko-KR');
+              postEl.innerHTML = `
+                <div>
+                  <div class="bulletin-post-content">${post.text}</div>
+                  <div class="bulletin-post-time">${time}</div>
+                </div>
+                <button class="bulletin-post-delete" data-index="${index}">삭제</button>
+              `;
+              bulletinPosts.appendChild(postEl);
+            }
+          });
+          bulletinPosts.querySelectorAll('.bulletin-post-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const index = parseInt(e.target.dataset.index);
+              if (confirm('이 글을 삭제하시겠습니까?')) {
+                const snapshot = await get(ref(db, 'bulletin/' + date));
+                const posts = snapshot.val();
+                const postsArray = Array.isArray(posts) ? posts : Object.values(posts);
+                postsArray.reverse();
+                postsArray.splice(index, 1);
+                postsArray.reverse();
+                await set(ref(db, 'bulletin/' + date), postsArray);
+                loadBulletinPosts(date);
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('게시판 로드 실패:', err);
+      }
+    }
+
+    bulletinSubmitBtn.addEventListener('click', async () => {
+      const text = bulletinInput.value.trim();
+      if (!text) {
+        alert('내용을 입력해주세요.');
+        return;
+      }
+      const date = datePicker.value;
+      if (!date) {
+        alert('날짜를 선택해주세요.');
+        return;
+      }
+      try {
+        const snapshot = await get(ref(db, 'bulletin/' + date));
+        let posts = [];
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          posts = Array.isArray(data) ? data : Object.values(data);
+        }
+        posts.push({
+          text: text,
+          time: new Date().toISOString()
+        });
+        await set(ref(db, 'bulletin/' + date), posts);
+        bulletinInput.value = '';
+        loadBulletinPosts(date);
+      } catch (err) {
+        console.error('게시판 저장 실패:', err);
+        alert('저장에 실패했습니다.');
+      }
+    });
+
+    bulletinInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        bulletinSubmitBtn.click();
+      }
+    });
+
+    // 날짜 변경 시 게시판도 함께 로드
+    datePicker.addEventListener('change', () => {
+      loadBulletinPosts(datePicker.value);
+    });
+
+    // 초기 게시판 로드
+    loadBulletinPosts(todayStr);
   } catch (err) {
     console.error("Firebase 초기화 실패:", err);
     alert("Firebase 연결에 실패했습니다. 인터넷 연결을 확인해주세요.");
