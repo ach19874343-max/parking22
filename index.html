@@ -466,6 +466,15 @@ body{
   .bulletin-posts {
     max-height: 260px;
   }
+  .admin-buttons-container {
+    gap: 10px;
+  }
+  #currentVehicleBtn,
+  #popupSettingBtn,
+  #resetBtn {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
 }
 
 select:disabled {
@@ -549,6 +558,249 @@ select:disabled {
   cursor: not-allowed;
 }
 
+.admin-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+#popupSettingBtn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #9c27b0;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+}
+
+#popupSettingBtn:hover {
+  background: #7b1fa2;
+}
+
+.popup-settings-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.popup-settings-modal.active {
+  display: flex;
+}
+
+.popup-settings-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.popup-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #2c5364;
+  padding-bottom: 12px;
+}
+
+.popup-settings-header h3 {
+  margin: 0;
+  color: #2c5364;
+  font-size: 16px;
+}
+
+.popup-settings-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+}
+
+.popup-settings-close:hover {
+  color: #333;
+}
+
+.popup-settings-group {
+  margin-bottom: 16px;
+}
+
+.popup-settings-group label {
+  display: block;
+  font-weight: 600;
+  color: #2c5364;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.popup-settings-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 150px;
+}
+
+.popup-days-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.popup-day-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popup-day-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.popup-day-checkbox label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.popup-time-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.popup-time-input {
+  flex: 1;
+}
+
+.popup-time-input input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.popup-settings-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.popup-settings-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.popup-settings-buttons .save-btn {
+  background: #2c5364;
+  color: #fff;
+}
+
+.popup-settings-buttons .save-btn:hover {
+  background: #1e3a47;
+}
+
+.popup-settings-buttons .cancel-btn {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.popup-settings-buttons .cancel-btn:hover {
+  background: #d0d0d0;
+}
+
+.popup-notification {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 3000;
+  text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.popup-notification.active {
+  display: block;
+}
+
+.popup-notification-content {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.popup-notification-close {
+  padding: 8px 16px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.popup-notification-close:hover {
+  background: #1e3a47;
+}
+
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2999;
+}
+
+.popup-overlay.active {
+  display: block;
+}
+
 .bulletin-board {
   width: 100%;
   margin-top: 16px;
@@ -612,60 +864,67 @@ select:disabled {
   max-height: 240px;
 }
 
+/* 게시판 모바일 개선 */
+
 .bulletin-post {
-  padding: 10px 12px;
+  position: relative;
+  padding: 12px;
   background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .bulletin-post-content {
-  flex: 1;
-  word-break: break-word;
-  white-space: pre-wrap;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
   color: #333;
-  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .bulletin-post-time {
   font-size: 11px;
   color: #999;
-  white-space: nowrap;
+  text-align: right;
 }
 
 .bulletin-post-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
   background: #ff6b6b;
   color: #fff;
   border: none;
   border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 600;
+  padding: 3px 6px;
+  font-size: 10px;
   cursor: pointer;
-  transition: 0.2s;
-  white-space: nowrap;
-}
-
-.bulletin-post-delete:hover {
-  background: #ff5252;
 }
 
 @media (max-width: 480px) {
-  #resetBtn {
-    margin-left: 0;
-    margin-top: 6px;
-    flex-basis: 100%;
+
+  .bulletin-post {
+    padding: 10px;
   }
+
+  .bulletin-post-content {
+    font-size: 13px;
+  }
+
+  .bulletin-post-delete {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
   .bulletin-input-container {
     flex-direction: column;
   }
+
   .bulletin-input-container button {
-    align-self: stretch;
+    width: 100%;
   }
 }
 </style>
@@ -680,8 +939,11 @@ select:disabled {
     <button id="adminLoginBtn">게스트 모드</button>
     <span>📅 날짜 :</span>
     <input type="date" id="datePicker">
-    <button id="currentVehicleBtn" style="display:none;">현재 차량 목록</button>
-    <button id="resetBtn" style="display:none;">현재 설정 초기화</button>
+  </div>
+  <div class="admin-buttons-container" id="adminButtonsContainer" style="display:none;">
+    <button id="currentVehicleBtn">현재 차량 목록</button>
+    <button id="popupSettingBtn">팝업 설정</button>
+    <button id="resetBtn">현재 설정 초기화</button>
   </div>
 </div>
 
@@ -698,7 +960,7 @@ select:disabled {
   <div class="bulletin-board">
     <div class="bulletin-title">📝 특이사항 메모</div>
     <div class="bulletin-input-container">
-      <textarea id="bulletinInput" placeholder="당일 특이사항이 있을경우  메모 해주세요..."></textarea>
+      <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모 해 주세요..."></textarea>
       <button id="bulletinSubmitBtn">작성</button>
     </div>
     <div class="bulletin-posts" id="bulletinPosts"></div>
@@ -709,9 +971,55 @@ select:disabled {
 ※ 보영운수 22번 주차도 (노란색 = 당일휴차)
 ※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
 <pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
-<div class="copyright">Copyright (c) 2026 ChangHai AN. All rights reserved.</div>
-  <div class="version">Version 1.0.3.0</div>
+<div class="copyright">Copyright (c) 2026 ChangHai An. All rights reserved.</div>
+  <div class="version">Version 1.0.5.0</div>
  </div>
+</div>
+
+<!-- 팝업 설정 모달 -->
+<div class="popup-settings-modal" id="popupSettingsModal">
+  <div class="popup-settings-content">
+    <div class="popup-settings-header">
+      <h3>팝업 설정</h3>
+      <button class="popup-settings-close" id="popupSettingsClose">✕</button>
+    </div>
+    <div class="popup-settings-group">
+      <label>내용입력</label>
+      <textarea id="popupContent" placeholder="팝업에 표시될 내용을 입력하세요..."></textarea>
+    </div>
+    <div class="popup-settings-group">
+      <label>요일선택</label>
+      <div class="popup-days-container">
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-1" value="1"><label for="day-1">월</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-2" value="2"><label for="day-2">화</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-3" value="3"><label for="day-3">수</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-4" value="4"><label for="day-4">목</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-5" value="5"><label for="day-5">금</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-6" value="6"><label for="day-6">토</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-0" value="0"><label for="day-0">일</label></div>
+      </div>
+    </div>
+    <div class="popup-settings-group">
+      <label>시간설정</label>
+      <div class="popup-time-container">
+        <div class="popup-time-input"><label style="display:block;font-size:11px;margin-bottom:4px;">시작</label><input type="time" id="popupStartTime" value="09:00"></div>
+        <div class="popup-time-input"><label style="display:block;font-size:11px;margin-bottom:4px;">종료</label><input type="time" id="popupEndTime" value="18:00"></div>
+      </div>
+    </div>
+    <div class="popup-settings-buttons">
+      <button class="save-btn" id="popupSettingsSaveBtn">저장</button>
+      <button class="cancel-btn" id="popupSettingsCancelBtn">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Overlay -->
+<div class="popup-overlay" id="popupOverlay"></div>
+
+<!-- Popup Notification -->
+<div class="popup-notification" id="popupNotification">
+  <div class="popup-notification-content" id="popupNotificationContent"></div>
+  <button class="popup-notification-close" id="popupNotificationClose">닫기</button>
 </div>
 
 <!-- 현재차량상황 패널 -->
@@ -764,14 +1072,19 @@ let draggedItem = null;
 function updateAdminButton() {
   if (isAdmin) {
     adminLoginBtn.textContent = "관리자 모드";
-    document.getElementById('currentVehicleBtn').style.display = 'inline-block';
-    document.getElementById('resetBtn').style.display = 'inline-block';
+    document.getElementById('adminButtonsContainer').style.display = 'flex';
   } else {
     adminLoginBtn.textContent = "게스트 모드";
-    document.getElementById('currentVehicleBtn').style.display = 'none';
-    document.getElementById('resetBtn').style.display = 'none';
+    document.getElementById('adminButtonsContainer').style.display = 'none';
     document.getElementById('vehiclePanel').style.display = 'none';
   }
+}
+
+function formatDateWithDay(dateStr) {
+  const date = new Date(dateStr + 'T00:00:00');
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const dayName = days[date.getDay()];
+  return `${dateStr} ${dayName}`;
 }
 
 function applyPermissionUI(cells, selects, wrappers) {
@@ -856,13 +1169,22 @@ function renderVehicleList() {
       <button class="vehicle-item-delete">-</button>
     `;
     
-    const deleteBtn = item.querySelector('.vehicle-item-delete');
-    deleteBtn.addEventListener('click', () => {
-      currentBusList.splice(index, 1);
-      saveBusListToDB();
-      renderVehicleList();
-      refreshOptions(document.querySelectorAll('.cell select'));
-    });
+const deleteBtn = item.querySelector('.vehicle-item-delete');
+deleteBtn.addEventListener('click', () => {
+
+  const busNumber = currentBusList[index];
+
+  const confirmDelete = confirm(
+    `${busNumber} 차량번호를 정말로 삭제하시겠습니까?`
+  );
+
+  if (!confirmDelete) return;
+
+  currentBusList.splice(index, 1);
+  saveBusListToDB();
+  renderVehicleList();
+  refreshOptions(document.querySelectorAll('.cell select'));
+});
     
     item.addEventListener('dragstart', (e) => {
       draggedItem = item;
@@ -1226,35 +1548,121 @@ async function initFirebase() {
           const data = snapshot.val();
           posts = Array.isArray(data) ? data : Object.values(data);
         }
-        posts.push({
+               posts.push({
           text: text,
           time: new Date().toISOString()
         });
+
         await set(ref(db, 'bulletin/' + date), posts);
         bulletinInput.value = '';
         loadBulletinPosts(date);
+
       } catch (err) {
         console.error('게시판 저장 실패:', err);
-        alert('저장에 실패했습니다.');
+        alert('저장 중 오류가 발생했습니다.');
       }
     });
 
-    bulletinInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
-        bulletinSubmitBtn.click();
-      }
-    });
-
-    // 날짜 변경 시 게시판도 함께 로드
-    datePicker.addEventListener('change', () => {
+    // 날짜 변경 시 게시판도 다시 로드
+    datePicker.addEventListener("change", () => {
+      loadData(datePicker.value);
       loadBulletinPosts(datePicker.value);
     });
 
-    // 초기 게시판 로드
-    loadBulletinPosts(todayStr);
+    // 팝업 설정 기능
+    const popupSettingsModal = document.getElementById('popupSettingsModal');
+    const popupSettingBtn = document.getElementById('popupSettingBtn');
+    const popupSettingsClose = document.getElementById('popupSettingsClose');
+    const popupSettingsCancelBtn = document.getElementById('popupSettingsCancelBtn');
+    const popupSettingsSaveBtn = document.getElementById('popupSettingsSaveBtn');
+    const popupOverlay = document.getElementById('popupOverlay');
+    const popupNotification = document.getElementById('popupNotification');
+    const popupNotificationContent = document.getElementById('popupNotificationContent');
+    const popupNotificationClose = document.getElementById('popupNotificationClose');
+
+popupSettingBtn.addEventListener('click', async () => {
+
+  const snap = await get(ref(db, 'popup/settings'));
+
+  if (snap.exists()) {
+    const data = snap.val();
+
+    document.getElementById('popupContent').value = data.content || '';
+    document.getElementById('popupStartTime').value = data.startTime || '09:00';
+    document.getElementById('popupEndTime').value = data.endTime || '18:00';
+
+    document.querySelectorAll('.popup-day-checkbox input')
+      .forEach(cb => {
+        cb.checked = data.days?.includes(cb.value) || false;
+      });
+  }
+
+  popupSettingsModal.classList.add('active');
+});
+
+    popupSettingsClose.addEventListener('click', () => {
+      popupSettingsModal.classList.remove('active');
+    });
+
+    popupSettingsCancelBtn.addEventListener('click', () => {
+      popupSettingsModal.classList.remove('active');
+    });
+
+    popupSettingsSaveBtn.addEventListener('click', async () => {
+      const content = document.getElementById('popupContent').value.trim();
+      const startTime = document.getElementById('popupStartTime').value;
+      const endTime = document.getElementById('popupEndTime').value;
+
+      const checkedDays = [];
+      document.querySelectorAll('.popup-day-checkbox input:checked')
+        .forEach(cb => checkedDays.push(cb.value));
+
+      const popupData = {
+        content,
+        startTime,
+        endTime,
+        days: checkedDays
+      };
+
+      await set(ref(db, 'popup/settings'), popupData);
+
+      popupSettingsModal.classList.remove('active');
+      alert('팝업 설정 저장 완료');
+    });
+
+    popupNotificationClose.addEventListener('click', () => {
+      popupNotification.classList.remove('active');
+      popupOverlay.classList.remove('active');
+    });
+
+    // 팝업 자동 표시 체크
+    async function checkAndShowPopup() {
+      const snap = await get(ref(db, 'popup/settings'));
+      if (!snap.exists()) return;
+
+      const data = snap.val();
+      if (!data.content) return;
+
+      const now = new Date();
+      const day = String(now.getDay());
+      const currentTime = now.toTimeString().slice(0,5);
+
+      if (
+        data.days?.includes(day) &&
+        currentTime >= data.startTime &&
+        currentTime <= data.endTime
+      ) {
+        popupNotificationContent.textContent = data.content;
+        popupNotification.classList.add('active');
+        popupOverlay.classList.add('active');
+      }
+    }
+
+    checkAndShowPopup();
+    loadBulletinPosts(datePicker.value);
+
   } catch (err) {
     console.error("Firebase 초기화 실패:", err);
-    alert("Firebase 연결에 실패했습니다. 인터넷 연결을 확인해주세요.");
   }
 }
 
