@@ -359,7 +359,7 @@ body{
 }
 
 #currentVehicleBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #2c5364;
@@ -368,7 +368,7 @@ body{
   white-space: nowrap;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 6px;
+  width: 100%;
 }
 
 #currentVehicleBtn:hover {
@@ -448,12 +448,12 @@ body{
   }
   #currentVehicleBtn {
     margin-left: 0;
-    margin-top: 6px;
+    margin-top: 1px;
     flex-basis: 100%;
   }
   #resetBtn {
-    margin-left: 0;
-    margin-top: 6px;
+    width: 100%;
+    margin-top: 1px;
     flex-basis: 100%;
   }
 }
@@ -468,8 +468,9 @@ body{
   }
   #currentVehicleBtn,
   #popupSettingBtn,
-  #resetBtn {
-    padding: 10px 14px;
+  #resetBtn,
+  #copyVehicleBtn {
+    padding: 2px 3px;
     font-size: 14px;
   }
 }
@@ -534,7 +535,7 @@ select:disabled {
 }
 
 #resetBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #ff6b6b;
@@ -543,7 +544,7 @@ select:disabled {
   white-space: nowrap;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 6px;
+  width: 100%;
 }
 
 #resetBtn:hover {
@@ -556,7 +557,7 @@ select:disabled {
 }
 
 #popupSettingBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #9c27b0;
@@ -917,7 +918,7 @@ select:disabled {
   }
 }
 #copyVehicleBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #4caf50;
@@ -926,7 +927,7 @@ select:disabled {
   white-space: nowrap;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 6px;
+  margin-left: 1px;
 }
 
 #copyVehicleBtn:hover {
@@ -942,14 +943,12 @@ select:disabled {
   gap:6px;
 
   max-width:420px;
-  margin:2px auto;
+  margin:1px auto;
 
-  padding:3px;
+  padding:1px;
 
-  background:#ffffff;
-  border-radius:12px;
-
-  box-shadow:0 4px 15px rgba(0,0,0,0.15);
+  background:none;
+  border-radius:none;
 
   animation:adminFade 0.4s ease;
 }
@@ -957,13 +956,13 @@ select:disabled {
 /* 버튼 디자인 */
 .admin-buttons-container button{
 
-  padding:12px;
+  padding:10px;
 
   font-size:14px;
   font-weight:600;
 
   border:none;
-  border-radius:8px;
+  border-radius:6px;
 
   background:#f5f6f7;
 
@@ -995,7 +994,7 @@ select:disabled {
 
   .admin-buttons-container{
 
-    max-width:90%;
+    max-width:100%;
 
     gap:8px;
 
@@ -1028,7 +1027,7 @@ select:disabled {
   max-width:420px;
   margin:3px auto;
 
-  background:#ffffff;
+  background:none;
 
   border-radius:10px;
 
@@ -1068,7 +1067,7 @@ select:disabled {
 
   color:white;
 
-  font-size:10px;
+  font-size:14px;
 
   cursor:pointer;
 
@@ -1191,19 +1190,18 @@ select:disabled {
 <div class="admin-panel" id="adminPanel" style="display:none;">
 
   <div class="admin-header">
-    관리자 패널
-    <button id="adminToggleBtn">▼</button>
-  </div>
-
-  <div class="admin-buttons-container" id="adminButtonsContainer">
-
-    <button id="currentVehicleBtn">현재 차량 목록</button>
-    <button id="popupSettingBtn">팝업 설정</button>
-    <button id="resetBtn">현재 설정 초기화</button>
-    <button id="copyVehicleBtn">현재 차량 복사</button>
-
+    <button id="adminToggleBtn">관리자 메뉴 ▼</button>
   </div>
 </div>
+  <div class="admin-buttons-container" id="adminButtonsContainer">
+
+    <button id="currentVehicleBtn">차량 목록</button>
+    <button id="popupSettingBtn">팝업 설정</button>
+    <button id="resetBtn">초기화</button>
+    <button id="copyVehicleBtn">번호 복사</button>
+
+  </div>
+
 </div>
 
   <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
@@ -2005,12 +2003,12 @@ adminToggleBtn.addEventListener("click", () => {
   if(adminButtons.style.display === "none" || adminButtons.style.display === ""){
 
     adminButtons.style.display = "grid";
-    adminToggleBtn.textContent = "▲";
+    adminToggleBtn.textContent = "관리자 메뉴 ▲";
 
   }else{
 
     adminButtons.style.display = "none";
-    adminToggleBtn.textContent = "▼";
+    adminToggleBtn.textContent = "관리자 메뉴 ▼";
 
   }
 
