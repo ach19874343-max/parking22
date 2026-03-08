@@ -1190,7 +1190,7 @@ select:disabled {
 <div class="admin-panel" id="adminPanel" style="display:none;">
 
   <div class="admin-header">
-    <button id="adminToggleBtn">관리자 메뉴 ▼</button>
+    <button id="adminToggleBtn">▲ 관리자 메뉴 ▲</button>
   </div>
 </div>
   <div class="admin-buttons-container" id="adminButtonsContainer">
@@ -2003,12 +2003,12 @@ adminToggleBtn.addEventListener("click", () => {
   if(adminButtons.style.display === "none" || adminButtons.style.display === ""){
 
     adminButtons.style.display = "grid";
-    adminToggleBtn.textContent = "관리자 메뉴 ▲";
+    adminToggleBtn.textContent = "▼ 관리자 메뉴 ▼";
 
   }else{
 
     adminButtons.style.display = "none";
-    adminToggleBtn.textContent = "관리자 메뉴 ▼";
+    adminToggleBtn.textContent = "▲ 관리자 메뉴 ▲";
 
   }
 
