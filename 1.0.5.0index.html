@@ -359,7 +359,7 @@ body{
 }
 
 #currentVehicleBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #2c5364;
@@ -368,7 +368,7 @@ body{
   white-space: nowrap;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 6px;
+  width: 100%;
 }
 
 #currentVehicleBtn:hover {
@@ -448,12 +448,12 @@ body{
   }
   #currentVehicleBtn {
     margin-left: 0;
-    margin-top: 6px;
+    margin-top: 1px;
     flex-basis: 100%;
   }
   #resetBtn {
-    margin-left: 0;
-    margin-top: 6px;
+    width: 100%;
+    margin-top: 1px;
     flex-basis: 100%;
   }
 }
@@ -466,14 +466,12 @@ body{
   .bulletin-posts {
     max-height: 260px;
   }
-  .admin-buttons-container {
-    gap: 10px;
-  }
   #currentVehicleBtn,
   #popupSettingBtn,
-  #resetBtn {
-    padding: 10px 14px;
-    font-size: 14px;
+  #resetBtn,
+  #copyVehicleBtn {
+    padding: 2px 3px;
+    font-size: 15px;
   }
 }
 
@@ -537,7 +535,7 @@ select:disabled {
 }
 
 #resetBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #ff6b6b;
@@ -546,7 +544,7 @@ select:disabled {
   white-space: nowrap;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 6px;
+  width: 100%;
 }
 
 #resetBtn:hover {
@@ -558,16 +556,8 @@ select:disabled {
   cursor: not-allowed;
 }
 
-.admin-buttons-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  margin-top: 8px;
-}
-
 #popupSettingBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #9c27b0;
@@ -928,7 +918,7 @@ select:disabled {
   }
 }
 #copyVehicleBtn {
-  padding: 8px 12px;
+  padding: 2px 3px;
   border-radius: 6px;
   border: none;
   background: #4caf50;
@@ -937,11 +927,252 @@ select:disabled {
   white-space: nowrap;
   cursor: pointer;
   transition: 0.2s;
-  margin-left: 6px;
+  margin-left: 1px;
 }
 
 #copyVehicleBtn:hover {
   background: #43a047;
+}
+
+/* 관리자 패널 */
+.admin-buttons-container{
+
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+
+  gap:6px;
+
+  max-width:420px;
+  margin:1px auto;
+
+  padding:1px;
+
+  background:none;
+  border-radius:none;
+
+  animation:adminFade 0.4s ease;
+}
+
+/* 버튼 디자인 */
+.admin-buttons-container button{
+
+  padding:10px;
+
+  font-size:14px;
+  font-weight:600;
+
+  border:none;
+  border-radius:6px;
+
+  background:#f5f6f7;
+
+  cursor:pointer;
+
+  transition:all 0.2s ease;
+}
+/* 클릭 애니메이션 */
+.admin-buttons-container button:active{
+
+  transform:scale(0.95);
+}
+
+/* 패널 등장 애니메이션 */
+@keyframes adminFade{
+
+  from{
+    opacity:0;
+    transform:translateY(-10px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+}
+@media (max-width:600px){
+
+  .admin-buttons-container{
+
+    max-width:100%;
+
+    gap:8px;
+
+    padding:9px;
+
+  }
+
+  .admin-buttons-container button{
+
+    font-size:13px;
+
+    padding:10px;
+
+  }
+
+}
+
+.admin-buttons-container button:hover{
+
+  background:#e9ecef;
+
+  transform:translateY(-2px);
+
+  box-shadow:none;
+}
+
+/* 관리자 패널 */
+.admin-panel{
+
+  max-width:420px;
+  margin:3px auto;
+
+  background:none;
+
+  border-radius:10px;
+
+  box-shadow:none;
+
+  overflow:hidden;
+
+  animation:adminFade 0.4s ease;
+
+}
+
+/* 관리자 헤더 */
+.admin-header{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:3px 13px;
+
+  background:#2c3e50;
+
+  color:white;
+
+  font-weight:bold;
+
+}
+
+/* 접기 버튼 */
+#adminToggleBtn{
+
+  background:none;
+
+  border:none;
+
+  color:white;
+
+  font-size:14px;
+
+  cursor:pointer;
+
+}
+/* hover */
+.admin-buttons-container button:hover{
+
+  transform:translateY(-2px);
+
+}
+/* 차량 */
+#currentVehicleBtn{
+
+  background:#e3f2fd;
+
+  color:#1976d2;
+
+}
+
+/* 팝업 */
+#popupSettingBtn{
+
+  background:#f3e5f5;
+
+  color:#8e24aa;
+
+}
+
+/* 초기화 */
+#resetBtn{
+
+  background:#ffebee;
+
+  color:#d32f2f;
+
+}
+
+/* 복사 */
+#copyVehicleBtn{
+
+  background:#e8f5e9;
+
+  color:#2e7d32;
+
+}
+
+
+@media (max-width:600px){
+
+  .admin-panel{
+
+    max-width:95%;
+
+  }
+
+  .admin-buttons-container{
+
+    gap:8px;
+
+    padding:3px;
+
+  }
+
+  .admin-buttons-container button{
+
+    font-size:13px;
+
+    padding:10px;
+
+  }
+
+}
+.board{
+  width:95%;
+  max-width:900px;
+}
+
+@media (max-width:700px){
+
+  .cell{
+    width:60px;
+    height:42px;
+  }
+
+}
+
+@media (max-width:500px){
+
+  .cell{
+    width:52px;
+    height:38px;
+  }
+
+  .line-label{
+    width:48px;
+    font-size:14px;
+  }
+
+}
+#adminButtonsContainer{
+  display:none;
+}
+.cells-wrapper{
+  touch-action: none;
+  user-select: none;
 }
 </style>
 </head>
@@ -956,12 +1187,21 @@ select:disabled {
     <span>📅 날짜 :</span>
     <input type="date" id="datePicker">
   </div>
-  <div class="admin-buttons-container" id="adminButtonsContainer" style="display:none;">
-    <button id="currentVehicleBtn">현재 차량 목록</button>
-    <button id="popupSettingBtn">팝업 설정</button>
-    <button id="resetBtn">현재 설정 초기화</button>
-    <button id="copyVehicleBtn">현재 차량 복사</button>
+<div class="admin-panel" id="adminPanel" style="display:none;">
+
+  <div class="admin-header">
+    <button id="adminToggleBtn">▼ 관리자 메뉴 ▼</button>
   </div>
+</div>
+  <div class="admin-buttons-container" id="adminButtonsContainer">
+
+    <button id="currentVehicleBtn">🚗차량</button>
+    <button id="popupSettingBtn">⚙팝업</button>
+    <button id="resetBtn">🔄초기화</button>
+    <button id="copyVehicleBtn">📋복사</button>
+
+  </div>
+
 </div>
 
   <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
@@ -1089,10 +1329,13 @@ let draggedItem = null;
 function updateAdminButton() {
   if (isAdmin) {
     adminLoginBtn.textContent = "관리자 모드";
-    document.getElementById('adminButtonsContainer').style.display = 'flex';
+    document.getElementById("adminPanel").style.display = "block";
+    document.getElementById('adminButtonsContainer').style.display = "none";
     document.getElementById("copyVehicleBtn").style.display = "block";
+
   } else {
     adminLoginBtn.textContent = "게스트 모드";
+    document.getElementById("adminPanel").style.display = "none";
     document.getElementById('adminButtonsContainer').style.display = 'none';
     document.getElementById('vehiclePanel').style.display = 'none';
     document.getElementById("copyVehicleBtn").style.display = "none";
@@ -1354,34 +1597,63 @@ async function initFirebase() {
       const endPress = () => {
         clearTimeout(timer);
       };
-      cell.addEventListener("mousedown", startPress);
-      cell.addEventListener("mouseup", endPress);
-      cell.addEventListener("mouseleave", endPress);
-      cell.addEventListener("touchstart", startPress, { passive: false });
-      cell.addEventListener("touchend", endPress);
-      cell.addEventListener("touchcancel", endPress);
+         cell.addEventListener("pointerdown", startPress);
+         cell.addEventListener("pointerup", endPress);
+         cell.addEventListener("pointerleave", endPress);
+         cell.addEventListener("pointercancel", endPress);
+         
     });
 
     wrappers.forEach(wrapper => {
-      let startX = 0, isDragging = false;
-      wrapper.addEventListener("mousedown", e => {
-        if (!isAdmin || e.target.tagName === "SELECT") return;
-        isDragging = true;
-        startX = e.clientX - (parseInt(wrapper.style.transform.replace(/\D/g, '')) || 0);
-      });
-      document.addEventListener("mousemove", e => {
-        if (!isDragging) return;
-        let x = e.clientX - startX;
-        x = Math.max(0, Math.min(18, x));
-        wrapper.style.transform = `translateX(${x}px)`;
-      });
-      document.addEventListener("mouseup", () => {
-        if (isDragging) {
-          isDragging = false;
-          saveData();
-        }
-      });
-    });
+
+  let startX = 0;
+  let isDragging = false;
+
+  wrapper.addEventListener("pointerdown", e => {
+
+    if (!isAdmin) return;
+    if (e.target.tagName === "SELECT") return;
+
+    isDragging = true;
+
+    const currentX = parseInt(wrapper.style.transform.replace(/[^\d\-]/g,'')) || 0;
+    startX = e.clientX - currentX;
+
+    wrapper.setPointerCapture(e.pointerId);
+
+  });
+
+  wrapper.addEventListener("pointermove", e => {
+
+    if (!isDragging) return;
+
+    let x = e.clientX - startX;
+
+    x = Math.max(0, Math.min(18, x));
+
+    wrapper.style.transform = `translateX(${x}px)`;
+
+  });
+
+  wrapper.addEventListener("pointerup", e => {
+
+    if (!isDragging) return;
+
+    isDragging = false;
+
+    wrapper.releasePointerCapture(e.pointerId);
+
+    saveData();
+
+  });
+
+  wrapper.addEventListener("pointercancel", () => {
+
+    isDragging = false;
+
+  });
+
+});
 
     // 현재차량상황 패널 이벤트
     const vehiclePanel = document.getElementById('vehiclePanel');
@@ -1722,6 +1994,35 @@ document.getElementById("copyVehicleBtn").addEventListener("click", () => {
 
   alert("차량 목록이 복사되었습니다.");
 });
+
+const adminToggleBtn = document.getElementById("adminToggleBtn");
+const adminButtons = document.getElementById("adminButtonsContainer");
+
+adminToggleBtn.addEventListener("click", () => {
+
+  if(adminButtons.style.display === "none" || adminButtons.style.display === ""){
+
+    adminButtons.style.display = "grid";
+    adminToggleBtn.textContent = "▼ 관리자 메뉴 ▼";
+
+  }else{
+
+    adminButtons.style.display = "none";
+    adminToggleBtn.textContent = "▲ 관리자 메뉴 ▲";
+
+  }
+
+});
+window.addEventListener("load", () => {
+
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("adminButtonsContainer").style.display = "none";
+
+});
+
+function startDrag(e){
+e.preventDefault()
+}
 
 initFirebase();
 </script>
