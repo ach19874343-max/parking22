@@ -1326,6 +1326,15 @@ let db, ref, set, get;
 let currentBusList = [];
 let draggedItem = null;
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function updateAdminButton() {
   if (isAdmin) {
     adminLoginBtn.textContent = "관리자 모드";
@@ -1426,7 +1435,7 @@ function renderVehicleList() {
     item.innerHTML = `
       <div class="vehicle-item-content">
         <span class="vehicle-item-drag-handle">⋮⋮</span>
-        <span class="vehicle-item-number">${bus}</span>
+        <span class="vehicle-item-number">${escapeHtml(bus)}</span>
       </div>
       <button class="vehicle-item-delete">-</button>
     `;
@@ -1792,7 +1801,7 @@ async function initFirebase() {
               const time = new Date(post.time).toLocaleTimeString('ko-KR');
               postEl.innerHTML = `
                 <div>
-                  <div class="bulletin-post-content">${post.text}</div>
+                  <div class="bulletin-post-content">${escapeHtml(post.text)}</div>
                   <div class="bulletin-post-time">${time}</div>
                 </div>
                 <button class="bulletin-post-delete" data-index="${index}">삭제</button>
