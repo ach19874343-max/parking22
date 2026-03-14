@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>메뉴 테스트</title>
@@ -9,38 +11,51 @@
 <link rel="stylesheet" href="css/menu.css">
 
 </head>
+
 <body>
 
-<div class="top-menu">
+<header>
+
+<nav class="top-menu">
 <a href="#">게스트 모드</a>
-<a href="#">현재차향</a>
-<a href="#">팝업설정</a>
+<a href="#">현재 차량</a>
+<a href="#">팝업 설정</a>
 <a href="#">초기화</a>
 <a href="#">복사</a>
-</div>
+</nav>
 
+</header>
+
+<!-- 햄버거 버튼 -->
 <div id="menu-btn">
 <span></span>
 <span></span>
 <span></span>
 </div>
 
+<!-- 배경 -->
 <div id="menu-overlay"></div>
 
-<div id="side-menu">
+<!-- 슬라이드 메뉴 -->
+<nav id="side-menu">
+
 <a href="#">게스트 모드</a>
-<a href="#">현재차향</a>
-<a href="#">팝업설정</a>
+<a href="#">현재 차량</a>
+<a href="#">팝업 설정</a>
 <a href="#">초기화</a>
 <a href="#">복사</a>
-</div>
 
-<div class="bottom-menu">
+</nav>
+
+<!-- 모바일 하단 메뉴 -->
+<nav class="bottom-menu">
+
 <a href="#">🏠</a>
 <a href="#">📢</a>
 <a href="#">✏️</a>
 <a href="#">👤</a>
-</div>
+
+</nav>
 
 <script src="js/menu.js"></script>
 
