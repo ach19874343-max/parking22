@@ -1184,13 +1184,13 @@ select:disabled {
 <div class="header">
   <div class="date-box date-row">
     <button id="adminLoginBtn">게스트 모드</button>
-    <span>📅 날짜 :</span>
+    <span id="teamLabel">【 A조 】</span>
     <input type="date" id="datePicker">
   </div>
 <div class="admin-panel" id="adminPanel" style="display:none;">
 
   <div class="admin-header">
-    <button id="adminToggleBtn">▲ 관리자 메뉴 ▲</button>
+    <button id="adminToggleBtn">관리자 메뉴 ▼</button>
   </div>
 </div>
   <div class="admin-buttons-container" id="adminButtonsContainer">
@@ -1320,6 +1320,25 @@ select:disabled {
 </div>
 
 <script>
+
+
+function getTeamByDate(dateStr){
+
+  const baseDate = new Date("2026-03-14");
+  const targetDate = new Date(dateStr);
+
+  const diff = Math.floor((targetDate - baseDate) / (1000*60*60*24));
+
+  if(diff % 2 === 0){
+    return "【 B조 】";
+  }else{
+    return "【 A조 】";
+  }
+
+}
+
+
+
 let isAdmin = sessionStorage.getItem("isAdmin") === "1";
 let adminLoginBtn, adminModal, adminLoginOk;
 let db, ref, set, get;
@@ -1583,7 +1602,19 @@ async function initFirebase() {
       }
     }));
     
-    datePicker.addEventListener("change", () => loadData(datePicker.value));
+datePicker.addEventListener("change", () => {
+
+  loadData(datePicker.value);
+
+  const team = getTeamByDate(datePicker.value);
+  document.getElementById("teamLabel").textContent = "" + team;
+
+});
+
+
+
+
+
 
     cells.forEach(cell => {
       let timer;
@@ -1720,6 +1751,9 @@ async function initFirebase() {
     const todayStr = `${yyyy}-${mm}-${dd}`;
     datePicker.value = todayStr;
     loadData(todayStr);
+    loadBulletinPosts();
+const team = getTeamByDate(todayStr);
+document.getElementById("teamLabel").textContent = "" + team;
 
     applyPermissionUI(cells, selects, wrappers);
     updateAdminButton();
@@ -1780,7 +1814,7 @@ async function initFirebase() {
 
     async function loadBulletinPosts(date) {
       try {
-        const snapshot = await get(ref(db, 'bulletin/' + date));
+        const snapshot = await get(ref(db, 'bulletin/posts'));
         bulletinPosts.innerHTML = '';
         if (snapshot.exists()) {
           const posts = snapshot.val();
@@ -1804,14 +1838,14 @@ async function initFirebase() {
             btn.addEventListener('click', async (e) => {
               const index = parseInt(e.target.dataset.index);
               if (confirm('이 글을 삭제하시겠습니까?')) {
-                const snapshot = await get(ref(db, 'bulletin/' + date));
+                const snapshot = await get(ref(db, 'bulletin/posts'));
                 const posts = snapshot.val();
                 const postsArray = Array.isArray(posts) ? posts : Object.values(posts);
                 postsArray.reverse();
                 postsArray.splice(index, 1);
                 postsArray.reverse();
-                await set(ref(db, 'bulletin/' + date), postsArray);
-                loadBulletinPosts(date);
+                await set(ref(db, 'bulletin/posts'), postsArray);
+                loadBulletinPosts();
               }
             });
           });
@@ -1833,7 +1867,7 @@ async function initFirebase() {
         return;
       }
       try {
-        const snapshot = await get(ref(db, 'bulletin/' + date));
+        const snapshot = await get(ref(db, 'bulletin/posts'));
         let posts = [];
         if (snapshot.exists()) {
           const data = snapshot.val();
@@ -1844,7 +1878,7 @@ async function initFirebase() {
           time: new Date().toISOString()
         });
 
-        await set(ref(db, 'bulletin/' + date), posts);
+        await set(ref(db, 'bulletin/posts'), posts);
         bulletinInput.value = '';
         loadBulletinPosts(date);
 
@@ -1856,9 +1890,8 @@ async function initFirebase() {
 
     // 날짜 변경 시 게시판도 다시 로드
     datePicker.addEventListener("change", () => {
-      loadData(datePicker.value);
-      loadBulletinPosts(datePicker.value);
-    });
+  loadData(datePicker.value);
+});
 
     // 팝업 설정 기능
     const popupSettingsModal = document.getElementById('popupSettingsModal');
@@ -2003,12 +2036,12 @@ adminToggleBtn.addEventListener("click", () => {
   if(adminButtons.style.display === "none" || adminButtons.style.display === ""){
 
     adminButtons.style.display = "grid";
-    adminToggleBtn.textContent = "▼ 관리자 메뉴 ▼";
+    adminToggleBtn.textContent = "관리자 메뉴 ▲";
 
   }else{
 
     adminButtons.style.display = "none";
-    adminToggleBtn.textContent = "▲ 관리자 메뉴 ▲";
+    adminToggleBtn.textContent = "관리자 메뉴 ▼";
 
   }
 
