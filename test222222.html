@@ -1,65 +1,612 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>메뉴 테스트</title>
+<title>Parking System ULTRA</title>
 
-<link rel="stylesheet" href="css/menu.css">
+<style>
 
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+background:#0f172a;
+color:white;
+}
+
+/* HEADER */
+
+header{
+background:#111827;
+padding:10px;
+text-align:center;
+box-shadow:0 4px 10px rgba(0,0,0,.3);
+position:sticky;
+top:0;
+z-index:999;
+}
+
+.ultra-header{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.nav-btn{
+background:#1f2937;
+border:none;
+color:white;
+padding:6px 12px;
+border-radius:20px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.nav-btn:hover{
+background:#374151;
+}
+
+.date-display{
+font-size:18px;
+font-weight:800;
+cursor:pointer;
+}
+
+.team-indicator{
+font-size:22px;
+font-weight:900;
+margin-top:4px;
+}
+
+.teamA{color:#60a5fa;}
+.teamB{color:#ef4444;}
+
+/* CONTAINER */
+
+.container{
+max-width:900px;
+margin:auto;
+padding:15px;
+}
+
+/* CARD */
+
+.card{
+background:#111827;
+padding:15px;
+border-radius:10px;
+margin-bottom:20px;
+box-shadow:0 4px 10px rgba(0,0,0,.3);
+}
+
+/* BOARD */
+
+.post{
+background:#1f2937;
+border-radius:8px;
+padding:10px;
+margin-bottom:10px;
+}
+
+.notice{
+background:#7c2d12;
+}
+
+.pin{
+background:#1e3a8a;
+}
+
+.reply{
+margin-left:25px;
+margin-top:5px;
+background:#374151;
+border-radius:6px;
+padding:5px;
+}
+
+textarea{
+width:100%;
+border-radius:8px;
+padding:8px;
+border:none;
+height:70px;
+}
+
+button{
+border:none;
+padding:5px 10px;
+border-radius:6px;
+margin-top:5px;
+cursor:pointer;
+}
+
+.adminBadge{
+color:#fbbf24;
+font-weight:bold;
+}
+
+.modeBtn{
+background:#374151;
+color:white;
+padding:6px 12px;
+border-radius:10px;
+cursor:pointer;
+margin-top:6px;
+display:inline-block;
+}
+
+</style>
 </head>
 
 <body>
 
 <header>
 
-<nav class="top-menu">
-<a href="#">게스트 모드</a>
-<a href="#">현재 차량</a>
-<a href="#">팝업 설정</a>
-<a href="#">초기화</a>
-<a href="#">복사</a>
-</nav>
+<div class="ultra-header">
+
+<button class="nav-btn" onclick="prevDay()">◀ 이전</button>
+
+<div class="date-display" onclick="openCalendar()">
+📅 <span id="dateText"></span>
+</div>
+
+<button class="nav-btn" onclick="nextDay()">다음 ▶</button>
+
+</div>
+
+<div id="teamIndicator" class="team-indicator"></div>
+
+<input type="date" id="calendarPicker" style="display:none">
+
+<div>
+<span id="modeBtn" class="modeBtn" onclick="toggleAdmin()">게스트 모드</span>
+</div>
 
 </header>
 
-<!-- 햄버거 버튼 -->
-<div id="menu-btn">
-<span></span>
-<span></span>
-<span></span>
+<div class="container">
+
+<div class="card">
+
+<h3>주차도</h3>
+
+<div id="parkingArea">
+기존 주차도 시스템 위치
 </div>
 
-<!-- 배경 -->
-<div id="menu-overlay"></div>
+</div>
 
-<!-- 슬라이드 메뉴 -->
-<nav id="side-menu">
-<div class="menu-close">✕</div>
-<a href="#">게스트 모드</a>
-<a href="#">현재 차량</a>
-<a href="#">팝업 설정</a>
-<a href="#">초기화</a>
-<a href="#">복사</a>
+<div class="card">
 
-</nav>
+<h3>현장 게시판</h3>
 
-<!-- 모바일 하단 메뉴 -->
-<nav class="bottom-menu">
+<div id="board"></div>
 
-<a href="#">👤</a>
-<a href="#">👑</a>
-<a href="#">🚌</a>
-<a href="#">⚙️</a>
-<a href="#">🔄</a>
-<a href="#">📋</a>
-  
-</nav>
+<textarea id="postInput" placeholder="내용 입력"></textarea>
 
-<script src="js/menu.js"></script>
+<button onclick="writePost()">작성</button>
+
+</div>
+
+</div>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+
+/* Firebase 설정
+   기존 파일의 config 그대로 넣으면 됩니다
+*/
+
+const firebaseConfig = {
+
+};
+
+firebase.initializeApp(firebaseConfig)
+
+const db = firebase.database()
+
+
+/* 관리자 모드 */
+
+let adminMode=false
+
+function toggleAdmin(){
+
+if(!adminMode){
+
+const pw=prompt("관리자 비밀번호")
+
+if(pw==="2222"){
+
+adminMode=true
+document.getElementById("modeBtn").innerText="관리자 모드"
+
+}else{
+
+alert("비밀번호 오류")
+
+}
+
+}else{
+
+adminMode=false
+document.getElementById("modeBtn").innerText="게스트 모드"
+
+}
+
+}
+
+
+/* 날짜 시스템 */
+
+const baseDate=new Date("2026-03-14")
+
+let currentDate=new Date()
+
+
+function formatDate(d){
+
+return d.toISOString().split("T")[0]
+
+}
+
+
+function updateHeader(){
+
+const days=["일","월","화","수","목","금","토"]
+
+document.getElementById("dateText").innerText=
+formatDate(currentDate)+" ("+days[currentDate.getDay()]+")"
+
+updateTeam()
+
+}
+
+
+/* 팀 계산 */
+
+function updateTeam(){
+
+const diff=Math.floor((currentDate-baseDate)/(1000*60*60*24))
+
+let team
+
+if(diff%2===0){
+
+team="B"
+
+}else{
+
+team="A"
+
+}
+
+const el=document.getElementById("teamIndicator")
+
+if(team==="B"){
+
+el.innerHTML="🔴 B TEAM"
+el.className="team-indicator teamB"
+
+}else{
+
+el.innerHTML="🔵 A TEAM"
+el.className="team-indicator teamA"
+
+}
+
+}
+
+
+/* 날짜 이동 */
+
+function prevDay(){
+
+currentDate.setDate(currentDate.getDate()-1)
+
+updateHeader()
+
+loadParkingData()
+
+}
+
+
+function nextDay(){
+
+currentDate.setDate(currentDate.getDate()+1)
+
+updateHeader()
+
+loadParkingData()
+
+}
+
+
+/* 달력 */
+
+function openCalendar(){
+
+const picker=document.getElementById("calendarPicker")
+
+picker.value=formatDate(currentDate)
+
+picker.showPicker()
+
+}
+
+
+document.getElementById("calendarPicker").addEventListener("change",(e)=>{
+
+currentDate=new Date(e.target.value)
+
+updateHeader()
+
+loadParkingData()
+
+})
+
+</script>
+
+<script>
+
+/* 게시글 작성 */
+
+function writePost(){
+
+const text=document.getElementById("postInput").value.trim()
+
+if(!text) return
+
+const post={
+
+text:text,
+time:Date.now(),
+admin:adminMode,
+notice:false,
+pin:false,
+reply:{}
+
+}
+
+db.ref("board").push(post)
+
+document.getElementById("postInput").value=""
+
+}
+
+
+/* 게시판 로드 */
+
+function loadBoard(){
+
+db.ref("board").on("value",(snap)=>{
+
+const data=snap.val()
+
+const board=document.getElementById("board")
+
+board.innerHTML=""
+
+if(!data) return
+
+const arr=Object.entries(data)
+
+
+/* 정렬
+공지 → 고정 → 최신
+*/
+
+arr.sort((a,b)=>{
+
+if(a[1].notice && !b[1].notice) return -1
+if(!a[1].notice && b[1].notice) return 1
+
+if(a[1].pin && !b[1].pin) return -1
+if(!a[1].pin && b[1].pin) return 1
+
+return b[1].time-a[1].time
+
+})
+
+
+arr.forEach(([key,val])=>{
+
+let cls="post"
+
+if(val.notice) cls+=" notice"
+if(val.pin) cls+=" pin"
+
+const d=new Date(val.time)
+
+const el=document.createElement("div")
+
+el.className=cls
+
+let html=""
+
+if(val.notice) html+="📢 공지<br>"
+if(val.pin) html+="📌 고정<br>"
+
+html+="<div>"+(val.admin?"<span class='adminBadge'>👑 ADMIN</span>":"익명")+"</div>"
+
+html+="<div>"+val.text+"</div>"
+
+html+="<small>"+d.toLocaleString()+"</small><br>"
+
+
+/* 버튼 */
+
+html+="<button onclick=\"replyPost('"+key+"')\">답글</button>"
+
+html+="<button onclick=\"editPost('"+key+"','"+val.text+"')\">수정</button>"
+
+html+="<button onclick=\"deletePost('"+key+"')\">삭제</button>"
+
+
+if(adminMode){
+
+html+="<button onclick=\"setNotice('"+key+"')\">공지</button>"
+
+html+="<button onclick=\"setPin('"+key+"')\">고정</button>"
+
+}
+
+
+/* 답글 표시 */
+
+if(val.reply){
+
+Object.entries(val.reply).forEach(([rid,r])=>{
+
+const rd=new Date(r.time)
+
+html+="<div class='reply'>└ "+r.text+" <small>"+rd.toLocaleString()+"</small></div>"
+
+})
+
+}
+
+el.innerHTML=html
+
+board.appendChild(el)
+
+})
+
+})
+
+}
+
+
+/* 삭제 */
+
+function deletePost(id){
+
+db.ref("board/"+id).remove()
+
+}
+
+
+/* 수정 */
+
+function editPost(id,old){
+
+const text=prompt("수정",old)
+
+if(!text) return
+
+db.ref("board/"+id+"/text").set(text)
+
+}
+
+
+/* 답글 */
+
+function replyPost(id){
+
+const text=prompt("답글 입력")
+
+if(!text) return
+
+db.ref("board/"+id+"/reply").push({
+
+text:text,
+time:Date.now()
+
+})
+
+}
+
+
+/* 공지 */
+
+function setNotice(id){
+
+db.ref("board/"+id+"/notice").set(true)
+
+}
+
+
+/* 고정 */
+
+function setPin(id){
+
+db.ref("board/"+id+"/pin").set(true)
+
+}
+
+</script>
+<script>
+
+/* 100일 자동 삭제 */
+
+function cleanupOldPosts(){
+
+const now=Date.now()
+
+const limit=100*24*60*60*1000
+
+db.ref("board").once("value",(snap)=>{
+
+snap.forEach((child)=>{
+
+const data=child.val()
+
+if(now-data.time>limit){
+
+child.ref.remove()
+
+}
+
+})
+
+})
+
+}
+
+
+/* 주차도 데이터 로드
+   기존 파일의 주차도 함수와 연결하면 됩니다
+*/
+
+function loadParkingData(){
+
+const date=formatDate(currentDate)
+
+/*
+여기에 기존 주차도 Firebase 코드 연결
+
+예시:
+
+db.ref("parking/"+date).once(...)
+*/
+
+console.log("주차 데이터 로드:",date)
+
+}
+
+
+/* 페이지 시작 */
+
+function init(){
+
+updateHeader()
+
+loadParkingData()
+
+loadBoard()
+
+cleanupOldPosts()
+
+}
+
+
+window.onload=init
+
+</script>
 
 </body>
 </html>
