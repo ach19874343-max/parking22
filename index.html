@@ -1288,17 +1288,9 @@ body.admin-mode .admin-ui{
 }
 @media (max-width:768px){
 
-.board{
-  width:98%;
-  border-radius:12px;
-}
-
-}
-  @media (max-width:768px){
-
 .cell{
-  min-width:80px;
-  min-height:40px;
+  min-width:110px;
+  min-height:70px;
   font-size:18px;
 }
 
@@ -1374,9 +1366,9 @@ body.admin-mode #menu-btn span{background:#ffb703}
 
 <!-- ===== Added Menu UI ===== -->
 <nav class="top-menu admin-ui">
-  <button class="menu-admin">게스트 모드</button>
-  <button data-target="currentVehicleBtn">차량목록</button>
-  <button data-target="popupSettingBtn">팝업설정</button>
+  <button class="menu-admin">게스트</button>
+  <button data-target="currentVehicleBtn">차량</button>
+  <button data-target="popupSettingBtn">팝업</button>
   <button data-target="resetBtn">초기화</button>
   <button data-target="copyVehicleBtn">복사</button>
 </nav>
@@ -1385,7 +1377,7 @@ body.admin-mode #menu-btn span{background:#ffb703}
 
 <div class="header">
   <div class="date-box date-row">
-    <button id="adminLoginBtn"style="display:none;">게스트 모드</button>
+    <button id="adminLoginBtn"style="display:none;">게스트</button>
     <button id="prevDayBtn">◀이전</button>
     <input type="date" id="datePicker">
     <button id="todayBtn">오늘</button>
@@ -1553,13 +1545,13 @@ let draggedItem = null;
 
 function updateAdminButton() {
   if (isAdmin) {
-    adminLoginBtn.textContent = "관리자 모드";
+    adminLoginBtn.textContent = "관리자";
     document.getElementById("adminPanel").style.display = "block";
     document.getElementById('adminButtonsContainer').style.display = "none";
     document.getElementById("copyVehicleBtn").style.display = "block";
 
   } else {
-    adminLoginBtn.textContent = "게스트 모드";
+    adminLoginBtn.textContent = "게스트";
     document.getElementById("adminPanel").style.display = "none";
     document.getElementById('adminButtonsContainer').style.display = 'none';
     document.getElementById('vehiclePanel').style.display = 'none';
@@ -1991,7 +1983,7 @@ document.getElementById("teamLabel").textContent = "" + team;
         sessionStorage.removeItem("isAdmin");
         applyPermissionUI(cells, selects, wrappers);
         updateAdminButton();
-        alert("게스트 모드로 전환 되었습니다");
+        alert("게스트로 전환 되었습니다");
       } else {
         adminModal.style.display = "flex";
       }
@@ -2006,7 +1998,7 @@ document.getElementById("teamLabel").textContent = "" + team;
         adminModal.style.display = "none";
         applyPermissionUI(cells, selects, wrappers);
         updateAdminButton();
-        alert("관리자 모드로 전환 되었습니다");
+        alert("관리자로 전환 되었습니다");
       } else {
         alert("비밀번호 오류");
       }
@@ -2301,7 +2293,7 @@ document.querySelectorAll("[data-target]").forEach(btn=>{
 
 /* admin buttons sync */
 function syncAdminText(){
-  const txt=document.getElementById("adminLoginBtn")?.textContent||"게스트 모드";
+  const txt=document.getElementById("adminLoginBtn")?.textContent||"게스트";
   document.querySelectorAll(".menu-admin").forEach(b=>b.textContent=txt);
 }
 setInterval(syncAdminText,500);
@@ -2336,7 +2328,7 @@ setInterval(checkAdminUI,500);
 
 /* floating guest login button */
 const floating=document.createElement("button");
-floating.textContent="게스트 모드";
+floating.textContent="게스트";
 floating.className="guest-login-floating";
 document.body.appendChild(floating);
 floating.onclick=()=>{
