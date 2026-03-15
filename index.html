@@ -22,12 +22,10 @@ body{
   font-family:'Segoe UI',sans-serif;
   background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
   padding:18px 0;
-  overflow-x:hidden;
 }
 .board{
   background:#fff;
-  width:90%;
-  max-width:none;
+  width:95%;
   border-radius:16px;
   padding:24px;
   box-shadow:0 20px 40px rgba(0,0,0,.3);
@@ -43,6 +41,15 @@ body{
   color:#2c5364;
   text-align:center;
   letter-spacing:1px;
+}
+#teamLabel{
+  font-size:32px;
+  font-weight:900;
+  letter-spacing:4px;
+  text-shadow:
+    0 0 10px rgba(0,0,0,0.4),
+    0 0 20px rgba(0,0,0,0.3);
+  margin-bottom:8px;
 }
 .header{
   display:flex;
@@ -1264,6 +1271,19 @@ select:disabled {
 body.admin-mode .admin-ui{
  display:flex;
 }
+@media (max-width:768px){
+
+#teamLabel{
+  font-size:42px;
+  font-weight:900;
+  letter-spacing:6px;
+}
+
+#teamLabel::first-letter{
+  font-size:52px;
+}
+
+}
 </style>
 
 <style>
@@ -1298,15 +1318,7 @@ body.admin-mode .admin-ui{
   border:none; background:#2c5364; color:#fff;
   padding:10px; border-radius:6px; cursor:pointer;
 }
-.bottom-menu{
-  position:fixed; bottom:0; left:0; right:0;
-  background:#fff; border-top:1px solid #ddd;
-  display:flex; justify-content:space-around; padding:6px 0; z-index:5000;
-}
-.bottom-menu button{
-  border:none; background:none; font-size:18px; cursor:pointer;
-}
-body{ padding-top:60px; padding-bottom:60px; }
+body{ padding-top:60px; }
 /* hide old admin panel area */
 .admin-panel, #adminButtonsContainer{ display:none !important; }
 </style>
@@ -1348,13 +1360,6 @@ body.admin-mode #menu-btn span{background:#ffb703}
   <button data-target="popupSettingBtn">팝업설정</button>
   <button data-target="resetBtn">초기화</button>
   <button data-target="copyVehicleBtn">복사</button>
-</nav>
-<nav class="bottom-menu admin-ui">
-  <button class="menu-admin">👤</button>
-  <button data-target="currentVehicleBtn">🚌</button>
-  <button data-target="popupSettingBtn">⚙️</button>
-  <button data-target="resetBtn">🔄</button>
-  <button data-target="copyVehicleBtn">📋</button>
 </nav>
 <div class="board">
   <div class="title">보영운수 22번 주차도 관리시스템</div>
