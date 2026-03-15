@@ -3,610 +3,2455 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보영운수 22번 주차도 관리시스템</title>
 
-<title>Parking System ULTRA</title>
+<!-- favicon -->
+<link rel="icon" href="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" type="image/png">
+
+<!-- SNS 공유용 메타 -->
+<meta property="og:title" content="보영운수 22번 주차도 관리시스템">
+<meta property="og:description" content="보영운수 22번 주차도를 쉽게 확인하고 관리할 수 있습니다.">
+<meta property="og:image" content="https://ach19874343-max.github.io/parking22/123456789.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 
 <style>
-
+*{box-sizing:border-box;}
 body{
-margin:0;
-font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
-background:#0f172a;
-color:white;
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+  padding:18px 0;
+}
+.board{
+  background:#fff;
+  width:95%;
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.title{
+  font-size:22px;
+  font-weight:800;
+  margin-bottom:12px;
+  color:#2c5364;
+  text-align:center;
+  letter-spacing:1px;
+}
+#teamLabel{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:4px;
+  text-shadow:
+    0 0 10px rgba(0,0,0,0.4),
+    0 0 20px rgba(0,0,0,0.3);
+  margin-bottom:8px;
+}
+.header{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  border-bottom:2px solid #2c5364;
+  padding-bottom:6px;
+  margin-bottom:12px;
+}
+.date-box input{
+  font-size:16px;
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  text-align:center;
+}
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:6px;
+}
+.line-label{
+  width:60px;
+  font-weight:700;
+  font-size:17px;
+  background:#2c5364;
+  color:#fff;
+  border-radius:6px;
+  padding:8px 4px;
+  text-align:center;
+}
+.cells-wrapper{
+  display:flex;
+  gap:6px;
+  margin-left:6px;
+  position:relative;
+  cursor:grab;
+}
+.cells-wrapper:active{cursor:grabbing;}
+.cell{
+  width:70px;
+  height:45px;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(145deg,#f8fafc,#e2e8f0);
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+  border:1px solid #cbd5e1;
+  transition:.2s;
+  overflow:hidden;
+}
+.cell.active{
+  background:linear-gradient(145deg,#ffe082,#ffca28);
+  border:1px solid #f57f17;
+}
+.cell select{
+  width:100%;
+  height:100%;
+  border:none;
+  background:transparent;
+  font-size:18px;
+  font-weight:700;
+  text-align:center;
+  appearance:none;
+}
+.footer{
+  position: relative;
+  display:flex;
+  flex-direction:column;
+  margin-top:8px;
+  font-size:13px;
+  width:100%;
+  border-top:2px solid #2c5364;
+  padding-top:6px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.footer pre{
+  margin:4px 0;
+  line-height:1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: inherit;
+}
+.footer .highlight{
+  color:#f57f17;
+  font-weight:700;
+  display: block;
+  margin:4px 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.footer .copyright{
+  margin-top:4px;
+  margin-bottom:0;
+  font-size:11px;
+  color:#888;
+  text-align:left;
+  padding-left:4px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.date-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
 }
 
-/* HEADER */
-
-header{
-background:#111827;
-padding:10px;
-text-align:center;
-box-shadow:0 4px 10px rgba(0,0,0,.3);
-position:sticky;
-top:0;
-z-index:999;
+.date-row button{
+  margin:0;
+}
+#prevDayBtn,
+#todayBtn{
+  padding:4px 8px;
+  border-radius:6px;
+  border:none;
+  background:#2c5364;
+  color:#fff;
+  font-weight:700;
+  cursor:pointer;
 }
 
-.ultra-header{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:10px;
-flex-wrap:wrap;
+#prevDayBtn:hover,
+#todayBtn:hover{
+  background:#1e3a47;
+}
+#adminLoginBtn{
+  padding:6px 10px;
+  border-radius:6px;
+  border:none;
+  background:#2c5364;
+  color:#fff;
+  font-weight:700;
+  white-space:nowrap;
+}
+.date-box{
+  font-size:18px;
+  font-weight:700;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.version {
+  position: absolute;
+  right: 0px;
+  bottom: 0px;
+  font-size: 8px;
+  color: #888;
+  font-weight: 600;
 }
 
-.nav-btn{
-background:#1f2937;
-border:none;
-color:white;
-padding:6px 12px;
-border-radius:20px;
-cursor:pointer;
-font-weight:bold;
+/* 현재차량상황 패널 스타일 */
+#vehiclePanel {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 3px solid #2c5364;
+  box-shadow: 0 -5px 20px rgba(0,0,0,.2);
+  z-index: 1000;
+  max-height: 50vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
 }
 
-.nav-btn:hover{
-background:#374151;
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
-.date-display{
-font-size:18px;
-font-weight:800;
-cursor:pointer;
+.vehicle-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f5f5f5;
+  position: sticky;
+  top: 0;
 }
 
-.team-indicator{
-font-size:22px;
-font-weight:900;
-margin-top:4px;
+.vehicle-panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2c5364;
 }
 
-.teamA{color:#60a5fa;}
-.teamB{color:#ef4444;}
-
-/* CONTAINER */
-
-.container{
-max-width:900px;
-margin:auto;
-padding:15px;
+.vehicle-panel-header button {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  padding: 4px 8px;
 }
 
-/* CARD */
-
-.card{
-background:#111827;
-padding:15px;
-border-radius:10px;
-margin-bottom:20px;
-box-shadow:0 4px 10px rgba(0,0,0,.3);
+.vehicle-panel-header button:hover {
+  color: #333;
 }
 
-/* BOARD */
-
-.post{
-background:#1f2937;
-border-radius:8px;
-padding:10px;
-margin-bottom:10px;
+.vehicle-list {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.notice{
-background:#7c2d12;
+.vehicle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: grab;
+  transition: 0.2s;
 }
 
-.pin{
-background:#1e3a8a;
+.vehicle-item:active {
+  cursor: grabbing;
+  background: #f0f0f0;
 }
 
-.reply{
-margin-left:25px;
-margin-top:5px;
-background:#374151;
-border-radius:6px;
-padding:5px;
+.vehicle-item.dragging {
+  opacity: 0.5;
+  background: #e8e8e8;
 }
 
-textarea{
-width:100%;
-border-radius:8px;
-padding:8px;
-border:none;
-height:70px;
+.vehicle-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
 }
 
-button{
-border:none;
-padding:5px 10px;
-border-radius:6px;
-margin-top:5px;
-cursor:pointer;
+.vehicle-item-drag-handle {
+  color: #999;
+  font-size: 14px;
+  cursor: grab;
 }
 
-.adminBadge{
-color:#fbbf24;
-font-weight:bold;
+.vehicle-item-number {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  min-width: 40px;
 }
 
-.modeBtn{
-background:#374151;
-color:white;
-padding:6px 12px;
-border-radius:10px;
-cursor:pointer;
-margin-top:6px;
-display:inline-block;
+.vehicle-item-delete {
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
+.vehicle-item-delete:hover {
+  background: #ff5252;
+}
+
+.vehicle-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  gap: 6px;
+  margin-bottom: 8px;
+  transition: 0.2s;
+}
+
+.vehicle-add-btn:hover {
+  background: #1e3a47;
+}
+
+.vehicle-add-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.vehicle-add-input-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.vehicle-add-input-container button {
+  padding: 8px 16px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.vehicle-add-input-container button:hover {
+  background: #1e3a47;
+}
+
+#currentVehicleBtn {
+  padding: 2px 3px;
+  border-radius: 6px;
+  border: none;
+  background: #2c5364;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+}
+
+#currentVehicleBtn:hover {
+  background: #1e3a47;
+}
+
+#currentVehicleBtn.active {
+  background: #ff9800;
+}
+
+@media (max-width: 768px) {
+  .board {
+    padding: 16px;
+    width: 95%;
+  }
+  .title {
+    font-size: 18px;
+    letter-spacing: 0.5px;
+  }
+  .line-label {
+    width: 52px;
+    font-size: 15px;
+    padding: 6px 2px;
+  }
+  .cell {
+    width: 70px;
+    height: 50px;
+  }
+  .cell select {
+    font-size: 16px;
+    font-weight: 800;
+  }
+  .date-box span {
+    font-size: 14px;
+  }
+  #adminLoginBtn {
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+  .bulletin-posts {
+    max-height: 200px;
+  }
+  .footer pre {
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 3px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  .footer .highlight {
+    font-size: 11px;
+    display: block;
+    margin: 3px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  .footer .copyright {
+    font-size: 10px;
+    margin-top: 2px;
+  }
+  .version {
+    font-size: 9px;
+  }
+  #vehiclePanel {
+    max-height: 60vh;
+  }
+  .bulletin-board {
+    margin-top: 12px;
+    padding: 12px;
+  }
+  .bulletin-input-container textarea {
+    min-height: 50px;
+  }
+  .date-row {
+    flex-wrap: wrap;
+  }
+  #currentVehicleBtn {
+    margin-left: 0;
+    margin-top: 1px;
+    flex-basis: 100%;
+  }
+  #resetBtn {
+    width: 100%;
+    margin-top: 1px;
+    flex-basis: 100%;
+  }
+}
+
+@media (min-width: 769px) {
+  .board {
+    width: 85%;
+    max-width: 700px;
+  }
+  .bulletin-posts {
+    max-height: 260px;
+  }
+  #currentVehicleBtn,
+  #popupSettingBtn,
+  #resetBtn,
+  #copyVehicleBtn {
+    padding: 2px 3px;
+    font-size: 15px;
+  }
+}
+
+select:disabled {
+  opacity: 1 !important;
+  color: #333;
+  background: transparent;
+  -webkit-text-fill-color: #333;
+}
+
+@supports (-webkit-touch-callout: none) {
+  .cell select {
+    text-align-last: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .cell select option {
+    text-align: center;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  .cell {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.7),
+      0 2px 4px rgba(0,0,0,.12);
+  }
+  .cell.active {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.5),
+      0 2px 6px rgba(245,127,23,.4);
+  }
+}
+
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+
+.modal-header h3{
+  margin:0;
+  font-size:17px;
+  font-weight:800;
+  color:#2c5364;
+}
+
+.modal-header button{
+  border:none;
+  background:transparent;
+  font-size:20px;
+  font-weight:700;
+  color:#888;
+  cursor:pointer;
+  padding:4px;
+}
+
+.modal-header button:active{
+  transform:scale(0.9);
+}
+
+#resetBtn {
+  padding: 2px 3px;
+  border-radius: 6px;
+  border: none;
+  background: #ff6b6b;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+}
+
+#resetBtn:hover {
+  background: #ff5252;
+}
+
+#resetBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+#popupSettingBtn {
+  padding: 2px 3px;
+  border-radius: 6px;
+  border: none;
+  background: #9c27b0;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+}
+
+#popupSettingBtn:hover {
+  background: #7b1fa2;
+}
+
+.popup-settings-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.popup-settings-modal.active {
+  display: flex;
+}
+
+.popup-settings-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.popup-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #2c5364;
+  padding-bottom: 12px;
+}
+
+.popup-settings-header h3 {
+  margin: 0;
+  color: #2c5364;
+  font-size: 16px;
+}
+
+.popup-settings-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+}
+
+.popup-settings-close:hover {
+  color: #333;
+}
+
+.popup-settings-group {
+  margin-bottom: 16px;
+}
+
+.popup-settings-group label {
+  display: block;
+  font-weight: 600;
+  color: #2c5364;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.popup-settings-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 150px;
+}
+
+.popup-days-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.popup-day-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.popup-day-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.popup-day-checkbox label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.popup-time-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.popup-time-input {
+  flex: 1;
+}
+
+.popup-time-input input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.popup-settings-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.popup-settings-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  transition: 0.2s;
+}
+
+.popup-settings-buttons .save-btn {
+  background: #2c5364;
+  color: #fff;
+}
+
+.popup-settings-buttons .save-btn:hover {
+  background: #1e3a47;
+}
+
+.popup-settings-buttons .cancel-btn {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.popup-settings-buttons .cancel-btn:hover {
+  background: #d0d0d0;
+}
+
+.popup-notification {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  z-index: 3000;
+  text-align: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.popup-notification.active {
+  display: block;
+}
+
+.popup-notification-content {
+  color: #333;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.popup-notification-close {
+  padding: 8px 16px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.popup-notification-close:hover {
+  background: #1e3a47;
+}
+
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 2999;
+}
+
+.popup-overlay.active {
+  display: block;
+}
+
+.bulletin-board {
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  border-top: 2px solid #2c5364;
+  padding-top: 16px;
+}
+
+.bulletin-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2c5364;
+  margin-bottom: 12px;
+}
+
+.bulletin-input-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.bulletin-input-container textarea {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Segoe UI', sans-serif;
+  resize: vertical;
+  min-height: 60px;
+  max-height: 120px;
+}
+
+.bulletin-input-container button {
+  padding: 8px 16px;
+  background: #2c5364;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.bulletin-input-container button:hover {
+  background: #1e3a47;
+}
+
+.bulletin-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+/* 게시판 모바일 개선 */
+
+.bulletin-post {
+  position: relative;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  position:relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bulletin-post-content {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bulletin-post-time {
+  font-size: 11px;
+  color: #999;
+  text-align: right;
+}
+
+.bulletin-post-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #ff6b6b;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+
+  .bulletin-post {
+    padding: 10px;
+  }
+
+  .bulletin-post-content {
+    font-size: 13px;
+  }
+
+  .bulletin-post-delete {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .bulletin-input-container {
+    flex-direction: column;
+  }
+
+  .bulletin-input-container button {
+    width: 100%;
+  }
+.new-icon{
+  display:inline-block;
+  margin-left:6px;
+  animation:starBlink 1s infinite;
+}
+
+@keyframes starBlink{
+  0%{
+    transform:scale(1);
+    filter:brightness(1);
+  }
+  50%{
+    transform:scale(1.5);
+    filter:brightness(2);
+  }
+  100%{
+    transform:scale(1);
+    filter:brightness(1);
+  }
+}
+
+#copyVehicleBtn {
+  padding: 2px 3px;
+  border-radius: 6px;
+  border: none;
+  background: #4caf50;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-left: 1px;
+}
+
+#copyVehicleBtn:hover {
+  background: #43a047;
+}
+
+/* 관리자 패널 */
+.admin-buttons-container{
+
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+
+  gap:6px;
+
+  max-width:420px;
+  margin:1px auto;
+
+  padding:1px;
+
+  background:none;
+  border-radius:none;
+
+  animation:adminFade 0.4s ease;
+}
+
+/* 버튼 디자인 */
+.admin-buttons-container button{
+
+  padding:10px;
+
+  font-size:14px;
+  font-weight:600;
+
+  border:none;
+  border-radius:6px;
+
+  background:#f5f6f7;
+
+  cursor:pointer;
+
+  transition:all 0.2s ease;
+}
+/* 클릭 애니메이션 */
+.admin-buttons-container button:active{
+
+  transform:scale(0.95);
+}
+
+/* 패널 등장 애니메이션 */
+@keyframes adminFade{
+
+  from{
+    opacity:0;
+    transform:translateY(-10px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+}
+@media (max-width:600px){
+
+  .admin-buttons-container{
+
+    max-width:100%;
+
+    gap:8px;
+
+    padding:9px;
+
+  }
+
+  .admin-buttons-container button{
+
+    font-size:13px;
+
+    padding:10px;
+
+  }
+
+}
+
+.admin-buttons-container button:hover{
+
+  background:#e9ecef;
+
+  transform:translateY(-2px);
+
+  box-shadow:none;
+}
+
+/* 관리자 패널 */
+.admin-panel{
+
+  max-width:420px;
+  margin:3px auto;
+
+  background:none;
+
+  border-radius:10px;
+
+  box-shadow:none;
+
+  overflow:hidden;
+
+  animation:adminFade 0.4s ease;
+
+}
+
+/* 관리자 헤더 */
+.admin-header{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:3px 13px;
+
+  background:#2c3e50;
+
+  color:white;
+
+  font-weight:bold;
+
+}
+
+/* 접기 버튼 */
+#adminToggleBtn{
+
+  background:none;
+
+  border:none;
+
+  color:white;
+
+  font-size:14px;
+
+  cursor:pointer;
+
+}
+/* hover */
+.admin-buttons-container button:hover{
+
+  transform:translateY(-2px);
+
+}
+/* 차량 */
+#currentVehicleBtn{
+
+  background:#e3f2fd;
+
+  color:#1976d2;
+
+}
+
+/* 팝업 */
+#popupSettingBtn{
+
+  background:#f3e5f5;
+
+  color:#8e24aa;
+
+}
+
+/* 초기화 */
+#resetBtn{
+
+  background:#ffebee;
+
+  color:#d32f2f;
+
+}
+
+/* 복사 */
+#copyVehicleBtn{
+
+  background:#e8f5e9;
+
+  color:#2e7d32;
+
+}
+
+
+@media (max-width:600px){
+
+  .admin-panel{
+
+    max-width:95%;
+
+  }
+
+  .admin-buttons-container{
+
+    gap:8px;
+
+    padding:3px;
+
+  }
+
+  .admin-buttons-container button{
+
+    font-size:13px;
+
+    padding:10px;
+
+  }
+
+}
+.board{
+  width:95%;
+  max-width:900px;
+}
+
+@media (max-width:700px){
+
+  .cell{
+    width:60px;
+    height:42px;
+  }
+
+}
+
+@media (max-width:500px){
+
+  .cell{
+    width:52px;
+    height:38px;
+  }
+
+  .line-label{
+    width:48px;
+    font-size:14px;
+  }
+
+}
+#adminButtonsContainer{
+  display:none;
+}
+.cells-wrapper{
+  touch-action: none;
+  user-select: none;
+}
+.post-menu{
+  position:relative;
+  right:8px;
+  top:6px;
+  z-index:1000;
+}
+
+.menu-btn{
+  background:none;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.menu-box{
+  display:none;
+  position:absolute;
+  right:0;
+  top:22px;
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:6px;
+  padding:5px;
+  z-index:9999;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+}
+.menu-box{
+  display:none;
+  position:absolute;
+  right:0;
+  top:22px;
+  background:#fff;
+  border:1px solid #ccc;
+  border-radius:6px;
+  padding:5px;
+  z-index:9999;
+}
+.menu-box button{
+  display:block;
+  width:60px;
+  margin:3px 0;
+  border:none;
+  background:#2c5364;
+  color:#fff;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:11px;
+}
+.admin-ui{
+  display:none;
+}
+
+body.admin-mode .admin-ui{
+ display:flex;
+}
+@media (max-width:768px){
+
+#teamLabel{
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:6px;
+  text-align:center;
+}
+
+}
+#teamLabel::first-letter{
+  font-size:20px;
+}
+
+}
+#writePostBtn{
+ position:fixed;
+ right:20px;
+ bottom:20px;
+ width:60px;
+ height:60px;
+ border-radius:50%;
+ background:#2c5364;
+ color:#fff;
+ font-size:26px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ box-shadow:0 8px 20px rgba(0,0,0,0.3);
+ cursor:pointer;
+ z-index:999;
+}
+
+#writePostBtn:hover{
+ transform:scale(1.1);
+}
+
+.write-popup{
+ position:fixed;
+ left:0;
+ top:0;
+ width:100%;
+ height:100%;
+ background:rgba(0,0,0,0.6);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:2000;
+}
+
+.write-box{
+ background:#fff;
+ width:90%;
+ max-width:400px;
+ border-radius:12px;
+ padding:20px;
+}
+
+.write-title{
+ font-weight:800;
+ margin-bottom:10px;
+}
+
+.write-box textarea{
+ width:100%;
+ height:120px;
+ padding:10px;
+ border-radius:6px;
+ border:1px solid #ccc;
+}
+
+.write-buttons{
+ margin-top:10px;
+ display:flex;
+ justify-content:space-between;
+}
+
+.write-buttons button{
+ padding:8px 16px;
+ border:none;
+ border-radius:6px;
+ background:#2c5364;
+ color:#fff;
+ cursor:pointer;
+}
 </style>
+
+<style>
+/* ===== Added Menu UI ===== */
+.top-menu{
+  position:fixed; top:0; left:0; right:0;
+  background:#ffffff; border-bottom:1px solid #ddd;
+  display:flex; justify-content:center; gap:10px;
+  padding:8px 60px 8px 10px; z-index:5000; flex-wrap:wrap;
+}
+.top-menu button{
+  border:none; background:#2c5364; color:#fff;
+  padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:600;
+}
+#menu-btn{
+  position:fixed; right:10px; top:10px; width:32px; height:24px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  cursor:pointer; z-index:6000;
+}
+#menu-btn span{display:block;height:4px;background:#2c5364;border-radius:2px;}
+#menu-overlay{
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:5500;
+}
+#side-menu{
+  position:fixed; top:0; right:-240px; width:220px; height:100%;
+  background:#fff; box-shadow:-3px 0 10px rgba(0,0,0,.2);
+  padding:60px 10px; display:flex; flex-direction:column; gap:10px;
+  transition:.3s; z-index:5600;
+}
+#side-menu.active{ right:0; }
+#side-menu button{
+  border:none; background:#2c5364; color:#fff;
+  padding:10px; border-radius:6px; cursor:pointer;
+}
+body{ padding-top:60px; }
+/* hide old admin panel area */
+.admin-panel, #adminButtonsContainer{ display:none !important; }
+</style>
+
+
+<style>
+/* guest/admin visibility */
+body.guest-mode .admin-ui{display:none !important;}
+body.admin-mode .admin-ui{display:flex;}
+body.admin-mode #side-menu{display:flex}
+
+/* improved animation */
+#side-menu{transition:all .35s cubic-bezier(.4,0,.2,1);}
+.top-menu button{transition:.25s}
+.top-menu button:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.25)}
+
+/* admin color theme */
+body.admin-mode .top-menu{background:#1b3c59}
+body.admin-mode .top-menu button{background:#ffb703;color:#000;font-weight:700}
+body.admin-mode #menu-btn span{background:#ffb703}
+
+/* guest floating login */
+.guest-login-floating{
+ position:fixed;right:12px;top:12px;z-index:7000;
+ background:#ffb703;border:none;padding:10px 14px;
+ border-radius:8px;font-weight:700;cursor:pointer;
+ box-shadow:0 6px 14px rgba(0,0,0,.3)
+}
+</style>
+
 </head>
 
-<body>
+<body class="guest-mode">
 
-<header>
+<!-- ===== Added Menu UI ===== -->
+<nav class="top-menu admin-ui">
+  <button class="menu-admin">게스트</button>
+  <button data-target="currentVehicleBtn">차량</button>
+  <button data-target="popupSettingBtn">팝업</button>
+  <button data-target="resetBtn">초기화</button>
+  <button data-target="copyVehicleBtn">복사</button>
+</nav>
+<div class="board">
+  <div class="title">보영운수 22번 주차도 관리시스템</div>
 
-<div class="ultra-header">
+<div class="header">
+  <div class="date-box date-row">
+    <button id="adminLoginBtn"style="display:none;">게스트</button>
+    <button id="prevDayBtn">◀이전</button>
+    <input type="date" id="datePicker">
+    <button id="todayBtn">오늘</button>
+  </div>
+  <div class="date-box date-row">
+    <span id="teamLabel">🔵 A TEAM 🔵</span>
+  </div>
+<div class="admin-panel" id="adminPanel" style="display:none;">
 
-<button class="nav-btn" onclick="prevDay()">◀ 이전</button>
-
-<div class="date-display" onclick="openCalendar()">
-📅 <span id="dateText"></span>
+  <div class="admin-header">
+    <button id="adminToggleBtn">관리자 메뉴 ▼</button>
+  </div>
 </div>
+  <div class="admin-buttons-container" id="adminButtonsContainer">
 
-<button class="nav-btn" onclick="nextDay()">다음 ▶</button>
+    <button id="currentVehicleBtn">🚗차량</button>
+    <button id="popupSettingBtn">⚙팝업</button>
+    <button id="resetBtn">🔄초기화</button>
+    <button id="copyVehicleBtn">📋복사</button>
 
-</div>
-
-<div id="teamIndicator" class="team-indicator"></div>
-
-<input type="date" id="calendarPicker" style="display:none">
-
-<div>
-<span id="modeBtn" class="modeBtn" onclick="toggleAdmin()">게스트 모드</span>
-</div>
-
-</header>
-
-<div class="container">
-
-<div class="card">
-
-<h3>주차도</h3>
-
-<div id="parkingArea">
-기존 주차도 시스템 위치
-</div>
-
-</div>
-
-<div class="card">
-
-<h3>현장 게시판</h3>
-
-<div id="board"></div>
-
-<textarea id="postInput" placeholder="내용 입력"></textarea>
-
-<button onclick="writePost()">작성</button>
+  </div>
 
 </div>
 
+  <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">3R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">4R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">5R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">6R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  <div class="row"><div class="line-label">7R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+
+  <hr style="width:100%; border:none; border-top:2px solid #2c5364; margin:12px 0; opacity:0.3;">
+
+  <!-- 게시판 -->
+  <div class="bulletin-board">
+    <div class="bulletin-posts" id="bulletinPosts"></div>
+  </div>
+
+  <div class="footer">
+    <pre>
+※ 보영운수 22번 주차도 (노란색 = 당일휴차)
+※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
+<pre><span class="highlight">※ 각조 팀장&부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
+<div class="copyright">Copyright (c) 2026 ChangHai An. All rights reserved.</div>
+  <div class="version">Version 1.0.5.0</div>
+ </div>
 </div>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<!-- 팝업 설정 모달 -->
+<div class="popup-settings-modal" id="popupSettingsModal">
+  <div class="popup-settings-content">
+    <div class="popup-settings-header">
+      <h3>팝업 설정</h3>
+      <button class="popup-settings-close" id="popupSettingsClose">✕</button>
+    </div>
+    <div class="popup-settings-group">
+      <label>내용입력</label>
+      <textarea id="popupContent" placeholder="팝업에 표시될 내용을 입력하세요..."></textarea>
+    </div>
+    <div class="popup-settings-group">
+      <label>요일선택</label>
+      <div class="popup-days-container">
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-1" value="1"><label for="day-1">월</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-2" value="2"><label for="day-2">화</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-3" value="3"><label for="day-3">수</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-4" value="4"><label for="day-4">목</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-5" value="5"><label for="day-5">금</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-6" value="6"><label for="day-6">토</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-0" value="0"><label for="day-0">일</label></div>
+      </div>
+    </div>
+    <div class="popup-settings-group">
+      <label>시간설정</label>
+      <div class="popup-time-container">
+        <div class="popup-time-input"><label style="display:block;font-size:11px;margin-bottom:4px;">시작</label><input type="time" id="popupStartTime" value="09:00"></div>
+        <div class="popup-time-input"><label style="display:block;font-size:11px;margin-bottom:4px;">종료</label><input type="time" id="popupEndTime" value="18:00"></div>
+      </div>
+    </div>
+    <div class="popup-settings-buttons">
+      <button class="save-btn" id="popupSettingsSaveBtn">저장</button>
+      <button class="cancel-btn" id="popupSettingsCancelBtn">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Overlay -->
+<div class="popup-overlay" id="popupOverlay"></div>
+
+<!-- Popup Notification -->
+<div class="popup-notification" id="popupNotification">
+  <div class="popup-notification-content" id="popupNotificationContent"></div>
+  <button class="popup-notification-close" id="popupNotificationClose">닫기</button>
+</div>
+
+<!-- 현재차량상황 패널 -->
+<div id="vehiclePanel">
+  <div class="vehicle-panel-header">
+    <h3>차량 목록</h3>
+    <button id="vehiclePanelCloseBtn">✕</button>
+  </div>
+  <div class="vehicle-list">
+    <button class="vehicle-add-btn" id="vehicleAddBtn">차량번호 추가 +</button>
+    <div id="vehicleAddInputContainer" style="display:none;" class="vehicle-add-input-container">
+      <input type="text" id="vehicleAddInput" placeholder="차량번호 입력 숫자3자리" maxlength="4">
+      <button id="vehicleAddConfirmBtn">추가</button>
+      <button id="vehicleAddCancelBtn" style="background:#999;">취소</button>
+    </div>
+    <div id="vehicleListContainer"></div>
+  </div>
+</div>
+
+<div id="adminModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.5);
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+">
+  <div style="background:#fff; padding:20px; border-radius:12px; width:260px;">
+    <div class="modal-header">
+  <h3>관리자 비밀번호 입력</h3>
+  <button id="adminCloseBtn" aria-label="닫기">✕</button>
+</div>
+    <input type="password" id="adminPw" placeholder="비밀번호"
+      style="width:100%; padding:8px; margin-bottom:10px;">
+    <button id="adminLoginOk"
+      style="width:100%; padding:8px; background:#2c5364; color:#fff; border:none; border-radius:6px;">
+      로그인
+    </button>
+  </div>
+</div>
 
 <script>
 
-/* Firebase 설정
-   기존 파일의 config 그대로 넣으면 됩니다
-*/
 
-const firebaseConfig = {
+function getTeamByDate(dateStr){
+
+  const baseDate = new Date("2026-03-14");
+  const targetDate = new Date(dateStr);
+
+  const diff = Math.floor((targetDate - baseDate) / (1000*60*60*24));
+
+  if(diff % 2 === 0){
+    return "🔴 B TEAM 🔴";
+  }else{
+    return "🔵 A TEAM 🔵";
+  }
+
+}
+
+
+
+let isAdmin = sessionStorage.getItem("isAdmin") === "1";
+let adminLoginBtn, adminModal, adminLoginOk;
+let db, ref, set, get;
+let currentBusList = [];
+let draggedItem = null;
+
+function updateAdminButton() {
+  if (isAdmin) {
+    adminLoginBtn.textContent = "관리자";
+    document.getElementById("adminPanel").style.display = "block";
+    document.getElementById('adminButtonsContainer').style.display = "none";
+    document.getElementById("copyVehicleBtn").style.display = "block";
+
+  } else {
+    adminLoginBtn.textContent = "게스트";
+    document.getElementById("adminPanel").style.display = "none";
+    document.getElementById('adminButtonsContainer').style.display = 'none';
+    document.getElementById('vehiclePanel').style.display = 'none';
+    document.getElementById("copyVehicleBtn").style.display = "none";
+  }
+}
+
+function formatDateWithDay(dateStr) {
+  const date = new Date(dateStr + 'T00:00:00');
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const dayName = days[date.getDay()];
+  return `${dateStr} ${dayName}`;
+}
+
+function applyPermissionUI(cells, selects, wrappers) {
+  if (!isAdmin) {
+    cells.forEach(cell => {
+      cell.style.pointerEvents = "none";
+      cell.style.opacity = "1";
+    });
+    selects.forEach(sel => {
+      sel.disabled = true;
+    });
+    wrappers.forEach(w => {
+      w.style.pointerEvents = "none";
+    });
+  } else {
+    cells.forEach(cell => {
+      cell.style.pointerEvents = "auto";
+      cell.style.opacity = "1";
+    });
+    selects.forEach(sel => {
+      sel.disabled = false;
+      sel.style.display = "block";
+    });
+    wrappers.forEach(w => {
+      w.style.pointerEvents = "auto";
+    });
+  }
+}
+
+async function loadBusListFromDB() {
+  try {
+    console.log('busList 로드 시작...');
+    const snapshot = await get(ref(db, 'busList'));
+    console.log('Firebase snapshot:', snapshot);
+    console.log('snapshot.exists():', snapshot.exists());
+    
+    if (snapshot.exists()) {
+      currentBusList = snapshot.val() || [];
+      console.log('Firebase에서 로드된 busList:', currentBusList);
+      if (!Array.isArray(currentBusList)) {
+        currentBusList = Object.values(currentBusList);
+        console.log('객체를 배열로 변환:', currentBusList);
+      }
+    } else {
+      console.log('Firebase에 busList가 없음. 기본값 사용');
+      currentBusList = ["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
+    }
+    console.log('최종 busList:', currentBusList);
+    return currentBusList;
+  } catch (err) {
+    console.error("busList 로드 실패:", err);
+    console.error("에러 메시지:", err.message);
+    console.error("에러 코드:", err.code);
+    currentBusList = ["714","750","751","752","753","754","755","756","757","768","769","770","771","776","778","780","785"];
+    return currentBusList;
+  }
+}
+
+async function saveBusListToDB() {
+  try {
+    await set(ref(db, 'busList'), currentBusList);
+  } catch (err) {
+    console.error("busList 저장 실패:", err);
+  }
+}
+
+function renderVehicleList() {
+  const container = document.getElementById('vehicleListContainer');
+  container.innerHTML = '';
+  
+  currentBusList.forEach((bus, index) => {
+    const item = document.createElement('div');
+    item.className = 'vehicle-item';
+    item.draggable = true;
+    item.dataset.index = index;
+    
+    item.innerHTML = `
+      <div class="vehicle-item-content">
+        <span class="vehicle-item-drag-handle">⋮⋮</span>
+        <span class="vehicle-item-number">${bus}</span>
+      </div>
+      <button class="vehicle-item-delete">-</button>
+    `;
+    
+const deleteBtn = item.querySelector('.vehicle-item-delete');
+deleteBtn.addEventListener('click', () => {
+
+  const busNumber = currentBusList[index];
+
+  const confirmDelete = confirm(
+    `${busNumber} 차량번호를 정말로 삭제하시겠습니까?`
+  );
+
+  if (!confirmDelete) return;
+
+  currentBusList.splice(index, 1);
+  saveBusListToDB();
+  renderVehicleList();
+  refreshOptions(document.querySelectorAll('.cell select'));
+});
+    
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+    });
+    
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+    });
+    
+    item.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (draggedItem && draggedItem !== item) {
+        const allItems = Array.from(container.querySelectorAll('.vehicle-item'));
+        const draggedIndex = allItems.indexOf(draggedItem);
+        const targetIndex = allItems.indexOf(item);
+        
+        if (draggedIndex < targetIndex) {
+          item.parentNode.insertBefore(draggedItem, item.nextSibling);
+        } else {
+          item.parentNode.insertBefore(draggedItem, item);
+        }
+      }
+    });
+    
+    item.addEventListener('drop', (e) => {
+      e.preventDefault();
+    });
+    
+    container.appendChild(item);
+  });
+  
+  container.addEventListener('dragend', () => {
+    const items = Array.from(container.querySelectorAll('.vehicle-item'));
+    const newOrder = items.map(item => currentBusList[item.dataset.index]);
+    currentBusList = newOrder;
+    saveBusListToDB();
+  });
+}
+
+function refreshOptions(selects) {
+  const selected = [...selects].map(s => s.value).filter(v => v);
+  selects.forEach(select => {
+    const current = select.value;
+    select.innerHTML = '<option value=""></option>';
+    currentBusList.forEach(num => {
+      if (!selected.includes(num) || num === current) {
+        const opt = document.createElement('option');
+        opt.value = num;
+        opt.textContent = num;
+        if (num === current) opt.selected = true;
+        select.appendChild(opt);
+      }
+    });
+  });
+}
+
+async function initFirebase() {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js");
+    const { getDatabase, ref: dbRef, set: dbSet, get: dbGet } = await import("https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js");
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcaIcwlhwAOgKPD5BKD3mAuXiAqLKHTu4",
+      databaseURL: "https://parking22-886c6-default-rtdb.asia-southeast1.firebasedatabase.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    ref = dbRef;
+    set = dbSet;
+    get = dbGet;
+
+    const selects = document.querySelectorAll('.cell select');
+    const cells = document.querySelectorAll('.cell');
+    const wrappers = document.querySelectorAll('.cells-wrapper');
+    const datePicker = document.getElementById('datePicker');
+    const prevDayBtn = document.getElementById("prevDayBtn");
+    const todayBtn = document.getElementById("todayBtn");
+    
+    adminLoginBtn = document.getElementById('adminLoginBtn');
+    adminModal = document.getElementById('adminModal');
+    adminLoginOk = document.getElementById('adminLoginOk');
+
+    // busList 로드
+    await loadBusListFromDB();
+
+    async function loadData(date) {
+      if (!date) return;
+      selects.forEach(s => {
+        s.innerHTML = '<option value=""></option>';
+        currentBusList.forEach(num => {
+          const opt = document.createElement('option');
+          opt.value = num;
+          opt.textContent = num;
+          s.appendChild(opt);
+        });
+        s.value = "";
+      });
+      cells.forEach(c => c.classList.remove("active"));
+      wrappers.forEach(w => w.style.transform = "translateX(0px)");
+
+      const snapshot = await get(ref(db, 'parking/' + date));
+      const data = snapshot.val();
+      console.log('로드된 parking 데이터:', data);
+      if (data) {
+        const valuesArray = data.values ? Object.values(data.values) : [];
+        console.log('변환된 values 배열:', valuesArray);
+        selects.forEach((s, i) => {
+          s.value = valuesArray[i] || "";
+        });
+        cells.forEach((c, i) => c.classList.toggle("active", data.active?.[i]));
+        wrappers.forEach((w, i) => w.style.transform = `translateX(${data.drag?.[i] || 0}px)`);
+      }
+      refreshOptions(selects);
+    }
+
+    function saveData() {
+      if (!isAdmin) return;
+      const date = datePicker.value;
+      if (!date) return;
+      const values = {}, active = {}, drag = {};
+      selects.forEach((s, i) => values[i] = s.value);
+      cells.forEach((c, i) => active[i] = c.classList.contains("active"));
+      wrappers.forEach((w, i) => {
+        const m = w.style.transform.match(/-?\d+/);
+        drag[i] = m ? parseInt(m[0]) : 0;
+      });
+      set(ref(db, 'parking/' + date), { values, active, drag });
+    }
+
+    selects.forEach(s => s.addEventListener("change", () => {
+      if (isAdmin) {
+        refreshOptions(selects);
+        saveData();
+      }
+    }));
+    
+datePicker.addEventListener("change", () => {
+
+  loadData(datePicker.value);
+
+  const team = getTeamByDate(datePicker.value);
+  document.getElementById("teamLabel").textContent = "" + team;
+
+});
+// 이전날 버튼
+prevDayBtn.addEventListener("click", () => {
+
+  const currentDate = new Date(datePicker.value);
+
+  currentDate.setDate(currentDate.getDate() - 1);
+
+  const newDate = currentDate.toISOString().split("T")[0];
+
+  datePicker.value = newDate;
+
+  loadData(newDate);
+
+  const team = getTeamByDate(newDate);
+  document.getElementById("teamLabel").textContent = "" + team;
+
+});
+// 오늘 버튼 (새로고침)
+todayBtn.addEventListener("click", () => {
+  location.reload();
+});
+
+
+
+
+    cells.forEach(cell => {
+      let timer;
+      const startPress = () => {
+        timer = setTimeout(() => {
+          if (!isAdmin) return;
+          cell.classList.toggle("active");
+          saveData();
+        }, 600);
+      };
+      const endPress = () => {
+        clearTimeout(timer);
+      };
+         cell.addEventListener("pointerdown", startPress);
+         cell.addEventListener("pointerup", endPress);
+         cell.addEventListener("pointerleave", endPress);
+         cell.addEventListener("pointercancel", endPress);
+         
+    });
+
+    wrappers.forEach(wrapper => {
+
+  let startX = 0;
+  let isDragging = false;
+
+  wrapper.addEventListener("pointerdown", e => {
+
+    if (!isAdmin) return;
+    if (e.target.tagName === "SELECT") return;
+
+    isDragging = true;
+
+    const currentX = parseInt(wrapper.style.transform.replace(/[^\d\-]/g,'')) || 0;
+    startX = e.clientX - currentX;
+
+    wrapper.setPointerCapture(e.pointerId);
+
+  });
+
+  wrapper.addEventListener("pointermove", e => {
+
+    if (!isDragging) return;
+
+    let x = e.clientX - startX;
+
+    x = Math.max(0, Math.min(18, x));
+
+    wrapper.style.transform = `translateX(${x}px)`;
+
+  });
+
+  wrapper.addEventListener("pointerup", e => {
+
+    if (!isDragging) return;
+
+    isDragging = false;
+
+    wrapper.releasePointerCapture(e.pointerId);
+
+    saveData();
+
+  });
+
+  wrapper.addEventListener("pointercancel", () => {
+
+    isDragging = false;
+
+  });
+
+});
+
+    // 현재차량상황 패널 이벤트
+    const vehiclePanel = document.getElementById('vehiclePanel');
+    const currentVehicleBtn = document.getElementById('currentVehicleBtn');
+    const vehiclePanelCloseBtn = document.getElementById('vehiclePanelCloseBtn');
+    const vehicleAddBtn = document.getElementById('vehicleAddBtn');
+    const vehicleAddInputContainer = document.getElementById('vehicleAddInputContainer');
+    const vehicleAddInput = document.getElementById('vehicleAddInput');
+    const vehicleAddConfirmBtn = document.getElementById('vehicleAddConfirmBtn');
+    const vehicleAddCancelBtn = document.getElementById('vehicleAddCancelBtn');
+
+    currentVehicleBtn.addEventListener('click', () => {
+      vehiclePanel.style.display = vehiclePanel.style.display === 'none' ? 'block' : 'none';
+      currentVehicleBtn.classList.toggle('active');
+    });
+
+    vehiclePanelCloseBtn.addEventListener('click', () => {
+      vehiclePanel.style.display = 'none';
+      currentVehicleBtn.classList.remove('active');
+    });
+
+    vehicleAddBtn.addEventListener('click', () => {
+      vehicleAddBtn.style.display = 'none';
+      vehicleAddInputContainer.style.display = 'flex';
+      vehicleAddInput.focus();
+    });
+
+    vehicleAddConfirmBtn.addEventListener('click', () => {
+      const newBus = vehicleAddInput.value.trim();
+      if (newBus && !currentBusList.includes(newBus)) {
+        currentBusList.push(newBus);
+        saveBusListToDB();
+        renderVehicleList();
+        refreshOptions(selects);
+        vehicleAddInput.value = '';
+        vehicleAddBtn.style.display = 'block';
+        vehicleAddInputContainer.style.display = 'none';
+      } else if (currentBusList.includes(newBus)) {
+        alert('이미 존재하는 차량번호입니다.');
+      } else {
+        alert('차량번호를 입력해주세요.');
+      }
+    });
+
+    vehicleAddCancelBtn.addEventListener('click', () => {
+      vehicleAddInput.value = '';
+      vehicleAddBtn.style.display = 'block';
+      vehicleAddInputContainer.style.display = 'none';
+    });
+
+    vehicleAddInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        vehicleAddConfirmBtn.click();
+      }
+    });
+
+    renderVehicleList();
+    refreshOptions(selects);
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+    datePicker.value = todayStr;
+    loadData(todayStr);
+    loadBulletinPosts();
+const team = getTeamByDate(todayStr);
+document.getElementById("teamLabel").textContent = "" + team;
+
+    applyPermissionUI(cells, selects, wrappers);
+    updateAdminButton();
+
+    adminLoginBtn.addEventListener('click', () => {
+      if (isAdmin) {
+        isAdmin = false;
+        sessionStorage.removeItem("isAdmin");
+        applyPermissionUI(cells, selects, wrappers);
+        updateAdminButton();
+        alert("게스트로 전환 되었습니다");
+      } else {
+        adminModal.style.display = "flex";
+      }
+    });
+
+    adminLoginOk.addEventListener('click', async () => {
+      const pw = document.getElementById("adminPw").value;
+      const snap = await get(ref(db, "admin/password"));
+      if (snap.exists() && String(snap.val()) === String(pw)) {
+        isAdmin = true;
+        sessionStorage.setItem("isAdmin", "1");
+        adminModal.style.display = "none";
+        applyPermissionUI(cells, selects, wrappers);
+        updateAdminButton();
+        alert("관리자로 전환 되었습니다");
+      } else {
+        alert("비밀번호 오류");
+      }
+    });
+
+    document.addEventListener("click", (e) => {
+      if (e.target.id === "adminCloseBtn") {
+        adminModal.style.display = "none";
+      }
+    });
+
+    // 초기화 버튼 기능
+    const resetBtn = document.getElementById('resetBtn');
+    resetBtn.addEventListener('click', () => {
+      if (!isAdmin) return;
+      const date = datePicker.value;
+      if (!date) {
+        alert('날짜를 선택해주세요.');
+        return;
+      }
+      if (confirm('선택된 날짜의 차량 번호 설정을 초기화하시겠습니까?')) {
+        set(ref(db, 'parking/' + date), null);
+        loadData(date);
+        alert('초기화 완료되었습니다.');
+      }
+    });
+
+    // 게시판 기능
+    const bulletinInput = document.getElementById('bulletinInput');
+    const bulletinSubmitBtn = document.getElementById('bulletinSubmitBtn');
+    const bulletinPosts = document.getElementById('bulletinPosts');
+
+    async function loadBulletinPosts(date) {
+      try {
+        const snapshot = await get(ref(db, 'bulletin/posts'));
+        bulletinPosts.innerHTML = '';
+        if (snapshot.exists()) {
+          const posts = snapshot.val();
+          const postsArray = Array.isArray(posts) ? posts : Object.values(posts);
+          postsArray.reverse().forEach((post, index) => {
+            if (post) {
+              const postEl = document.createElement('div');
+              postEl.className = 'bulletin-post';
+              const time = new Date(post.time).toLocaleTimeString('ko-KR');
+              postEl.innerHTML = `
+                <div>
+                  <div class="bulletin-post-content">${post.text}</div>
+                  <div class="bulletin-post-time">${time}</div>
+                </div>
+                <button class="bulletin-post-delete" data-index="${index}">삭제</button>
+              `;
+              bulletinPosts.appendChild(postEl);
+            }
+          });
+          bulletinPosts.querySelectorAll('.bulletin-post-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const index = parseInt(e.target.dataset.index);
+              if (confirm('이 글을 삭제하시겠습니까?')) {
+                const snapshot = await get(ref(db, 'bulletin/posts'));
+                const posts = snapshot.val();
+                const postsArray = Array.isArray(posts) ? posts : Object.values(posts);
+                postsArray.reverse();
+                postsArray.splice(index, 1);
+                postsArray.reverse();
+                await set(ref(db, 'bulletin/posts'), postsArray);
+                loadBulletinPosts();
+              }
+            });
+          });
+        }
+      } catch (err) {
+        console.error('게시판 로드 실패:', err);
+      }
+    }
+
+    bulletinSubmitBtn.addEventListener('click', async () => {
+      const text = bulletinInput.value.trim();
+      if (!text) {
+        alert('내용을 입력해주세요.');
+        return;
+      }
+      const date = datePicker.value;
+      if (!date) {
+        alert('날짜를 선택해주세요.');
+        return;
+      }
+      try {
+        const snapshot = await get(ref(db, 'bulletin/posts'));
+        let posts = [];
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          posts = Array.isArray(data) ? data : Object.values(data);
+        }
+               posts.push({
+          text: text,
+          time: new Date().toISOString()
+        });
+
+        await set(ref(db, 'bulletin/posts'), posts);
+        bulletinInput.value = '';
+        loadBulletinPosts(date);
+
+      } catch (err) {
+        console.error('게시판 저장 실패:', err);
+        alert('저장 중 오류가 발생했습니다.');
+      }
+    });
+document.getElementById("postSubmit").onclick = () => {
+
+ const text = document.getElementById("postInput").value.trim();
+ if(!text) return;
+
+ const now = new Date();
+
+ const post = {
+  text:text,
+  time:now.getTime(),
+  replies:[]
+ };
+
+ bulletinData.push(post);
+
+ saveBulletin();
+
+ document.getElementById("postInput").value="";
+ popup.style.display="none";
+
+ renderBulletin();
 
 };
 
-firebase.initializeApp(firebaseConfig)
+    // 날짜 변경 시 게시판도 다시 로드
+    datePicker.addEventListener("change", () => {
+  loadData(datePicker.value);
+});
 
-const db = firebase.database()
+    // 팝업 설정 기능
+    const popupSettingsModal = document.getElementById('popupSettingsModal');
+    const popupSettingBtn = document.getElementById('popupSettingBtn');
+    const popupSettingsClose = document.getElementById('popupSettingsClose');
+    const popupSettingsCancelBtn = document.getElementById('popupSettingsCancelBtn');
+    const popupSettingsSaveBtn = document.getElementById('popupSettingsSaveBtn');
+    const popupOverlay = document.getElementById('popupOverlay');
+    const popupNotification = document.getElementById('popupNotification');
+    const popupNotificationContent = document.getElementById('popupNotificationContent');
+    const popupNotificationClose = document.getElementById('popupNotificationClose');
 
+popupSettingBtn.addEventListener('click', async () => {
 
-/* 관리자 모드 */
+  const snap = await get(ref(db, 'popup/settings'));
 
-let adminMode=false
+  if (snap.exists()) {
+    const data = snap.val();
 
-function toggleAdmin(){
+    document.getElementById('popupContent').value = data.content || '';
+    document.getElementById('popupStartTime').value = data.startTime || '09:00';
+    document.getElementById('popupEndTime').value = data.endTime || '18:00';
 
-if(!adminMode){
+    document.querySelectorAll('.popup-day-checkbox input')
+      .forEach(cb => {
+        cb.checked = data.days?.includes(cb.value) || false;
+      });
+  }
 
-const pw=prompt("관리자 비밀번호")
+  popupSettingsModal.classList.add('active');
+});
 
-if(pw==="2222"){
+    popupSettingsClose.addEventListener('click', () => {
+      popupSettingsModal.classList.remove('active');
+    });
 
-adminMode=true
-document.getElementById("modeBtn").innerText="관리자 모드"
+    popupSettingsCancelBtn.addEventListener('click', () => {
+      popupSettingsModal.classList.remove('active');
+    });
 
-}else{
+    popupSettingsSaveBtn.addEventListener('click', async () => {
+      const content = document.getElementById('popupContent').value.trim();
+      const startTime = document.getElementById('popupStartTime').value;
+      const endTime = document.getElementById('popupEndTime').value;
 
-alert("비밀번호 오류")
+      const checkedDays = [];
+      document.querySelectorAll('.popup-day-checkbox input:checked')
+        .forEach(cb => checkedDays.push(cb.value));
 
+      const popupData = {
+        content,
+        startTime,
+        endTime,
+        days: checkedDays
+      };
+
+      await set(ref(db, 'popup/settings'), popupData);
+
+      popupSettingsModal.classList.remove('active');
+      alert('팝업 설정 저장 완료');
+    });
+
+    popupNotificationClose.addEventListener('click', () => {
+      popupNotification.classList.remove('active');
+      popupOverlay.classList.remove('active');
+    });
+
+    // 팝업 자동 표시 체크
+    async function checkAndShowPopup() {
+      const snap = await get(ref(db, 'popup/settings'));
+      if (!snap.exists()) return;
+
+      const data = snap.val();
+      if (!data.content) return;
+
+      const now = new Date();
+      const day = String(now.getDay());
+      const currentTime = now.toTimeString().slice(0,5);
+
+      if (
+        data.days?.includes(day) &&
+        currentTime >= data.startTime &&
+        currentTime <= data.endTime
+      ) {
+        popupNotificationContent.textContent = data.content;
+        popupNotification.classList.add('active');
+        popupOverlay.classList.add('active');
+      }
+    }
+
+    checkAndShowPopup();
+    loadBulletinPosts(datePicker.value);
+
+  } catch (err) {
+    console.error("Firebase 초기화 실패:", err);
+  }
 }
 
-}else{
+document.getElementById("copyVehicleBtn").addEventListener("click", () => {
 
-adminMode=false
-document.getElementById("modeBtn").innerText="게스트 모드"
+  // 날짜 가져오기
+  const dateInput = document.querySelector('.date-box input');
+  let dateText = "";
 
+  if (dateInput && dateInput.value) {
+    const d = new Date(dateInput.value);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    dateText = `${month}/${day}`;
+  }
+
+  const rows = document.querySelectorAll(".row");
+  let result = [];
+
+  rows.forEach(row => {
+
+    const selects = row.querySelectorAll("select");
+    let cars = [];
+
+    selects.forEach(sel => {
+      if (sel.value) cars.push(sel.value);
+    });
+
+    if (cars.length > 0) {
+      result.push(cars.join("-"));
+    }
+
+  });
+
+  const finalText = dateText + "\n\n" + result.join("\n");
+
+  navigator.clipboard.writeText(finalText);
+
+  alert("차량 목록이 복사되었습니다.");
+});
+
+const adminToggleBtn = document.getElementById("adminToggleBtn");
+const adminButtons = document.getElementById("adminButtonsContainer");
+
+adminToggleBtn.addEventListener("click", () => {
+
+  if(adminButtons.style.display === "none" || adminButtons.style.display === ""){
+
+    adminButtons.style.display = "grid";
+    adminToggleBtn.textContent = "관리자 메뉴 ▲";
+
+  }else{
+
+    adminButtons.style.display = "none";
+    adminToggleBtn.textContent = "관리자 메뉴 ▼";
+
+  }
+
+});
+window.addEventListener("load", () => {
+
+  document.getElementById("adminPanel").style.display = "none";
+  document.getElementById("adminButtonsContainer").style.display = "none";
+
+});
+
+function startDrag(e){
+e.preventDefault()
 }
 
-}
-
-
-/* 날짜 시스템 */
-
-const baseDate=new Date("2026-03-14")
-
-let currentDate=new Date()
-
-
-function formatDate(d){
-
-return d.toISOString().split("T")[0]
-
-}
-
-
-function updateHeader(){
-
-const days=["일","월","화","수","목","금","토"]
-
-document.getElementById("dateText").innerText=
-formatDate(currentDate)+" ("+days[currentDate.getDay()]+")"
-
-updateTeam()
-
-}
-
-
-/* 팀 계산 */
-
-function updateTeam(){
-
-const diff=Math.floor((currentDate-baseDate)/(1000*60*60*24))
-
-let team
-
-if(diff%2===0){
-
-team="B"
-
-}else{
-
-team="A"
-
-}
-
-const el=document.getElementById("teamIndicator")
-
-if(team==="B"){
-
-el.innerHTML="🔴 B TEAM"
-el.className="team-indicator teamB"
-
-}else{
-
-el.innerHTML="🔵 A TEAM"
-el.className="team-indicator teamA"
-
-}
-
-}
-
-
-/* 날짜 이동 */
-
-function prevDay(){
-
-currentDate.setDate(currentDate.getDate()-1)
-
-updateHeader()
-
-loadParkingData()
-
-}
-
-
-function nextDay(){
-
-currentDate.setDate(currentDate.getDate()+1)
-
-updateHeader()
-
-loadParkingData()
-
-}
-
-
-/* 달력 */
-
-function openCalendar(){
-
-const picker=document.getElementById("calendarPicker")
-
-picker.value=formatDate(currentDate)
-
-picker.showPicker()
-
-}
-
-
-document.getElementById("calendarPicker").addEventListener("change",(e)=>{
-
-currentDate=new Date(e.target.value)
-
-updateHeader()
-
-loadParkingData()
-
-})
-
+initFirebase();
 </script>
 
 <script>
+/* ===== Menu behavior ===== */
 
-/* 게시글 작성 */
 
-function writePost(){
+/* trigger existing buttons */
+document.querySelectorAll("[data-target]").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const target=document.getElementById(btn.dataset.target);
+    if(target) target.click();
+  });
+});
 
-const text=document.getElementById("postInput").value.trim()
-
-if(!text) return
-
-const post={
-
-text:text,
-time:Date.now(),
-admin:adminMode,
-notice:false,
-pin:false,
-reply:{}
-
+/* admin buttons sync */
+function syncAdminText(){
+  const txt=document.getElementById("adminLoginBtn")?.textContent||"게스트";
+  document.querySelectorAll(".menu-admin").forEach(b=>b.textContent=txt);
 }
-
-db.ref("board").push(post)
-
-document.getElementById("postInput").value=""
-
-}
-
-
-/* 게시판 로드 */
-
-function loadBoard(){
-
-db.ref("board").on("value",(snap)=>{
-
-const data=snap.val()
-
-const board=document.getElementById("board")
-
-board.innerHTML=""
-
-if(!data) return
-
-const arr=Object.entries(data)
-
-
-/* 정렬
-공지 → 고정 → 최신
-*/
-
-arr.sort((a,b)=>{
-
-if(a[1].notice && !b[1].notice) return -1
-if(!a[1].notice && b[1].notice) return 1
-
-if(a[1].pin && !b[1].pin) return -1
-if(!a[1].pin && b[1].pin) return 1
-
-return b[1].time-a[1].time
-
-})
-
-
-arr.forEach(([key,val])=>{
-
-let cls="post"
-
-if(val.notice) cls+=" notice"
-if(val.pin) cls+=" pin"
-
-const d=new Date(val.time)
-
-const el=document.createElement("div")
-
-el.className=cls
-
-let html=""
-
-if(val.notice) html+="📢 공지<br>"
-if(val.pin) html+="📌 고정<br>"
-
-html+="<div>"+(val.admin?"<span class='adminBadge'>👑 ADMIN</span>":"익명")+"</div>"
-
-html+="<div>"+val.text+"</div>"
-
-html+="<small>"+d.toLocaleString()+"</small><br>"
-
-
-/* 버튼 */
-
-html+="<button onclick=\"replyPost('"+key+"')\">답글</button>"
-
-html+="<button onclick=\"editPost('"+key+"','"+val.text+"')\">수정</button>"
-
-html+="<button onclick=\"deletePost('"+key+"')\">삭제</button>"
-
-
-if(adminMode){
-
-html+="<button onclick=\"setNotice('"+key+"')\">공지</button>"
-
-html+="<button onclick=\"setPin('"+key+"')\">고정</button>"
-
-}
-
-
-/* 답글 표시 */
-
-if(val.reply){
-
-Object.entries(val.reply).forEach(([rid,r])=>{
-
-const rd=new Date(r.time)
-
-html+="<div class='reply'>└ "+r.text+" <small>"+rd.toLocaleString()+"</small></div>"
-
-})
-
-}
-
-el.innerHTML=html
-
-board.appendChild(el)
-
-})
-
-})
-
-}
-
-
-/* 삭제 */
-
-function deletePost(id){
-
-db.ref("board/"+id).remove()
-
-}
-
-
-/* 수정 */
-
-function editPost(id,old){
-
-const text=prompt("수정",old)
-
-if(!text) return
-
-db.ref("board/"+id+"/text").set(text)
-
-}
-
-
-/* 답글 */
-
-function replyPost(id){
-
-const text=prompt("답글 입력")
-
-if(!text) return
-
-db.ref("board/"+id+"/reply").push({
-
-text:text,
-time:Date.now()
-
-})
-
-}
-
-
-/* 공지 */
-
-function setNotice(id){
-
-db.ref("board/"+id+"/notice").set(true)
-
-}
-
-
-/* 고정 */
-
-function setPin(id){
-
-db.ref("board/"+id+"/pin").set(true)
-
-}
-
+setInterval(syncAdminText,500);
+
+/* clicking menu admin triggers original admin button */
+document.querySelectorAll(".menu-admin").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const original=document.getElementById("adminLoginBtn");
+    if(original) original.click();
+  });
+});
 </script>
+
+
 <script>
-
-/* 100일 자동 삭제 */
-
-function cleanupOldPosts(){
-
-const now=Date.now()
-
-const limit=100*24*60*60*1000
-
-db.ref("board").once("value",(snap)=>{
-
-snap.forEach((child)=>{
-
-const data=child.val()
-
-if(now-data.time>limit){
-
-child.ref.remove()
-
+/* admin / guest UI control */
+function checkAdminUI(){
+ const btn=document.getElementById("adminLoginBtn");
+ if(!btn) return;
+ const txt=btn.textContent||"";
+ if(txt.includes("관리자")){
+   document.body.classList.remove("guest-mode");
+   document.body.classList.add("admin-mode");
+   if(floating) floating.style.display="none";
+ }else{
+   document.body.classList.add("guest-mode");
+   document.body.classList.remove("admin-mode");
+   if(floating) floating.style.display="block";
+ }
 }
+setInterval(checkAdminUI,500);
 
-})
+/* floating guest login button */
+const floating=document.createElement("button");
+floating.textContent="게스트";
+floating.className="guest-login-floating";
+document.body.appendChild(floating);
+floating.onclick=()=>{
+ const original=document.getElementById("adminLoginBtn");
+ if(original) original.click();
+};
 
-})
+/* auto close menu on mobile */
+document.querySelectorAll("#side-menu button,.bottom-menu button").forEach(b=>{
+ b.addEventListener("click",()=>{
+   const side=document.getElementById("side-menu");
+   const overlay=document.getElementById("menu-overlay");
+   if(side) side.classList.remove("active");
+   if(overlay) overlay.style.display="none";
+ });
+});
 
-}
+const writeBtn = document.getElementById("writePostBtn");
+const popup = document.getElementById("writePopup");
 
-
-/* 주차도 데이터 로드
-   기존 파일의 주차도 함수와 연결하면 됩니다
-*/
-
-function loadParkingData(){
-
-const date=formatDate(currentDate)
-
-/*
-여기에 기존 주차도 Firebase 코드 연결
-
-예시:
-
-db.ref("parking/"+date).once(...)
-*/
-
-console.log("주차 데이터 로드:",date)
-
-}
-
-
-/* 페이지 시작 */
-
-function init(){
-
-updateHeader()
-
-loadParkingData()
-
-loadBoard()
-
-cleanupOldPosts()
-
-}
-
-
-window.onload=init
-
+writeBtn.onclick = () => {
+ popup.style.display = "flex";
+};
+document.getElementById("postCancel").onclick = () => {
+ popup.style.display = "none";
+};
 </script>
+<!-- 글쓰기 팝업 -->
+<div id="writePopup" class="write-popup">
+  <div class="write-box">
 
+    <div class="write-title">게시글 작성</div>
+
+    <textarea id="postInput" placeholder="내용을 입력하세요"></textarea>
+
+    <div class="write-buttons">
+      <button id="postSubmit">확인</button>
+      <button id="postCancel">취소</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 게시글 작성 버튼 -->
+<div id="writePostBtn">✏️</div>
 </body>
 </html>
