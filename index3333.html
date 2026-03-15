@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>보영운수 22번 주차도 관리시스템</title>
+  
+  <!-- favicon -->
+  <link rel="icon" href="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" type="image/png">
+  
+  <!-- SNS 공유용 메타 -->
+  <meta property="og:title" content="보영운수 22번 주차도 관리시스템">
+  <meta property="og:description" content="보영운수 22번 주차도를 쉽게 확인하고 관리할 수 있습니다.">
+  <meta property="og:image" content="https://ach19874343-max.github.io/parking22/123456789.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  
+  <!-- 스타일시트 -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 해버거 메뉴 -->
+  <div class="hamburger-menu" id="hamburgerMenu">
+    <button class="hamburger-toggle" id="hamburgerToggle">☰</button>
+    <nav class="hamburger-nav" id="hamburgerNav">
+      <button class="hamburger-close" id="hamburgerClose">✕</button>
+      <ul class="hamburger-list">
+        <li><a href="#" class="hamburger-link">메뉴1</a></li>
+        <li><a href="#" class="hamburger-link">메뉴2</a></li>
+        <li><a href="#" class="hamburger-link">메뉴3</a></li>
+      </ul>
+    </nav>
+  </div>
+
+  <div class="board">
+    <!-- 제목 -->
+    <div class="title">보영운수 22번 주차도 관리시스템</div>
+
+    <!-- 헤더 -->
+    <div class="header">
+      <!-- 날짜 네비게이션 -->
+      <div class="date-navigation">
+        <button class="date-nav-btn" id="prevBtn">◀ 이전</button>
+        <div class="date-display" id="dateDisplay">📅 2026-03-14 (토)</div>
+        <button class="date-nav-btn" id="nextBtn">다음 ▶</button>
+      </div>
+      
+      <!-- 팀 표시 -->
+      <div class="team-display" id="teamDisplay">🔴 B TEAM</div>
+
+      <!-- 숨겨진 date input (달력용) -->
+      <input type="date" id="datePicker" style="display:none;">
+
+      <!-- 관리자 패널 -->
+      <div class="admin-panel" id="adminPanel" style="display:none;">
+        <div class="admin-header">
+          <button id="adminToggleBtn">관리자 메뉴 ▼</button>
+        </div>
+      </div>
+      <div class="admin-buttons-container" id="adminButtonsContainer">
+        <button id="currentVehicleBtn">🚗차량</button>
+        <button id="popupSettingBtn">⚙팝업</button>
+        <button id="resetBtn">🔄초기화</button>
+        <button id="copyVehicleBtn">📋복사</button>
+      </div>
+
+      <!-- 로그인 버튼 -->
+      <button id="adminLoginBtn" style="margin-top:10px;">게스트 모드</button>
+    </div>
+
+    <!-- 주차도 -->
+    <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">3R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">4R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">5R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">6R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">7R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+
+    <hr style="width:100%; border:none; border-top:2px solid #2c5364; margin:12px 0; opacity:0.3;">
+
+    <!-- 게시판 -->
+    <div class="bulletin-board">
+      <div class="bulletin-title">📝 특이사항 메모</div>
+      <div class="bulletin-input-container">
+        <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모 해 주세요..."></textarea>
+        <button id="bulletinSubmitBtn">작성</button>
+      </div>
+      <div id="bulletinPosts" class="bulletin-posts"></div>
+    </div>
+
+    <!-- 푸터 -->
+    <div class="footer">
+      <div class="copyright">Copyright (c) 2026 ChangHai An. All rights reserved.</div>
+      <div class="version">Version 1.0.5.0</div>
+    </div>
+  </div>
+
+  <!-- 팝업 설정 모달 -->
+  <div class="popup-settings-modal" id="popupSettingsModal">
+    <div class="popup-settings-content">
+      <div class="popup-settings-header">
+        <h3>팝업 설정</h3>
+        <button class="popup-settings-close" id="popupSettingsClose">✕</button>
+      </div>
+      <div class="popup-settings-group">
+        <label>내용입력</label>
+        <textarea id="popupContent" placeholder="팝업에 표시될 내용을 입력하세요..."></textarea>
+      </div>
+      <div class="popup-settings-group">
+        <label>요일선택</label>
+        <div class="popup-days-container">
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-1" value="1"><label for="day-1">월</label></div>
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-2" value="2"><label for="day-2">화</label></div>
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-3" value="3"><label for="day-3">수</label></div>
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-4" value="4"><label for="day-4">목</label></div>
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-5" value="5"><label for="day-5">금</label></div>
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-6" value="6"><label for="day-6">토</label></div>
+          <div class="popup-day-checkbox"><input type="checkbox" id="day-0" value="0"><label for="day-0">일</label></div>
+        </div>
+      </div>
+      <div class="popup-settings-group">
+        <label>시간설정</label>
+        <div class="popup-time-container">
+          <div class="popup-time-input"><label style="display:block;font-size:11px;margin-bottom:4px;">시작</label><input type="time" id="popupStartTime" value="09:00"></div>
+          <div class="popup-time-input"><label style="display:block;font-size:11px;margin-bottom:4px;">종료</label><input type="time" id="popupEndTime" value="18:00"></div>
+        </div>
+      </div>
+      <div class="popup-settings-buttons">
+        <button class="save-btn" id="popupSettingsSaveBtn">저장</button>
+        <button class="cancel-btn" id="popupSettingsCancelBtn">취소</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Popup Overlay -->
+  <div class="popup-overlay" id="popupOverlay"></div>
+
+  <!-- Popup Notification -->
+  <div class="popup-notification" id="popupNotification">
+    <div class="popup-notification-content" id="popupNotificationContent"></div>
+    <button class="popup-notification-close" id="popupNotificationClose">닫기</button>
+  </div>
+
+  <!-- 현재차량상황 패널 -->
+  <div id="vehiclePanel">
+    <div class="vehicle-panel-header">
+      <h3>현재 차량 목록</h3>
+      <button id="vehiclePanelCloseBtn">✕</button>
+    </div>
+    <div class="vehicle-list">
+      <button class="vehicle-add-btn" id="vehicleAddBtn">+ 차량번호 추가</button>
+      <div id="vehicleAddInputContainer" style="display:none;" class="vehicle-add-input-container">
+        <input type="text" id="vehicleAddInput" placeholder="차량번호 입력" maxlength="4">
+        <button id="vehicleAddConfirmBtn">추가</button>
+        <button id="vehicleAddCancelBtn" style="background:#999;">취소</button>
+      </div>
+      <div id="vehicleListContainer"></div>
+    </div>
+  </div>
+
+  <!-- 관리자 로그인 모달 -->
+  <div id="adminModal" style="
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.5);
+    align-items:center;
+    justify-content:center;
+    z-index:999;
+  ">
+    <div style="background:#fff; padding:20px; border-radius:12px; width:260px;">
+      <div class="modal-header">
+        <h3>관리자 비밀번호 입력</h3>
+        <button id="adminCloseBtn" aria-label="닫기">✕</button>
+      </div>
+      <input type="password" id="adminPw" placeholder="비밀번호"
+        style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+      <button id="adminLoginOk"
+        style="width:100%; padding:8px; background:#2c5364; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+        로그인
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
