@@ -104,15 +104,6 @@ body{
   transition:.2s;
   overflow:hidden;
 }
-@media (max-width:768px){
-
-.cell{
-  min-width:110px;
-  min-height:70px;
-  font-size:18px;
-}
-
-}
 .cell.active{
   background:linear-gradient(145deg,#ffe082,#ffca28);
   border:1px solid #f57f17;
@@ -1283,22 +1274,15 @@ body.admin-mode .admin-ui{
 @media (max-width:768px){
 
 #teamLabel{
-  font-size:30px;
+  font-size:20px;
   font-weight:900;
   letter-spacing:6px;
   text-align:center;
 }
 
+}
 #teamLabel::first-letter{
   font-size:52px;
-}
-
-}
-@media (max-width:768px){
-
-.board{
-  width:98%;
-  border-radius:12px;
 }
 
 }
@@ -1390,7 +1374,7 @@ body.admin-mode #menu-btn span{background:#ffb703}
     <button id="todayBtn">오늘</button>
   </div>
   <div class="date-box date-row">
-    <span id="teamLabel">🔵  A  TEAM  🔵</span>
+    <span id="teamLabel">🔵 A TEAM 🔵</span>
   </div>
 <div class="admin-panel" id="adminPanel" style="display:none;">
 
@@ -1535,9 +1519,9 @@ function getTeamByDate(dateStr){
   const diff = Math.floor((targetDate - baseDate) / (1000*60*60*24));
 
   if(diff % 2 === 0){
-    return "🔴  B  TEAM  🔴";
+    return "🔴 B TEAM 🔴";
   }else{
-    return "🔵  A  TEAM  🔵";
+    return "🔵 A TEAM 🔵";
   }
 
 }
