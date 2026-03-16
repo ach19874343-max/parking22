@@ -98,34 +98,72 @@ function renderVehicleList() {
     });
     item.addEventListener('drop', e => e.preventDefault());
 
-    /* 모바일 터치 드래그 */
-    let touchStartY = 0;
-    item.addEventListener('touchstart', e => {
-      touchStartY = e.touches[0].clientY;
-      APP.draggedItem = item;
-      item.classList.add('dragging');
-    }, { passive: true });
-    item.addEventListener('touchmove', e => {
-      e.preventDefault();
-      const y = e.touches[0].clientY;
-      const all = Array.from(container.querySelectorAll('.vehicle-item'));
-      all.forEach(el => {
-        const rect = el.getBoundingClientRect();
-        if (y > rect.top && y < rect.bottom && el !== item) {
-          el.parentNode.insertBefore(item, y > (rect.top + rect.height / 2) ? el.nextSibling : el);
-        }
-      });
-    }, { passive: false });
-    item.addEventListener('touchend', () => {
-      item.classList.remove('dragging');
-      APP.currentBusList = Array.from(container.querySelectorAll('.vehicle-item-number'))
-        .map(el => el.textContent.trim());
-      saveBusListToDB();
-      APP.draggedItem = null;
-    });
+/* 모바일 터치 드래그 */
 
-    container.appendChild(item);
+let touchStartY = 0;
+let pressTimer = null;
+let isDragging = false;
+
+item.addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+
+  pressTimer = setTimeout(() => {
+    APP.draggedItem = item;
+    item.classList.add('dragging');
+    isDragging = true;
+  }, 400); // 0.4초 길게 터치해야 드래그 시작
+
+}, { passive: true });
+
+
+item.addEventListener('touchmove', e => {
+
+  if (!isDragging) return; // 드래그 아닐때는 스크롤 허용
+
+  e.preventDefault();
+
+  const y = e.touches[0].clientY;
+  const all = Array.from(container.querySelectorAll('.vehicle-item'));
+
+  all.forEach(el => {
+    const rect = el.getBoundingClientRect();
+
+    if (y > rect.top && y < rect.bottom && el !== item) {
+      el.parentNode.insertBefore(
+        item,
+        y > (rect.top + rect.height / 2) ? el.nextSibling : el
+      );
+    }
+
   });
+
+}, { passive: false });
+
+
+item.addEventListener('touchend', () => {
+
+  clearTimeout(pressTimer);
+
+  if (isDragging) {
+
+    item.classList.remove('dragging');
+
+    APP.currentBusList = Array.from(
+      container.querySelectorAll('.vehicle-item-number')
+    ).map(el => el.textContent.trim());
+
+    saveBusListToDB();
+
+  }
+
+  isDragging = false;
+  APP.draggedItem = null;
+
+});
+
+
+container.appendChild(item);
+});
 
   /* PC 드래그 종료 후 순서 저장 */
   container.addEventListener('dragend', () => {
