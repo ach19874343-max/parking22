@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<!-- iOS Safari 키보드 줌 방지 + safe-area 지원 -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>보영운수 22번 주차도 관리시스템</title>
+<link rel="icon" href="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" type="image/png">
+
+<!-- SNS 공유 메타 -->
+<meta property="og:title" content="보영운수 22번 주차도 관리시스템">
+<meta property="og:description" content="보영운수 22번 주차도를 쉽게 확인하고 관리할 수 있습니다.">
+<meta property="og:image" content="https://ach19874343-max.github.io/parking22/123456789.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="guest-mode">
+
+<!-- ===== 관리자 상단 메뉴 (관리자 모드에서만 표시) ===== -->
+<nav class="top-menu admin-ui">
+  <button class="menu-admin">Logout</button>
+  <button id="currentVehicleBtn">🚗 차량</button>
+  <button id="popupSettingBtn">⚙ 팝업</button>
+  <button id="resetBtn">🔄 초기화</button>
+  <button id="copyVehicleBtn">📋 복사</button>
+</nav>
+
+<!-- ===== 메인 보드 ===== -->
+<div class="board">
+  <div class="title">보영운수 22번 주차도 관리시스템</div>
+
+  <!-- 헤더: 날짜 + 팀 표시 -->
+  <div class="header">
+    <div class="date-row">
+      <button id="adminLoginBtn" style="display:none;">Login</button>
+      <button id="prevDayBtn" class="nav-btn">◀ 이전</button>
+      <input type="date" id="datePicker" autocomplete="off">
+      <button id="todayBtn" class="nav-btn">오늘</button>
+    </div>
+    <div class="team-row">
+      <span id="teamLabel">🔵 🅰 TEAM 🔵</span>
+    </div>
+  </div>
+
+  <!-- ===== 주차도 그리드 ===== -->
+  <div class="parking-grid">
+    <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">3R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">4R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">5R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">6R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+    <div class="row"><div class="line-label">7R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
+  </div>
+
+  <!-- ===== 게시판 ===== -->
+  <div class="bulletin-board">
+    <div class="bulletin-posts" id="bulletinPosts"></div>
+  </div>
+
+  <!-- 푸터 -->
+  <div class="footer">
+    <pre>※ 보영운수 22번 주차도 (노란색 = 당일휴차)
+※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
+    <pre><span class="highlight">※ 각조 팀장&amp;부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
+    <div class="copyright">Copyright (c) 2026 ChangHai An. All rights reserved.</div>
+    <div class="version">Version 2.0.0</div>
+  </div>
+</div>
+
+<!-- ===== 팝업 설정 모달 ===== -->
+<div class="modal-overlay popup-settings-modal" id="popupSettingsModal">
+  <div class="modal-box popup-settings-content">
+    <div class="modal-header">
+      <h3>팝업 설정</h3>
+      <button class="modal-close-btn" id="popupSettingsClose" aria-label="닫기">✕</button>
+    </div>
+    <div class="popup-settings-group">
+      <label>내용 입력</label>
+      <textarea id="popupContent" placeholder="팝업에 표시될 내용을 입력하세요..."></textarea>
+    </div>
+    <div class="popup-settings-group">
+      <label>요일 선택</label>
+      <div class="popup-days-container">
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-1" value="1"><label for="day-1">월</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-2" value="2"><label for="day-2">화</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-3" value="3"><label for="day-3">수</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-4" value="4"><label for="day-4">목</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-5" value="5"><label for="day-5">금</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-6" value="6"><label for="day-6">토</label></div>
+        <div class="popup-day-checkbox"><input type="checkbox" id="day-0" value="0"><label for="day-0">일</label></div>
+      </div>
+    </div>
+    <div class="popup-settings-group">
+      <label>시간 설정</label>
+      <div class="popup-time-container">
+        <div class="popup-time-input">
+          <label style="display:block;font-size:12px;margin-bottom:4px;color:#666;">시작</label>
+          <input type="time" id="popupStartTime" value="09:00">
+        </div>
+        <div class="popup-time-input">
+          <label style="display:block;font-size:12px;margin-bottom:4px;color:#666;">종료</label>
+          <input type="time" id="popupEndTime" value="18:00">
+        </div>
+      </div>
+    </div>
+    <div class="popup-settings-buttons">
+      <button class="btn-primary" id="popupSettingsSaveBtn">저장</button>
+      <button class="btn-secondary" id="popupSettingsCancelBtn">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 팝업 알림 오버레이 -->
+<div class="popup-overlay" id="popupOverlay"></div>
+<div class="popup-notification" id="popupNotification">
+  <div class="popup-notification-content" id="popupNotificationContent"></div>
+  <button class="btn-primary" id="popupNotificationClose">닫기</button>
+</div>
+
+<!-- ===== 차량 목록 패널 ===== -->
+<div id="vehiclePanel">
+  <div class="vehicle-panel-header">
+    <h3>차량 목록</h3>
+    <button id="vehiclePanelCloseBtn" aria-label="닫기">✕</button>
+  </div>
+  <div class="vehicle-list">
+    <button class="vehicle-add-btn" id="vehicleAddBtn">+ 차량번호 추가</button>
+    <div id="vehicleAddInputContainer" style="display:none;" class="vehicle-add-input-container">
+      <input type="text" id="vehicleAddInput" placeholder="숫자 3-4자리 입력" maxlength="4" autocomplete="off" inputmode="numeric">
+      <button id="vehicleAddConfirmBtn">추가</button>
+      <button id="vehicleAddCancelBtn" class="btn-cancel">취소</button>
+    </div>
+    <div id="vehicleListContainer"></div>
+  </div>
+</div>
+
+<!-- ===== 관리자 로그인 모달 ===== -->
+<div class="modal-overlay" id="adminModal">
+  <div class="modal-box admin-modal-box">
+    <div class="modal-header">
+      <h3>관리자 로그인</h3>
+      <button id="adminCloseBtn" class="modal-close-btn" aria-label="닫기">✕</button>
+    </div>
+    <!-- autocomplete="current-password" + font-size:16px → iOS 키보드 줌 방지 -->
+    <input
+      type="password"
+      id="adminPw"
+      placeholder="비밀번호"
+      autocomplete="current-password"
+      inputmode="numeric"
+    >
+    <button id="adminLoginOk" class="btn-primary btn-full">Login</button>
+  </div>
+</div>
+
+<!-- ===== 글쓰기 팝업 ===== -->
+<div id="writePopup" class="write-popup">
+  <div class="write-box">
+    <div class="write-title">📝 특이사항 메모</div>
+    <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모해 주세요..."></textarea>
+    <div class="write-buttons">
+      <button id="postSubmit" class="btn-primary" type="button">확인</button>
+      <button id="postCancel"  class="btn-secondary" type="button">취소</button>
+    </div>
+  </div>
+</div>
+
+<!-- 플로팅 글쓰기 버튼 -->
+<div id="writePostBtn" role="button" aria-label="메모 작성">✏️</div>
+
+<!-- ===== 스크립트 (로딩 순서 중요) ===== -->
+<script src="firebase.js"></script>
+<script src="admin.js"></script>
+<script src="parking.js"></script>
+<script src="bulletin.js"></script>
+<script src="ui.js"></script>
+
+</body>
+</html>
