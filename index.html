@@ -1286,6 +1286,98 @@ body.admin-mode .admin-ui{
 }
 
 }
+#writePostBtn{
+ position:fixed;
+ right:20px;
+ bottom:20px;
+ width:60px;
+ height:60px;
+ border-radius:50%;
+ background:#2c5364;
+ color:#fff;
+ font-size:26px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ box-shadow:0 8px 20px rgba(0,0,0,0.3);
+ cursor:pointer;
+ z-index:999;
+}
+
+#writePostBtn:hover{
+ transform:scale(1.1);
+}
+
+.write-popup{
+ position:fixed;
+ left:0;
+ top:0;
+ width:100%;
+ height:100%;
+ background:rgba(0,0,0,0.6);
+ display:none;
+ align-items:center;
+ justify-content:center;
+ z-index:2000;
+}
+
+.write-box{
+ background:#fff;
+ width:90%;
+ max-width:400px;
+ border-radius:12px;
+ padding:20px;
+}
+
+.write-title{
+ font-weight:800;
+ margin-bottom:10px;
+}
+
+.write-box textarea{
+ width:100%;
+ height:120px;
+ padding:10px;
+ border-radius:6px;
+ border:1px solid #ccc;
+}
+
+.write-buttons{
+ margin-top:10px;
+ display:flex;
+ justify-content:space-between;
+}
+
+.write-buttons button{
+ padding:8px 16px;
+ border:none;
+ border-radius:6px;
+ background:#2c5364;
+ color:#fff;
+ cursor:pointer;
+}
+.reply{
+ margin-left:20px;
+ padding:6px;
+ font-size:13px;
+ color:#444;
+ border-left:2px solid #ddd;
+}
+
+.reply-time{
+ font-size:11px;
+ color:#888;
+ margin-left:6px;
+}
+
+.post-buttons{
+ margin-top:6px;
+}
+
+.post-buttons button{
+ margin-right:6px;
+ font-size:12px;
+}
 </style>
 
 <style>
@@ -1404,11 +1496,6 @@ body.admin-mode #menu-btn span{background:#ffb703}
 
   <!-- 게시판 -->
   <div class="bulletin-board">
-    <div class="bulletin-title">📝 특이사항 메모</div>
-    <div class="bulletin-input-container">
-      <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모 해 주세요..."></textarea>
-      <button id="bulletinSubmitBtn">작성</button>
-    </div>
     <div class="bulletin-posts" id="bulletinPosts"></div>
   </div>
 
@@ -1509,7 +1596,6 @@ body.admin-mode #menu-btn span{background:#ffb703}
 </div>
 
 <script>
-
 
 function getTeamByDate(dateStr){
 
@@ -2029,21 +2115,119 @@ document.getElementById("teamLabel").textContent = "" + team;
         if (snapshot.exists()) {
           const posts = snapshot.val();
           const postsArray = Array.isArray(posts) ? posts : Object.values(posts);
-          postsArray.reverse().forEach((post, index) => {
-            if (post) {
-              const postEl = document.createElement('div');
-              postEl.className = 'bulletin-post';
-              const time = new Date(post.time).toLocaleTimeString('ko-KR');
-              postEl.innerHTML = `
-                <div>
-                  <div class="bulletin-post-content">${post.text}</div>
-                  <div class="bulletin-post-time">${time}</div>
-                </div>
-                <button class="bulletin-post-delete" data-index="${index}">삭제</button>
-              `;
-              bulletinPosts.appendChild(postEl);
-            }
-          });
+postsArray.slice().reverse().forEach((post, index) => {
+
+  const postEl = document.createElement('div');
+  postEl.className = 'bulletin-post';
+
+  const time = new Date(post.time).toLocaleTimeString('ko-KR');
+
+  let repliesHTML = '';
+
+  if(post.replies){
+    post.replies.forEach(r=>{
+      const rtime = new Date(r.time).toLocaleTimeString('ko-KR');
+      repliesHTML += `
+      <div class="reply">
+        └ ${r.text}
+        <span class="reply-time">${rtime}</span>
+      </div>
+      `;
+    });
+  }
+
+  postEl.innerHTML = `
+  <div class="post-main">
+
+    <div class="bulletin-post-content">${post.text}</div>
+    <div class="bulletin-post-time">${time}</div>
+
+    <div class="post-buttons">
+      <button class="replyBtn" data-index="${index}">답글</button>
+      <button class="editBtn" data-index="${index}">수정</button>
+      <button class="bulletin-post-delete" data-index="${index}">삭제</button>
+    </div>
+
+    <div class="reply-area"></div>
+
+    <div class="reply-list">
+      ${repliesHTML}
+    </div>
+
+  </div>
+  `;
+
+  bulletinPosts.appendChild(postEl);
+
+});
+document.querySelectorAll('.replyBtn').forEach(btn => {
+
+  btn.addEventListener('click', async (e)=>{
+
+    const index = parseInt(e.target.dataset.index);
+
+    const snapshot = await get(ref(db,'bulletin/posts'));
+    const data = snapshot.val();
+    const posts = Array.isArray(data)?data:Object.values(data);
+
+    const realIndex = posts.length - 1 - index;
+
+    const post = e.target.closest('.bulletin-post');
+    const area = post.querySelector('.reply-area');
+
+    area.innerHTML = `
+      <input class="replyInput" placeholder="답글 입력">
+      <button class="replySave">등록</button>
+    `;
+
+    area.querySelector(".replySave").onclick = async ()=>{
+
+      const text = area.querySelector(".replyInput").value.trim();
+      if(!text) return;
+
+      if(!posts[realIndex].replies){
+        posts[realIndex].replies=[];
+      }
+
+      posts[realIndex].replies.push({
+        text:text,
+        time:new Date().toISOString()
+      });
+
+      await set(ref(db,'bulletin/posts'),posts);
+
+      loadBulletinPosts();
+
+    };
+
+  });
+
+});
+document.querySelectorAll('.editBtn').forEach(btn => {
+
+  btn.addEventListener('click', async (e)=>{
+
+const index = parseInt(e.target.dataset.index);
+
+const snapshot = await get(ref(db,'bulletin/posts'));
+const data = snapshot.val();
+const posts = Array.isArray(data)?data:Object.values(data);
+
+const realIndex = posts.length - 1 - index;
+
+const newText = prompt("게시글 수정", posts[realIndex].text);
+
+    if(newText === null) return;
+
+    posts[realIndex].text = newText;
+
+    await set(ref(db,'bulletin/posts'),posts);
+
+    loadBulletinPosts();
+
+  });
+
+});
           bulletinPosts.querySelectorAll('.bulletin-post-delete').forEach(btn => {
             btn.addEventListener('click', async (e) => {
               const index = parseInt(e.target.dataset.index);
@@ -2065,39 +2249,43 @@ document.getElementById("teamLabel").textContent = "" + team;
       }
     }
 
-    bulletinSubmitBtn.addEventListener('click', async () => {
-      const text = bulletinInput.value.trim();
-      if (!text) {
-        alert('내용을 입력해주세요.');
-        return;
-      }
-      const date = datePicker.value;
-      if (!date) {
-        alert('날짜를 선택해주세요.');
-        return;
-      }
-      try {
-        const snapshot = await get(ref(db, 'bulletin/posts'));
-        let posts = [];
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          posts = Array.isArray(data) ? data : Object.values(data);
-        }
-               posts.push({
-          text: text,
-          time: new Date().toISOString()
-        });
+    document.getElementById("postSubmit").addEventListener('click', async () => {
 
-        await set(ref(db, 'bulletin/posts'), posts);
-        bulletinInput.value = '';
-        loadBulletinPosts(date);
+  const text = bulletinInput.value.trim();
+  if (!text) {
+    alert('내용을 입력해주세요.');
+    return;
+  }
 
-      } catch (err) {
-        console.error('게시판 저장 실패:', err);
-        alert('저장 중 오류가 발생했습니다.');
-      }
+  try {
+
+    const snapshot = await get(ref(db, 'bulletin/posts'));
+
+    let posts = [];
+
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      posts = Array.isArray(data) ? data : Object.values(data);
+    }
+
+    posts.push({
+      text: text,
+      time: new Date().toISOString()
     });
 
+    await set(ref(db, 'bulletin/posts'), posts);
+
+    bulletinInput.value = '';
+    document.getElementById("writePopup").style.display="none";
+
+    loadBulletinPosts();
+
+  } catch (err) {
+    console.error('게시판 저장 실패:', err);
+    alert('저장 중 오류가 발생했습니다.');
+  }
+
+});
     // 날짜 변경 시 게시판도 다시 로드
     datePicker.addEventListener("change", () => {
   loadData(datePicker.value);
@@ -2337,6 +2525,99 @@ document.querySelectorAll("#side-menu button,.bottom-menu button").forEach(b=>{
  });
 });
 </script>
+<!-- 글쓰기 팝업 -->
+<div id="writePopup" class="write-popup">
+  <div class="write-box">
 
+    <div class="write-title">📝 특이사항 메모</div>
+
+    <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모 해 주세요..."></textarea>
+
+    <div class="write-buttons">
+      <button id="postSubmit" type="button">확인</button>
+      <button id="postCancel">취소</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- 게시글 작성 버튼 -->
+<div id="writePostBtn">✏️</div>
+<script>
+
+/* 게시글 데이터 */
+let posts = [];
+
+/* 게시판 출력 */
+function renderPosts(){
+
+ const board = document.getElementById("bulletinBoard");
+ if(!board) return;
+
+ board.innerHTML="";
+
+ posts.forEach((post,index)=>{
+
+  const div=document.createElement("div");
+  div.className="post";
+
+  div.innerHTML=`
+  <div>${post.text}</div>
+  <div style="font-size:12px;color:#777">${post.time}</div>
+  <button onclick="deletePost(${index})">삭제</button>
+  `;
+
+  board.appendChild(div);
+
+ });
+
+}
+
+/* 삭제 */
+function deletePost(i){
+ posts.splice(i,1);
+ renderPosts();
+}
+
+/* 글쓰기 버튼 */
+document.getElementById("writePostBtn").onclick=function(){
+ document.getElementById("writePopup").style.display="flex";
+};
+
+/* 취소 버튼 */
+document.getElementById("postCancel").onclick=function(){
+ document.getElementById("writePopup").style.display="none";
+};
+
+/* 게시글 저장 */
+document.getElementById("postSubmit").onclick=function(){
+
+ const input=document.getElementById("postInput");
+ const text=input.value.trim();
+
+ if(!text) return;
+
+ const now=new Date();
+
+ const time=
+ (now.getMonth()+1)+"/"+
+ now.getDate()+" "+
+ now.getHours()+":"+
+ now.getMinutes()+":"+
+ now.getSeconds();
+
+ posts.push({
+  text:text,
+  time:time
+ });
+
+ input.value="";
+ document.getElementById("writePopup").style.display="none";
+
+ renderPosts();
+
+};
+
+</script>
 </body>
 </html>
