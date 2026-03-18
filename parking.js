@@ -111,7 +111,7 @@ item.addEventListener('touchstart', e => {
     APP.draggedItem = item;
     item.classList.add('dragging');
     isDragging = true;
-  }, 400); // 0.4초 길게 터치해야 드래그 시작
+  }, 1500); // 1.5초 길게 터치해야 드래그 시작
 
 }, { passive: true });
 
