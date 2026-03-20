@@ -1,9 +1,9 @@
 /* ============================================================
-   ui.js — 메뉴 / 플로팅 버튼 / 팝업 알림 / 팝업 설정
+   ui.js — 팝업 알림 / 팝업 설정 v2.1
    ============================================================ */
 'use strict';
 
-/* ── 팝업 자동 표시 체크 ─────────────────────────────── */
+/* ── 팝업 자동 표시 체크 ─────────────────────────────────── */
 async function checkAndShowPopup() {
   try {
     const snap = await APP.get(APP.ref(APP.db, 'popup/settings'));
@@ -26,21 +26,8 @@ async function checkAndShowPopup() {
   }
 }
 
-/* ── UI 초기화 (Firebase 불필요한 부분) ──────────────── */
+/* ── UI 초기화 ───────────────────────────────────────────── */
 function initUI() {
-
-  /* ── 게스트 플로팅 로그인 버튼 생성 ── */
-  const floating = document.createElement('button');
-  floating.textContent = 'Login';
-  floating.className   = 'guest-login-floating';
-  document.body.appendChild(floating);
-  floating.addEventListener('click', () => document.getElementById('adminLoginBtn').click());
-
-  /* ── 상단 메뉴 admin 버튼 ── */
-  document.querySelectorAll('.menu-admin').forEach(btn => {
-    btn.addEventListener('click', () => document.getElementById('adminLoginBtn').click());
-  });
-
   /* ── 팝업 알림 닫기 ── */
   document.getElementById('popupNotificationClose').addEventListener('click', () => {
     document.getElementById('popupNotification').classList.remove('active');
@@ -78,8 +65,9 @@ function initUI() {
     const content   = document.getElementById('popupContent').value.trim();
     const startTime = document.getElementById('popupStartTime').value;
     const endTime   = document.getElementById('popupEndTime').value;
-    const days      = [];
-    document.querySelectorAll('.popup-day-checkbox input:checked').forEach(cb => days.push(cb.value));
+    const days = [];
+    document.querySelectorAll('.popup-day-checkbox input:checked')
+      .forEach(cb => days.push(cb.value));
 
     try {
       await APP.set(APP.ref(APP.db, 'popup/settings'), { content, startTime, endTime, days });

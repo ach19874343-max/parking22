@@ -2,80 +2,98 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<!-- iOS Safari 키보드 줌 방지 + safe-area 지원 -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>보영운수 22번 주차도 관리시스템</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>보영운수 22번 주차도</title>
 <link rel="icon" href="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" type="image/png">
-
-<!-- SNS 공유 메타 -->
 <meta property="og:title" content="보영운수 22번 주차도 관리시스템">
 <meta property="og:description" content="보영운수 22번 주차도를 쉽게 확인하고 관리할 수 있습니다.">
 <meta property="og:image" content="https://ach19874343-max.github.io/parking22/123456789.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
-
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="style.css">
 </head>
-
 <body class="guest-mode">
 
-<!-- ===== 관리자 상단 메뉴 (관리자 모드에서만 표시) ===== -->
-<nav class="top-menu admin-ui">
-  <button class="menu-admin">Logout</button>
-  <button id="currentVehicleBtn">🚗 차량</button>
-  <button id="popupSettingBtn">⚙ 팝업</button>
-  <button id="resetBtn">🔄 초기화</button>
-  <button id="copyVehicleBtn">📋 복사</button>
-</nav>
+<!-- ===== 앱 전체 래퍼 ===== -->
+<div class="app-wrapper">
 
-<!-- ===== 메인 보드 ===== -->
-<div class="board">
-  <div class="title">보영운수 22번 주차도 관리시스템</div>
-
-  <!-- 헤더: 날짜 + 팀 표시 -->
-  <div class="header">
-    <div class="date-row">
-      <button id="adminLoginBtn" style="display:none;">Login</button>
-      <button id="prevDayBtn" class="nav-btn">◀ 이전</button>
-      <input type="date" id="datePicker" autocomplete="off">
-      <button id="todayBtn" class="nav-btn">오늘</button>
+  <!-- ===== 헤더 ===== -->
+  <header class="app-header">
+    <div class="date-nav">
+      <button id="prevDayBtn" class="date-nav-btn" aria-label="이전날">&#8249;</button>
+      <div class="date-center">
+        <input type="date" id="datePicker" autocomplete="off">
+        <button id="nextDayBtn" class="date-nav-btn" aria-label="다음날">&#8250;</button>
+      </div>
+      <button id="todayBtn" class="today-chip">오늘</button>
     </div>
     <div class="team-row">
-      <span id="teamLabel">🔵 🅰 TEAM 🔵</span>
+      <span id="teamLabel" class="team-badge"></span>
+      <div class="legend">
+        <span class="legend-dot run"></span><span class="legend-text">운행</span>
+        <span class="legend-dot rest"></span><span class="legend-text">휴차</span>
+      </div>
     </div>
-  </div>
+  </header>
 
-  <!-- ===== 주차도 그리드 ===== -->
-  <div class="parking-grid">
-    <div class="row"><div class="line-label">2R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
-    <div class="row"><div class="line-label">3R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
-    <div class="row"><div class="line-label">4R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
-    <div class="row"><div class="line-label">5R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
-    <div class="row"><div class="line-label">6R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
-    <div class="row"><div class="line-label">7R</div><div class="cells-wrapper"><div class="cell"><select></select></div><div class="cell"><select></select></div><div class="cell"><select></select></div></div></div>
-  </div>
+  <!-- ===== 주차 슬롯 그리드 ===== -->
+  <main class="parking-main">
+    <div class="parking-grid" id="parkingGrid">
+      <div class="p-row"><div class="line-label">2R</div><div class="slots-wrap" id="row-0"></div></div>
+      <div class="p-row"><div class="line-label">3R</div><div class="slots-wrap" id="row-1"></div></div>
+      <div class="p-row"><div class="line-label">4R</div><div class="slots-wrap" id="row-2"></div></div>
+      <div class="p-row"><div class="line-label">5R</div><div class="slots-wrap" id="row-3"></div></div>
+      <div class="p-row"><div class="line-label">6R</div><div class="slots-wrap" id="row-4"></div></div>
+      <div class="p-row"><div class="line-label">7R</div><div class="slots-wrap" id="row-5"></div></div>
+    </div>
+  </main>
 
-  <!-- ===== 게시판 ===== -->
-  <div class="bulletin-board">
-    <div class="bulletin-posts" id="bulletinPosts"></div>
-  </div>
+  <!-- ===== 게시판 영역 ===== -->
+  <section class="bulletin-section">
+    <div class="bulletin-board">
+      <div class="bulletin-posts" id="bulletinPosts"></div>
+    </div>
+    <div class="footer-note">
+      <p>※ 보영운수 22번 주차도&nbsp;&nbsp;|&nbsp;&nbsp;<span class="rest-note">노란색 = 당일 휴차</span></p>
+      <p>※ 원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다.</p>
+      <p class="warn-text">※ 각조 팀장 &amp; 부팀장 허락 없이 수정 절대 금지 ※</p>
+      <p class="copyright">Copyright &copy; 2026 ChangHai An. All rights reserved. &nbsp;|&nbsp; v2.1.0</p>
+    </div>
+  </section>
 
-  <!-- 푸터 -->
-  <div class="footer">
-    <pre>※ 보영운수 22번 주차도 (노란색 = 당일휴차)
-※ 원하는 날짜를 선택하시면 그날 마감주차도를 불러옵니다.</pre>
-    <pre><span class="highlight">※ 각조 팀장&amp;부팀장 허락없이 수정하시면 절대 안됩니다. ※</span></pre>
-    <div class="copyright">Copyright (c) 2026 ChangHai An. All rights reserved.</div>
-    <div class="version">Version 2.0.0</div>
-  </div>
-</div>
+  <!-- ===== 하단 네비게이션 ===== -->
+  <nav class="bottom-nav">
+    <button class="nav-item admin-ui" id="currentVehicleBtn">
+      <span class="nav-icon">&#128663;</span>
+      <span class="nav-label">차량</span>
+    </button>
+    <button class="nav-item admin-ui" id="popupSettingBtn">
+      <span class="nav-icon">&#9881;</span>
+      <span class="nav-label">팝업</span>
+    </button>
+    <button class="nav-item" id="writePostBtn">
+      <span class="nav-icon">&#9998;</span>
+      <span class="nav-label">메모</span>
+    </button>
+    <button class="nav-item" id="adminLoginBtn">
+      <span class="nav-icon" id="loginIcon">&#128100;</span>
+      <span class="nav-label" id="loginLabel">로그인</span>
+    </button>
+  </nav>
+
+</div><!-- /.app-wrapper -->
 
 <!-- ===== 팝업 설정 모달 ===== -->
 <div class="modal-overlay popup-settings-modal" id="popupSettingsModal">
   <div class="modal-box popup-settings-content">
     <div class="modal-header">
       <h3>팝업 설정</h3>
-      <button class="modal-close-btn" id="popupSettingsClose" aria-label="닫기">✕</button>
+      <button class="modal-close-btn" id="popupSettingsClose" aria-label="닫기">&#10005;</button>
     </div>
     <div class="popup-settings-group">
       <label>내용 입력</label>
@@ -97,11 +115,11 @@
       <label>시간 설정</label>
       <div class="popup-time-container">
         <div class="popup-time-input">
-          <label style="display:block;font-size:12px;margin-bottom:4px;color:#666;">시작</label>
+          <label style="display:block;font-size:12px;margin-bottom:4px;color:#888">시작</label>
           <input type="time" id="popupStartTime" value="09:00">
         </div>
         <div class="popup-time-input">
-          <label style="display:block;font-size:12px;margin-bottom:4px;color:#666;">종료</label>
+          <label style="display:block;font-size:12px;margin-bottom:4px;color:#888">종료</label>
           <input type="time" id="popupEndTime" value="18:00">
         </div>
       </div>
@@ -124,14 +142,17 @@
 <div id="vehiclePanel">
   <div class="vehicle-panel-header">
     <h3>차량 목록</h3>
-    <button id="vehiclePanelCloseBtn" aria-label="닫기">✕</button>
+    <button id="vehiclePanelCloseBtn" aria-label="닫기">&#10005;</button>
   </div>
   <div class="vehicle-list">
     <button class="vehicle-add-btn" id="vehicleAddBtn">+ 차량번호 추가</button>
-    <div id="vehicleAddInputContainer" style="display:none;" class="vehicle-add-input-container">
-      <input type="text" id="vehicleAddInput" placeholder="숫자 3-4자리 입력" maxlength="4" autocomplete="off" inputmode="numeric">
-      <button id="vehicleAddConfirmBtn">추가</button>
-      <button id="vehicleAddCancelBtn" class="btn-cancel">취소</button>
+    <div id="vehicleAddInputContainer" style="display:none" class="vehicle-add-input-container">
+      <input type="text" id="vehicleAddInput" placeholder="숫자 3-4자리 입력" maxlength="4"
+             autocomplete="off" inputmode="numeric">
+      <div class="vehicle-add-btn-row">
+        <button id="vehicleAddConfirmBtn" class="btn-confirm">추가</button>
+        <button id="vehicleAddCancelBtn" class="btn-cancel">취소</button>
+      </div>
     </div>
     <div id="vehicleListContainer"></div>
   </div>
@@ -142,16 +163,11 @@
   <div class="modal-box admin-modal-box">
     <div class="modal-header">
       <h3>관리자 로그인</h3>
-      <button id="adminCloseBtn" class="modal-close-btn" aria-label="닫기">✕</button>
+      <button id="adminCloseBtn" class="modal-close-btn" aria-label="닫기">&#10005;</button>
     </div>
-    <!-- autocomplete="current-password" + font-size:16px → iOS 키보드 줌 방지 -->
-    <input
-      type="password"
-      id="adminPw"
-      placeholder="비밀번호"
-      autocomplete="current-password"
-      inputmode="numeric"
-    >
+    <input type="password" id="adminPw" placeholder="비밀번호"
+           autocomplete="current-password" inputmode="numeric"
+           style="font-size:16px">
     <button id="adminLoginOk" class="btn-primary btn-full">Login</button>
   </div>
 </div>
@@ -159,19 +175,31 @@
 <!-- ===== 글쓰기 팝업 ===== -->
 <div id="writePopup" class="write-popup">
   <div class="write-box">
-    <div class="write-title">📝 특이사항 메모</div>
+    <div class="write-title">&#128221; 특이사항 메모</div>
     <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모해 주세요..."></textarea>
     <div class="write-buttons">
       <button id="postSubmit" class="btn-primary" type="button">확인</button>
-      <button id="postCancel"  class="btn-secondary" type="button">취소</button>
+      <button id="postCancel" class="btn-secondary" type="button">취소</button>
     </div>
   </div>
 </div>
 
-<!-- 플로팅 글쓰기 버튼 -->
-<div id="writePostBtn" role="button" aria-label="메모 작성">✏️</div>
+<!-- ===== 게시글 수정 팝업 ===== -->
+<div id="editPostPopup" class="write-popup">
+  <div class="write-box">
+    <div class="write-title">&#9998; 게시글 수정</div>
+    <textarea id="editPostInput" placeholder="수정할 내용을 입력하세요..."></textarea>
+    <div class="write-buttons">
+      <button id="editPostSubmit" class="btn-primary" type="button">저장</button>
+      <button id="editPostCancel" class="btn-secondary" type="button">취소</button>
+    </div>
+  </div>
+</div>
 
-<!-- ===== 스크립트 (로딩 순서 중요) ===== -->
+<!-- 드래그 고스트 -->
+<div id="dragGhost" class="drag-ghost"></div>
+
+<!-- ===== 스크립트 ===== -->
 <script src="firebase.js"></script>
 <script src="admin.js"></script>
 <script src="parking.js"></script>
