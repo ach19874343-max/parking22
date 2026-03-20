@@ -68,12 +68,34 @@ let isTouchDrag    = false;  // 모바일 드래그 진행 중 여부 (미사용
 /* ── 탭-투-스왑 전역 상태 ── */
 let tapFirstSlot   = null;   // 첫 번째 탭 슬롯 인덱스 (null 이면 미선택)
 
+/* ── Undo 스택 (최대 20단계) ── */
+const UNDO_LIMIT = 20;
+let undoStack = [];
+
+function pushUndo() {
+  undoStack.push(JSON.stringify(APP.parkingState));
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  const btn = document.getElementById('undoBtn');
+  if (btn) btn.disabled = false;
+}
+
+function undoAction() {
+  if (!undoStack.length) return;
+  const prev = JSON.parse(undoStack.pop());
+  APP.parkingState = prev;
+  renderCards();
+  saveData();
+  const btn = document.getElementById('undoBtn');
+  if (btn) btn.disabled = undoStack.length === 0;
+}
+
 /* 드래그 고스트 요소 */
 const ghost = document.getElementById('dragGhost');
 
 /* ── 슬롯 스왑 ──────────────────────────────────────────── */
 function swapSlots(srcIdx, dstIdx) {
   if (srcIdx === dstIdx) return;
+  pushUndo();
   const sv = APP.parkingState.values[srcIdx];
   const dv = APP.parkingState.values[dstIdx];
   const sa = APP.parkingState.active[srcIdx];
@@ -92,6 +114,7 @@ function swapSlots(srcIdx, dstIdx) {
 function toggleCardState(slotIdx) {
   if (!APP.isAdmin) return;
   if (!APP.parkingState.values[slotIdx]) return; // 빈 슬롯 무시
+  pushUndo();
   APP.parkingState.active[slotIdx] = !APP.parkingState.active[slotIdx];
   renderCards();
   saveData();
@@ -544,6 +567,15 @@ async function initParking() {
   await loadData(todayStr);
 
   APP.applyPermissionUI();
+
+  /* ── Undo 버튼 ── */
+  const undoBtn = document.getElementById('undoBtn');
+  if (undoBtn) {
+    undoBtn.addEventListener('click', () => {
+      if (!APP.isAdmin) return;
+      undoAction();
+    });
+  }
 
   /* 백그라운드에서 오래된 데이터 정리 (UI 블로킹 없음) */
   cleanOldParkingData();

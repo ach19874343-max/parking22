@@ -22,9 +22,9 @@
   --run-bg:      #ECFDF5;
   --run-txt:     #065F46;
   --run-border:  #6EE7B7;
-  --rest-bg:     #FFFBEB;
-  --rest-txt:    #92400E;
-  --rest-border: #FCD34D;
+  --rest-bg:     #FEF08A;
+  --rest-txt:    #713F12;
+  --rest-border: #EAB308;
   --empty-bg:    #F9FAFB;
   --empty-border:#D1D5DB;
 
@@ -42,6 +42,35 @@
   --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
   --shadow-md:   0 4px 12px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
   --shadow-lg:   0 10px 30px rgba(0,0,0,0.14);
+}
+
+/* ── 다크모드 ─────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:          #0F1117;
+    --surface:     #1C1E26;
+    --border:      rgba(255,255,255,0.08);
+    --text-pri:    #F1F3F9;
+    --text-sec:    #9CA3AF;
+    --text-hint:   #6B7280;
+    --run-bg:      #052E1C;
+    --run-txt:     #6EE7B7;
+    --run-border:  #065F46;
+    --rest-bg:     #2D2000;
+    --rest-txt:    #FDE68A;
+    --rest-border: #92400E;
+    --empty-bg:    #1C1E26;
+    --empty-border:#374151;
+    --blue:        #60A5FA;
+    --blue-light:  #1E3A5F;
+    --red:         #F87171;
+    --red-light:   #3B1515;
+    --label-bg:    #374151;
+    --label-txt:   #F9FAFB;
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md:   0 4px 12px rgba(0,0,0,0.5);
+    --shadow-lg:   0 10px 30px rgba(0,0,0,0.6);
+  }
 }
 
 /* ── Reset ─────────────────────────────────────────────── */
@@ -99,8 +128,8 @@ input, textarea, select {
   z-index: 100;
   height: var(--header-h);
   background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border);
   padding: 8px 14px 6px;
   display: flex;
@@ -206,6 +235,40 @@ input, textarea, select {
   min-height: 22px;
 }
 
+.header-actions {
+  grid-column: 1;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.header-action-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-sec);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  padding: 0;
+}
+
+.header-action-btn:hover  { background: var(--blue-light); color: var(--blue); }
+.header-action-btn:active { transform: scale(0.92); }
+.header-action-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* 관리자 모드에서만 Undo 버튼 표시 */
+.guest-mode #undoBtn { display: none; }
+
 .team-badge {
   grid-column: 2;
   font-size: 13px;
@@ -289,21 +352,28 @@ input, textarea, select {
   gap: 6px;
 }
 
-/* 2R~7R 라벨 */
+/* 2R~7R 라벨 — 행별 컬러 뱃지 */
 .line-label {
   width: 26px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--label-bg);
-  color: var(--label-txt);
   border-radius: 7px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.5px;
   box-shadow: var(--shadow-sm);
+  color: #fff;
+  transition: transform 0.15s;
 }
+
+.line-label[data-row="0"] { background: #6366F1; }
+.line-label[data-row="1"] { background: #3B82F6; }
+.line-label[data-row="2"] { background: #06B6D4; }
+.line-label[data-row="3"] { background: #10B981; }
+.line-label[data-row="4"] { background: #F59E0B; }
+.line-label[data-row="5"] { background: #EF4444; }
 
 /* 슬롯 래퍼 */
 .slots-wrap {
@@ -320,7 +390,7 @@ input, textarea, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(20px, 3.8vw, 19px);
+  font-size: clamp(14px, 4.5vw, 22px);
   font-weight: 800;
   font-family: var(--font);
   letter-spacing: -0.5px;
@@ -345,8 +415,9 @@ input, textarea, select {
 .slot-card.rest {
   background: var(--rest-bg);
   color: var(--rest-txt);
-  border: 1.5px solid var(--rest-border);
-  box-shadow: 0 2px 6px rgba(251,191,36,0.2);
+  border: 2px solid var(--rest-border);
+  box-shadow: 0 2px 8px rgba(234,179,8,0.35);
+  font-weight: 900;
 }
 
 .slot-card.empty {
@@ -391,6 +462,8 @@ input, textarea, select {
 .slot-card.tap-selected {
   outline: 2.5px solid var(--blue);
   outline-offset: -2px;
+  background: var(--blue-light) !important;
+  color: var(--blue) !important;
   transform: scale(1.06);
   z-index: 10;
   animation: tap-pulse 0.7s ease-in-out infinite alternate;
@@ -507,8 +580,21 @@ input, textarea, select {
 .nav-item.active .nav-label { color: var(--blue); font-weight: 700; }
 
 .nav-icon {
-  font-size: 20px;
-  line-height: 1;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+.nav-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .nav-label {
@@ -1017,6 +1103,7 @@ input, textarea, select {
   max-width: 420px;
   max-height: 90dvh;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -1075,6 +1162,8 @@ input, textarea, select {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .popup-time-input { }
@@ -1089,13 +1178,15 @@ input, textarea, select {
 
 .popup-time-input input[type="time"] {
   width: 100%;
+  min-width: 0;
   height: 42px;
   border: 1.5px solid #E5E7EB;
   border-radius: 10px;
-  padding: 0 10px;
-  font-size: 15px;
+  padding: 0 6px;
+  font-size: 13px;
   font-family: var(--font);
   font-weight: 600;
+  box-sizing: border-box;
 }
 
 .popup-settings-buttons {
@@ -1178,7 +1269,7 @@ input, textarea, select {
   text-align: center;
 }
 
-/* ── Inline Write / Edit Area ────────────────────────────── */
+/* ── Inline Write Area ──────────────────────────────────── */
 .bulletin-write-area {
   padding: 10px 12px 6px;
   border-bottom: 1px solid var(--border);
@@ -1205,6 +1296,38 @@ input, textarea, select {
   outline: none;
 }
 
+/* ── 다크모드 컴포넌트 오버라이드 ───────────────────────── */
+@media (prefers-color-scheme: dark) {
+  .app-header {
+    background: rgba(15,17,23,0.88);
+    border-bottom-color: rgba(255,255,255,0.06);
+  }
+  .bottom-nav {
+    background: rgba(28,30,38,0.92);
+    border-top-color: rgba(255,255,255,0.06);
+  }
+  .date-display-btn {
+    border-color: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-pri);
+  }
+  .today-chip {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-sec);
+    border-color: rgba(255,255,255,0.1);
+  }
+  .slot-card.run::before  { background: #34D399; }
+  .slot-card.rest::before { background: #FBBF24; }
+  .line-label[data-row="0"] { background: #4F46E5; }
+  .line-label[data-row="1"] { background: #2563EB; }
+  .line-label[data-row="2"] { background: #0891B2; }
+  .line-label[data-row="3"] { background: #059669; }
+  .line-label[data-row="4"] { background: #D97706; }
+  .line-label[data-row="5"] { background: #DC2626; }
+  .bulletin-post { border-color: rgba(255,255,255,0.06); }
+  .header-action-btn { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
+}
+
 /* ── Desktop 대응 ─────────────────────────────────────────── */
 @media (min-width: 641px) {
   .app-wrapper {
@@ -1213,7 +1336,7 @@ input, textarea, select {
   }
 
   .slot-card {
-    font-size: 18px;
+    font-size: 25px;
   }
 
   .parking-main {

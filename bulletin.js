@@ -1,5 +1,7 @@
 /* ============================================================
-   bulletin.js — 게시판 v2.2
+   bulletin.js — 게시판 v2.3
+   - savePosts: null 슬롯 제거
+   - 수정/메모: 인라인 입력창 (바텀시트 제거)
    ============================================================ */
 'use strict';
 
@@ -23,11 +25,11 @@ function formatTime(isoStr) {
   const dateStr = isoStr.split('T')[0];
   const hh = String(d.getHours()).padStart(2,'0');
   const mm = String(d.getMinutes()).padStart(2,'0');
-  if (dateStr === todayStr) return `<span class="time-badge today">오늘</span>${hh}:${mm}`;
-  if (dateStr === yestStr)  return `<span class="time-badge yesterday">어제</span>${hh}:${mm}`;
+  if (dateStr === todayStr) return '<span class="time-badge today">오늘</span>' + hh + ':' + mm;
+  if (dateStr === yestStr)  return '<span class="time-badge yesterday">어제</span>' + hh + ':' + mm;
   const mo = String(d.getMonth()+1).padStart(2,'0');
   const dd = String(d.getDate()).padStart(2,'0');
-  return `${mo}-${dd} ${hh}:${mm}`;
+  return mo + '-' + dd + ' ' + hh + ':' + mm;
 }
 
 function filterPosts(postsArray) {
@@ -36,9 +38,9 @@ function filterPosts(postsArray) {
   const yest = new Date(now); yest.setDate(yest.getDate() - 1);
   const yestStr = toDateStr(yest);
   if (APP.bulletinFilter === 'today')
-    return postsArray.filter(p => p.time?.startsWith(todayStr));
+    return postsArray.filter(p => p.time && p.time.startsWith(todayStr));
   if (APP.bulletinFilter === 'yesterday')
-    return postsArray.filter(p => p.time?.startsWith(yestStr));
+    return postsArray.filter(p => p.time && p.time.startsWith(yestStr));
   return postsArray;
 }
 
@@ -50,23 +52,21 @@ async function fetchPosts() {
 }
 
 async function savePosts(arr) {
-  /* null/undefined 슬롯 제거 후 저장 (splice 후 빈 슬롯 방지) */
   const clean = arr.filter(p => p != null);
   await APP.set(APP.ref(APP.db, 'bulletin/posts'), clean);
 }
 
-/* 인라인 수정창 열기 (답글 입력창과 동일 스타일) */
+/* 인라인 수정창 */
 function openInlineEdit(container, currentText, placeholder, onSave) {
-  /* 이미 열려 있으면 닫기 */
   if (container.innerHTML !== '') { container.innerHTML = ''; return; }
-  container.innerHTML = `
-    <div class="reply-input-row">
-      <textarea class="inlineEditInput" placeholder="${placeholder}" rows="2">${currentText}</textarea>
-      <div class="reply-action-row">
-        <button class="inlineEditSave replySave">저장</button>
-        <button class="inlineEditCancel replyCancel">취소</button>
-      </div>
-    </div>`;
+  container.innerHTML =
+    '<div class="reply-input-row">' +
+      '<textarea class="inlineEditInput" placeholder="' + placeholder + '" rows="2">' + escHtml(currentText) + '</textarea>' +
+      '<div class="reply-action-row">' +
+        '<button class="inlineEditSave replySave">저장</button>' +
+        '<button class="inlineEditCancel replyCancel">취소</button>' +
+      '</div>' +
+    '</div>';
   const ta = container.querySelector('.inlineEditInput');
   ta.focus();
   ta.setSelectionRange(ta.value.length, ta.value.length);
@@ -92,8 +92,8 @@ async function loadBulletinPosts() {
       return;
     }
 
-    const raw    = snap.val();
-    const allArr = Array.isArray(raw) ? raw : Object.values(raw);
+    const raw     = snap.val();
+    const allArr  = Array.isArray(raw) ? raw : Object.values(raw);
     const indexed = allArr.map((post, origIdx) => ({ ...post, _origIdx: origIdx }));
     const filtered = filterPosts(indexed.slice().reverse());
 
@@ -108,50 +108,50 @@ async function loadBulletinPosts() {
       let repliesHTML = '';
       if (post.replies) {
         post.replies.forEach((r, rIdx) => {
-          repliesHTML += `
-            <div class="reply-item" data-ridx="${rIdx}">
-              <div class="reply-item-header">
-                <span class="reply-arrow">└</span>
-                <span class="reply-text">${escHtml(r.text)}</span>
-              </div>
-              <div class="reply-meta">
-                <span class="reply-time">${formatTime(r.time)}</span>
-                <div class="reply-btns">
-                  <button class="reply-edit-btn">수정</button>
-                  <button class="reply-del-btn">삭제</button>
-                </div>
-              </div>
-              <div class="reply-edit-area"></div>
-            </div>`;
+          repliesHTML +=
+            '<div class="reply-item" data-ridx="' + rIdx + '">' +
+              '<div class="reply-item-header">' +
+                '<span class="reply-arrow">\u2514</span>' +
+                '<span class="reply-text">' + escHtml(r.text) + '</span>' +
+              '</div>' +
+              '<div class="reply-meta">' +
+                '<span class="reply-time">' + formatTime(r.time) + '</span>' +
+                '<div class="reply-btns">' +
+                  '<button class="reply-edit-btn">수정</button>' +
+                  '<button class="reply-del-btn">삭제</button>' +
+                '</div>' +
+              '</div>' +
+              '<div class="reply-edit-area"></div>' +
+            '</div>';
         });
       }
 
       const el = document.createElement('div');
       el.className = 'bulletin-post';
-      el.innerHTML = `
-        <div class="bulletin-post-content">${escHtml(post.text)}</div>
-        <div class="bulletin-post-time">${formatTime(post.time)}</div>
-        <div class="post-buttons">
-          <button class="replyBtn">답글</button>
-          <button class="editBtn">수정</button>
-          ${APP.isAdmin ? `<button class="bulletin-post-delete">삭제</button>` : ''}
-        </div>
-        <div class="edit-area"></div>
-        <div class="reply-area"></div>
-        <div class="reply-list">${repliesHTML}</div>`;
+      el.innerHTML =
+        '<div class="bulletin-post-content">' + escHtml(post.text) + '</div>' +
+        '<div class="bulletin-post-time">' + formatTime(post.time) + '</div>' +
+        '<div class="post-buttons">' +
+          '<button class="replyBtn">답글</button>' +
+          '<button class="editBtn">수정</button>' +
+          (APP.isAdmin ? '<button class="bulletin-post-delete">삭제</button>' : '') +
+        '</div>' +
+        '<div class="edit-area"></div>' +
+        '<div class="reply-area"></div>' +
+        '<div class="reply-list">' + repliesHTML + '</div>';
 
       /* 답글 */
       el.querySelector('.replyBtn').addEventListener('click', () => {
         const area = el.querySelector('.reply-area');
         if (area.innerHTML !== '') { area.innerHTML = ''; return; }
-        area.innerHTML = `
-          <div class="reply-input-row">
-            <input class="replyInput" placeholder="답글을 입력하세요...">
-            <div class="reply-action-row">
-              <button class="replySave">등록</button>
-              <button class="replyCancel">취소</button>
-            </div>
-          </div>`;
+        area.innerHTML =
+          '<div class="reply-input-row">' +
+            '<input class="replyInput" placeholder="답글을 입력하세요...">' +
+            '<div class="reply-action-row">' +
+              '<button class="replySave">등록</button>' +
+              '<button class="replyCancel">취소</button>' +
+            '</div>' +
+          '</div>';
         area.querySelector('.replyInput').focus();
         area.querySelector('.replyCancel').addEventListener('click', () => { area.innerHTML = ''; });
         area.querySelector('.replySave').addEventListener('click', async () => {
@@ -188,7 +188,7 @@ async function loadBulletinPosts() {
         });
       }
 
-      /* 답글 수정/삭제 이벤트 위임 */
+      /* 답글 수정/삭제 */
       el.querySelector('.reply-list').addEventListener('click', async e => {
         const replyItem = e.target.closest('.reply-item');
         if (!replyItem) return;
@@ -259,4 +259,24 @@ async function initBulletin() {
   });
 
   await loadBulletinPosts();
+
+  /* ── 1달 이상 지난 게시글 자동 정리 ── */
+  cleanOldBulletinPosts();
+}
+
+async function cleanOldBulletinPosts() {
+  try {
+    const arr = await fetchPosts();
+    if (!arr.length) return;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 31);
+    const cutoffISO = cutoff.toISOString();
+    const filtered = arr.filter(p => p && p.time && p.time > cutoffISO);
+    if (filtered.length < arr.length) {
+      await savePosts(filtered);
+      console.log('🗑️ 오래된 게시글 ' + (arr.length - filtered.length) + '건 삭제');
+    }
+  } catch (err) {
+    console.error('게시판 정리 실패:', err);
+  }
 }
