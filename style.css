@@ -145,6 +145,14 @@ input, textarea, select {
 }
 
 #datePicker {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.date-display-btn {
   flex: 1;
   height: 34px;
   border: 1.5px solid #E5E7EB;
@@ -155,13 +163,16 @@ input, textarea, select {
   font-weight: 600;
   color: var(--text-pri);
   background: var(--surface);
-  appearance: none;
-  -webkit-appearance: none;
   text-align: center;
+  cursor: pointer;
   transition: border-color 0.2s;
 }
 
-#datePicker:focus {
+.date-display-btn:hover {
+  border-color: var(--blue);
+}
+
+.date-display-btn:focus {
   border-color: var(--blue);
   outline: none;
 }
@@ -288,7 +299,7 @@ input, textarea, select {
   background: var(--label-bg);
   color: var(--label-txt);
   border-radius: 7px;
-  font-size: 10px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.5px;
   box-shadow: var(--shadow-sm);
@@ -374,6 +385,19 @@ input, textarea, select {
   outline-offset: -2px;
   transform: scale(1.06);
   z-index: 10;
+}
+
+/* 탭-투-스왑: 첫 번째 탭 선택 강조 */
+.slot-card.tap-selected {
+  outline: 2.5px solid var(--blue);
+  outline-offset: -2px;
+  transform: scale(1.06);
+  z-index: 10;
+  animation: tap-pulse 0.7s ease-in-out infinite alternate;
+}
+@keyframes tap-pulse {
+  from { box-shadow: 0 0 0 0 rgba(59,130,246,0.35); }
+  to   { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
 }
 
 /* 휴차 카드에 세로 선 액센트 */

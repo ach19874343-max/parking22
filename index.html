@@ -27,7 +27,8 @@
     <div class="date-nav">
       <button id="prevDayBtn" class="date-nav-btn" aria-label="이전날">&#8249;</button>
       <div class="date-center">
-        <input type="date" id="datePicker" autocomplete="off">
+        <input type="date" id="datePicker" autocomplete="off" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+        <button id="dateDisplayBtn" class="date-display-btn" aria-label="날짜 선택"></button>
         <button id="nextDayBtn" class="date-nav-btn" aria-label="다음날">&#8250;</button>
       </div>
       <button id="todayBtn" class="today-chip">오늘</button>

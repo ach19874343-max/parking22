@@ -9,6 +9,15 @@ function getTodayStr() {
   return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 }
 
+/* ── 날짜 문자열로 요일 표시 업데이트 ───────────────────── */
+function updateDayLabel(dateStr) {
+  const DAYS = ["일","월","화","수","목","금","토"];
+  const d   = new Date(dateStr + "T00:00:00");
+  const day = DAYS[d.getDay()];
+  const btn = document.getElementById("dateDisplayBtn");
+  if (btn) btn.textContent = dateStr + " (" + day + ")";
+}
+
 /* ── Firebase 에서 차량 목록 로드 ───────────────────────── */
 async function loadBusListFromDB() {
   const DEFAULT = ['714','750','751','752','753','754','755','756','757',
@@ -52,9 +61,12 @@ function buildDefaultState() {
    드래그 & 드롭 전역 상태
    ───────────────────────────────────────────────────────── */
 let dragSrcSlot    = null;   // PC 드래그 소스 슬롯 인덱스
-let touchDragSlot  = null;   // 모바일 드래그 소스 슬롯 인덱스
+let touchDragSlot  = null;   // 모바일 드래그 소스 슬롯 인덱스 (미사용 → 하위호환 유지)
 let touchTimer     = null;   // 롱프레스 타이머
-let isTouchDrag    = false;  // 모바일 드래그 진행 중 여부
+let isTouchDrag    = false;  // 모바일 드래그 진행 중 여부 (미사용 → 하위호환 유지)
+
+/* ── 탭-투-스왑 전역 상태 ── */
+let tapFirstSlot   = null;   // 첫 번째 탭 슬롯 인덱스 (null 이면 미선택)
 
 /* 드래그 고스트 요소 */
 const ghost = document.getElementById('dragGhost');
@@ -87,171 +99,141 @@ function toggleCardState(slotIdx) {
 
 /* ── 카드 터치/드래그 이벤트 설정 ──────────────────────── */
 function setupCardEvents(card, slotIdx) {
-  /* ── PC: Drag & Drop ── */
-  card.draggable = true;
+  /* ── PC: 클릭 = 탭-투-스왑 / 꾹클릭(500ms) = 휴차토글 ── */
+  let mouseTimer = null, mouseLong = false;
 
-  card.addEventListener('dragstart', e => {
-    dragSrcSlot = slotIdx;
-    e.dataTransfer.effectAllowed = 'move';
-    setTimeout(() => card.classList.add('dragging'), 0);
+  card.addEventListener('mousedown', () => {
+    mouseLong  = false;
+    mouseTimer = setTimeout(() => {
+      mouseLong = true;
+      toggleCardState(slotIdx);
+      /* 첫 탭 선택 중이었으면 취소 */
+      if (tapFirstSlot !== null) {
+        const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+        if (prev) prev.classList.remove('tap-selected');
+        tapFirstSlot = null;
+      }
+    }, 500);
   });
 
-  card.addEventListener('dragend', () => {
-    card.classList.remove('dragging');
-    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
-    dragSrcSlot = null;
-  });
+  card.addEventListener('mouseup',    () => clearTimeout(mouseTimer));
+  card.addEventListener('mouseleave', () => clearTimeout(mouseTimer));
 
-  card.addEventListener('dragover', e => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
-    card.classList.add('drag-over');
-  });
+  card.addEventListener('click', () => {
+    if (mouseLong) return; /* 롱클릭은 이미 처리됨 */
 
-  card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-
-  card.addEventListener('drop', e => {
-    e.preventDefault();
-    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
-    if (dragSrcSlot !== null && dragSrcSlot !== slotIdx) {
-      swapSlots(dragSrcSlot, slotIdx);
+    if (tapFirstSlot === null) {
+      tapFirstSlot = slotIdx;
+      card.classList.add('tap-selected');
+    } else if (tapFirstSlot === slotIdx) {
+      card.classList.remove('tap-selected');
+      tapFirstSlot = null;
+    } else {
+      const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+      if (prev) prev.classList.remove('tap-selected');
+      swapSlots(tapFirstSlot, slotIdx);
+      tapFirstSlot = null;
     }
   });
 
-  /* ── PC: 클릭 = 운행/휴차 토글 ── */
-  let clickFromDrag = false;
-  card.addEventListener('mousedown', () => { clickFromDrag = false; });
-  card.addEventListener('mousemove', () => { clickFromDrag = true; });
-  card.addEventListener('click', () => {
-    if (!clickFromDrag) toggleCardState(slotIdx);
-  });
-
-  /* ── 모바일: 터치 드래그 + 탭 ── */
-  let startX, startY, touchMoved = false;
+  /* ── 모바일: 롱프레스 → 휴차토글 / 탭 → 탭-투-스왑 ── */
+  let startX, startY, touchMoved = false, longPressed = false;
 
   card.addEventListener('touchstart', e => {
-    startX    = e.touches[0].clientX;
-    startY    = e.touches[0].clientY;
-    touchMoved = false;
-    isTouchDrag = false;
+    startX      = e.touches[0].clientX;
+    startY      = e.touches[0].clientY;
+    touchMoved  = false;
+    longPressed = false;
 
+    /* 롱프레스 타이머: 480ms 꾹 누르면 휴차 토글 */
     touchTimer = setTimeout(() => {
-      isTouchDrag   = true;
-      touchDragSlot = slotIdx;
-      card.classList.add('dragging');
-
-      /* 고스트 표시 */
-      const isRest = APP.parkingState.active[slotIdx];
-      ghost.textContent = APP.parkingState.values[slotIdx] || '';
-      ghost.className = `drag-ghost ${isRest ? 'rest' : 'run'}`;
-      ghost.style.left = (startX - 29) + 'px';
-      ghost.style.top  = (startY - 29) + 'px';
-      ghost.style.display = 'flex';
-
-      /* 햅틱 피드백 (지원 기기) */
+      if (touchMoved) return;
+      longPressed = true;
+      toggleCardState(slotIdx);
       if (navigator.vibrate) navigator.vibrate(35);
+
+      /* 첫 탭 선택 중이었으면 취소 */
+      if (tapFirstSlot !== null) {
+        const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+        if (prev) prev.classList.remove('tap-selected');
+        tapFirstSlot = null;
+      }
     }, 480);
   }, { passive: true });
 
   card.addEventListener('touchmove', e => {
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
-
-    /* 드래그 시작 전 이동이 크면 타이머 취소 (스크롤 허용) */
-    if (!isTouchDrag) {
-      if (Math.abs(dx) > 9 || Math.abs(dy) > 9) {
-        clearTimeout(touchTimer);
-        touchMoved = true;
-      }
-      return;
+    const dx = Math.abs(e.touches[0].clientX - startX);
+    const dy = Math.abs(e.touches[0].clientY - startY);
+    if (dx > 9 || dy > 9) {
+      touchMoved = true;
+      clearTimeout(touchTimer);
     }
-
-    e.preventDefault(); /* 드래그 중 스크롤 방지 */
-
-    const x = e.touches[0].clientX;
-    const y = e.touches[0].clientY;
-
-    /* 고스트 이동 */
-    ghost.style.left = (x - 29) + 'px';
-    ghost.style.top  = (y - 29) + 'px';
-
-    /* 드롭 대상 강조 */
-    ghost.style.display = 'none';
-    const el = document.elementFromPoint(x, y);
-    ghost.style.display = 'flex';
-
-    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
-    const targetCard = el?.closest('[data-slot]');
-    if (targetCard && parseInt(targetCard.dataset.slot) !== touchDragSlot) {
-      targetCard.classList.add('drag-over');
-    }
-  }, { passive: false });
+  }, { passive: true });
 
   card.addEventListener('touchend', e => {
     clearTimeout(touchTimer);
-    ghost.style.display = 'none';
-    document.querySelectorAll('.slot-card').forEach(c =>
-      c.classList.remove('drag-over', 'dragging')
-    );
+    if (touchMoved || longPressed) return; /* 스크롤 or 롱프레스 → 무시 */
 
-    if (isTouchDrag) {
-      /* 드롭: 타겟 슬롯 찾기 */
-      const x = e.changedTouches[0].clientX;
-      const y = e.changedTouches[0].clientY;
-      const el = document.elementFromPoint(x, y);
-      const targetCard = el?.closest('[data-slot]');
+    e.preventDefault(); /* 탭 처리 */
 
-      if (targetCard) {
-        const targetSlot = parseInt(targetCard.dataset.slot);
-        if (!isNaN(targetSlot) && targetSlot !== touchDragSlot) {
-          swapSlots(touchDragSlot, targetSlot);
-        }
-      }
-    } else if (!touchMoved) {
-      /* 탭: 운행/휴차 토글 */
-      e.preventDefault();
-      toggleCardState(slotIdx);
+    if (tapFirstSlot === null) {
+      /* 첫 번째 탭: 이 슬롯을 선택 상태로 표시 */
+      tapFirstSlot = slotIdx;
+      card.classList.add('tap-selected');
+    } else if (tapFirstSlot === slotIdx) {
+      /* 같은 슬롯 재탭: 선택 취소 */
+      card.classList.remove('tap-selected');
+      tapFirstSlot = null;
+    } else {
+      /* 두 번째 탭: 스왑 실행 */
+      const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+      if (prev) prev.classList.remove('tap-selected');
+      swapSlots(tapFirstSlot, slotIdx);
+      tapFirstSlot = null;
     }
-
-    isTouchDrag   = false;
-    touchDragSlot = null;
   }, { passive: false });
 
   card.addEventListener('touchcancel', () => {
     clearTimeout(touchTimer);
-    ghost.style.display = 'none';
-    document.querySelectorAll('.slot-card').forEach(c =>
-      c.classList.remove('drag-over', 'dragging')
-    );
-    isTouchDrag   = false;
-    touchDragSlot = null;
+    touchMoved  = false;
+    longPressed = false;
   });
 }
 
 /* ── 빈 슬롯 드롭 이벤트 (항상 설정, admin 모드 체크는 drop 시) ── */
 function setupEmptyCardDrop(card, slotIdx) {
-  /* PC 드롭 */
-  card.addEventListener('dragover', e => {
+  /* ── PC: 클릭 = 탭-투-스왑 두 번째 대상 ── */
+  card.addEventListener('click', () => {
     if (!APP.isAdmin) return;
-    e.preventDefault();
-    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
-    card.classList.add('drag-over');
-  });
-  card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
-  card.addEventListener('drop', e => {
-    if (!APP.isAdmin) return;
-    e.preventDefault();
-    document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('drag-over'));
-    if (dragSrcSlot !== null && dragSrcSlot !== slotIdx) {
-      swapSlots(dragSrcSlot, slotIdx);
+    if (tapFirstSlot === null) return; /* 첫 선택 없으면 무시 */
+    if (tapFirstSlot === slotIdx) {
+      card.classList.remove('tap-selected');
+      tapFirstSlot = null;
+      return;
     }
+    const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+    if (prev) prev.classList.remove('tap-selected');
+    swapSlots(tapFirstSlot, slotIdx);
+    tapFirstSlot = null;
   });
 
-  /* 모바일: touchend 시 ghost 숨기고 타겟 체크는 touchend 핸들러에서 처리 */
-  card.addEventListener('touchmove', e => {
-    if (!isTouchDrag || !APP.isAdmin) return;
+  /* ── 모바일: 탭 = 탭-투-스왑 두 번째 대상 ── */
+  let emptyTouchMoved = false;
+  card.addEventListener('touchstart', () => { emptyTouchMoved = false; }, { passive: true });
+  card.addEventListener('touchmove',  () => { emptyTouchMoved = true;  }, { passive: true });
+  card.addEventListener('touchend', e => {
+    if (!APP.isAdmin || emptyTouchMoved) return;
+    if (tapFirstSlot === null) return;
+    if (tapFirstSlot === slotIdx) {
+      card.classList.remove('tap-selected');
+      tapFirstSlot = null;
+      return;
+    }
     e.preventDefault();
+    const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+    if (prev) prev.classList.remove('tap-selected');
+    swapSlots(tapFirstSlot, slotIdx);
+    tapFirstSlot = null;
   }, { passive: false });
 }
 
@@ -433,6 +415,9 @@ async function initParking() {
   }
 
   const datePicker = document.getElementById('datePicker');
+  /* 날짜 표시 버튼 클릭 → datePicker 열기 */
+  const dateDisplayBtn = document.getElementById('dateDisplayBtn');
+  if (dateDisplayBtn) dateDisplayBtn.addEventListener('click', () => datePicker.showPicker?.() || datePicker.click());
   const prevDayBtn = document.getElementById('prevDayBtn');
   const nextDayBtn = document.getElementById('nextDayBtn');
   const todayBtn   = document.getElementById('todayBtn');
@@ -441,6 +426,7 @@ async function initParking() {
   datePicker.addEventListener('change', () => {
     loadData(datePicker.value);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(datePicker.value);
+    updateDayLabel(datePicker.value);
   });
 
   prevDayBtn.addEventListener('click', () => {
@@ -450,6 +436,7 @@ async function initParking() {
     datePicker.value = s;
     loadData(s);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
+    updateDayLabel(s);
   });
 
   if (nextDayBtn) {
@@ -460,6 +447,7 @@ async function initParking() {
       datePicker.value = s;
       loadData(s);
       document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
+    updateDayLabel(s);
     });
   }
 
@@ -468,6 +456,7 @@ async function initParking() {
     datePicker.value = s;
     loadData(s);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
+    updateDayLabel(s);
   });
 
   /* ── 차량 패널 이벤트 ── */
@@ -525,6 +514,7 @@ async function initParking() {
   const todayStr = getTodayStr();
   datePicker.value = todayStr;
   document.getElementById('teamLabel').textContent = APP.getTeamByDate(todayStr);
+    updateDayLabel(todayStr);
   await loadData(todayStr);
 
   APP.applyPermissionUI();
