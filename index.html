@@ -57,6 +57,15 @@
   <!-- ===== 게시판 영역 ===== -->
   <section class="bulletin-section">
     <div class="bulletin-board">
+      <div id="bulletinWriteArea" class="bulletin-write-area" style="display:none">
+        <div class="reply-input-row">
+          <textarea class="bulletinWriteInput" placeholder="당일 특이사항이 있을 경우 메모해 주세요..." rows="3"></textarea>
+          <div class="reply-action-row">
+            <button id="bulletinWriteSubmit" class="replySave">등록</button>
+            <button id="bulletinWriteCancel" class="replyCancel">취소</button>
+          </div>
+        </div>
+      </div>
       <div class="bulletin-posts" id="bulletinPosts"></div>
     </div>
     <div class="footer-note">
@@ -170,30 +179,6 @@
            autocomplete="current-password" inputmode="numeric"
            style="font-size:16px">
     <button id="adminLoginOk" class="btn-primary btn-full">Login</button>
-  </div>
-</div>
-
-<!-- ===== 글쓰기 팝업 ===== -->
-<div id="writePopup" class="write-popup">
-  <div class="write-box">
-    <div class="write-title">&#128221; 특이사항 메모</div>
-    <textarea id="bulletinInput" placeholder="당일 특이사항이 있을 경우 메모해 주세요..."></textarea>
-    <div class="write-buttons">
-      <button id="postSubmit" class="btn-primary" type="button">확인</button>
-      <button id="postCancel" class="btn-secondary" type="button">취소</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== 게시글 수정 팝업 ===== -->
-<div id="editPostPopup" class="write-popup">
-  <div class="write-box">
-    <div class="write-title">&#9998; 게시글 수정</div>
-    <textarea id="editPostInput" placeholder="수정할 내용을 입력하세요..."></textarea>
-    <div class="write-buttons">
-      <button id="editPostSubmit" class="btn-primary" type="button">저장</button>
-      <button id="editPostCancel" class="btn-secondary" type="button">취소</button>
-    </div>
   </div>
 </div>
 

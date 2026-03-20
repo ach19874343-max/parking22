@@ -55,30 +55,29 @@ async function savePosts(arr) {
   await APP.set(APP.ref(APP.db, 'bulletin/posts'), clean);
 }
 
-/* 수정 바텀시트 (게시글/답글 공용) */
-function openEditPopup(currentText, onSave) {
-  const popup = document.getElementById('editPostPopup');
-  const input = document.getElementById('editPostInput');
-
-  input.value = currentText;
-  popup.style.display = 'flex';
-  setTimeout(() => input.focus(), 150);
-
-  const submitBtn = document.getElementById('editPostSubmit');
-  const cancelBtn = document.getElementById('editPostCancel');
-  const newSubmit = submitBtn.cloneNode(true);
-  const newCancel = cancelBtn.cloneNode(true);
-  submitBtn.parentNode.replaceChild(newSubmit, submitBtn);
-  cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
-
-  newSubmit.addEventListener('click', () => {
-    const text = document.getElementById('editPostInput').value.trim();
-    if (!text) return;
-    popup.style.display = 'none';
-    onSave(text);
+/* 인라인 수정창 열기 (답글 입력창과 동일 스타일) */
+function openInlineEdit(container, currentText, placeholder, onSave) {
+  /* 이미 열려 있으면 닫기 */
+  if (container.innerHTML !== '') { container.innerHTML = ''; return; }
+  container.innerHTML = `
+    <div class="reply-input-row">
+      <textarea class="inlineEditInput" placeholder="${placeholder}" rows="2">${currentText}</textarea>
+      <div class="reply-action-row">
+        <button class="inlineEditSave replySave">저장</button>
+        <button class="inlineEditCancel replyCancel">취소</button>
+      </div>
+    </div>`;
+  const ta = container.querySelector('.inlineEditInput');
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+  container.querySelector('.inlineEditCancel').addEventListener('click', () => {
+    container.innerHTML = '';
   });
-  newCancel.addEventListener('click', () => {
-    popup.style.display = 'none';
+  container.querySelector('.inlineEditSave').addEventListener('click', () => {
+    const text = ta.value.trim();
+    if (!text) return;
+    container.innerHTML = '';
+    onSave(text);
   });
 }
 
@@ -122,6 +121,7 @@ async function loadBulletinPosts() {
                   <button class="reply-del-btn">삭제</button>
                 </div>
               </div>
+              <div class="reply-edit-area"></div>
             </div>`;
         });
       }
@@ -136,6 +136,7 @@ async function loadBulletinPosts() {
           <button class="editBtn">수정</button>
           ${APP.isAdmin ? `<button class="bulletin-post-delete">삭제</button>` : ''}
         </div>
+        <div class="edit-area"></div>
         <div class="reply-area"></div>
         <div class="reply-list">${repliesHTML}</div>`;
 
@@ -164,10 +165,11 @@ async function loadBulletinPosts() {
         });
       });
 
-      /* 게시글 수정 → 바텀시트 */
+      /* 게시글 수정 → 인라인 */
       el.querySelector('.editBtn').addEventListener('click', async () => {
-        const arr = await fetchPosts();
-        openEditPopup(arr[origIdx].text, async newText => {
+        const area = el.querySelector('.edit-area');
+        const arr  = await fetchPosts();
+        openInlineEdit(area, arr[origIdx].text, '수정할 내용을 입력하세요...', async newText => {
           arr[origIdx].text = newText;
           await savePosts(arr);
           loadBulletinPosts();
@@ -202,8 +204,9 @@ async function loadBulletinPosts() {
         }
 
         if (e.target.classList.contains('reply-edit-btn')) {
-          const arr = await fetchPosts();
-          openEditPopup(arr[origIdx].replies[rIdx].text, async newText => {
+          const area = replyItem.querySelector('.reply-edit-area');
+          const arr  = await fetchPosts();
+          openInlineEdit(area, arr[origIdx].replies[rIdx].text, '답글을 수정하세요...', async newText => {
             arr[origIdx].replies[rIdx].text = newText;
             await savePosts(arr);
             loadBulletinPosts();
@@ -222,30 +225,37 @@ async function loadBulletinPosts() {
 async function initBulletin() {
   APP.loadBulletinPosts = loadBulletinPosts;
 
-  document.getElementById('postSubmit').addEventListener('click', async () => {
-    const input = document.getElementById('bulletinInput');
-    const text = input.value.trim();
+  /* 메모 버튼 → 게시판 상단 인라인 입력창 */
+  document.getElementById('writePostBtn').addEventListener('click', () => {
+    const area = document.getElementById('bulletinWriteArea');
+    if (area.style.display !== 'none' && area.style.display !== '') {
+      area.style.display = 'none';
+      return;
+    }
+    area.style.display = 'block';
+    area.querySelector('.bulletinWriteInput').value = '';
+    setTimeout(() => area.querySelector('.bulletinWriteInput').focus(), 80);
+  });
+
+  document.getElementById('bulletinWriteCancel').addEventListener('click', () => {
+    document.getElementById('bulletinWriteArea').style.display = 'none';
+  });
+
+  document.getElementById('bulletinWriteSubmit').addEventListener('click', async () => {
+    const input = document.getElementById('bulletinWriteArea').querySelector('.bulletinWriteInput');
+    const text  = input.value.trim();
     if (!text) { alert('내용을 입력해주세요.'); return; }
     try {
       const arr = await fetchPosts();
       arr.push({ text, time: new Date().toISOString() });
       await savePosts(arr);
       input.value = '';
-      document.getElementById('writePopup').style.display = 'none';
+      document.getElementById('bulletinWriteArea').style.display = 'none';
       loadBulletinPosts();
     } catch (err) {
       console.error('게시판 저장 실패:', err);
       alert('저장 중 오류가 발생했습니다.');
     }
-  });
-
-  document.getElementById('writePostBtn').addEventListener('click', () => {
-    document.getElementById('writePopup').style.display = 'flex';
-    setTimeout(() => document.getElementById('bulletinInput').focus(), 150);
-  });
-
-  document.getElementById('postCancel').addEventListener('click', () => {
-    document.getElementById('writePopup').style.display = 'none';
   });
 
   await loadBulletinPosts();
