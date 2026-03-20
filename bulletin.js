@@ -50,7 +50,9 @@ async function fetchPosts() {
 }
 
 async function savePosts(arr) {
-  await APP.set(APP.ref(APP.db, 'bulletin/posts'), arr);
+  /* null/undefined 슬롯 제거 후 저장 (splice 후 빈 슬롯 방지) */
+  const clean = arr.filter(p => p != null);
+  await APP.set(APP.ref(APP.db, 'bulletin/posts'), clean);
 }
 
 /* 수정 바텀시트 (게시글/답글 공용) */

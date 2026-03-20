@@ -403,6 +403,32 @@ function renderVehicleList() {
 }
 
 /* ── 주차도 초기화 ──────────────────────────────────────── */
+async function cleanOldParkingData() {
+  /* 앱 접속 시 1달(31일) 이상 지난 주차 데이터 자동 삭제 */
+  try {
+    const snap = await APP.get(APP.ref(APP.db, 'parking'));
+    if (!snap.exists()) return;
+
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 31);
+    const cutoffStr = cutoff.toISOString().split('T')[0]; /* YYYY-MM-DD */
+
+    const deletions = [];
+    snap.forEach(child => {
+      if (child.key < cutoffStr) {
+        deletions.push(APP.set(APP.ref(APP.db, 'parking/' + child.key), null));
+      }
+    });
+
+    if (deletions.length > 0) {
+      await Promise.all(deletions);
+      console.log(`🗑️ 오래된 주차 데이터 ${deletions.length}건 삭제 완료`);
+    }
+  } catch (err) {
+    console.error('오래된 데이터 삭제 실패:', err);
+  }
+}
+
 async function initParking() {
   /* 다른 모듈에서 사용 */
   APP.loadData    = loadData;
@@ -518,4 +544,7 @@ async function initParking() {
   await loadData(todayStr);
 
   APP.applyPermissionUI();
+
+  /* 백그라운드에서 오래된 데이터 정리 (UI 블로킹 없음) */
+  cleanOldParkingData();
 }
