@@ -309,7 +309,7 @@ input, textarea, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(14px, 3.8vw, 19px);
+  font-size: clamp(20px, 3.8vw, 19px);
   font-weight: 800;
   font-family: var(--font);
   letter-spacing: -0.5px;
@@ -720,7 +720,7 @@ input, textarea, select {
 
 .footer-note p {
   font-size: 11px;
-  color: var(--text-hint);
+  color: black;
   line-height: 1.5;
 }
 
@@ -737,7 +737,6 @@ input, textarea, select {
 
 .copyright {
   font-size: 10px !important;
-  color: #C4C9D4 !important;
   margin-top: 4px;
 }
 
