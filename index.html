@@ -23,7 +23,14 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" as="style" crossorigin
   href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="style.css?v=2.3.0">
+<link rel="stylesheet" href="style.css?v=3.0.0">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff" id="themeColor">
+<link rel="apple-touch-icon" href="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="보영22주차">
 </head>
 <body class="guest-mode">
 
@@ -39,5 +46,88 @@
 <script src="bulletin.js"></script>
 <script src="ui.js"></script>
 
+<script>
+/* ── 다크모드 ── */
+(function() {
+  const saved = localStorage.getItem('darkMode');
+  if (saved === '1') document.body.classList.add('dark-mode');
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('darkModeBtn');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark ? '1' : '0');
+    /* theme-color 메타 업데이트 */
+    const tc = document.getElementById('themeColor');
+    if (tc) tc.content = isDark ? '#1C1C1E' : '#ffffff';
+  });
+});
+
+/* ── PWA 설치 ── */
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showAndroidBanner();
+});
+
+function showAndroidBanner() {
+  if (sessionStorage.getItem('pwaDismissed')) return;
+  const banner = document.createElement('div');
+  banner.className = 'pwa-banner';
+  banner.id = 'pwaBanner';
+  banner.innerHTML = `
+    <div class="pwa-banner-icon">
+      <img src="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" alt="">
+    </div>
+    <div class="pwa-banner-text">
+      <strong>보영22주차 앱 설치</strong>
+      <span>홈 화면에 추가하여 앱처럼 사용</span>
+    </div>
+    <div class="pwa-banner-btns">
+      <button class="pwa-install-btn" id="pwaInstallBtn">설치</button>
+      <button class="pwa-dismiss-btn" id="pwaDismissBtn">✕</button>
+    </div>`;
+  document.body.appendChild(banner);
+
+  document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    banner.remove();
+    if (outcome === 'accepted') console.log('PWA 설치 완료');
+  });
+  document.getElementById('pwaDismissBtn').addEventListener('click', () => {
+    sessionStorage.setItem('pwaDismissed', '1');
+    banner.remove();
+  });
+}
+
+/* iOS 안내 (Safari에서 PWA 미설치 상태) */
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone === true;
+
+if (isIOS && isSafari && !isStandalone && !sessionStorage.getItem('iosDismissed')) {
+  setTimeout(() => {
+    const banner = document.createElement('div');
+    banner.className = 'pwa-ios-banner';
+    banner.innerHTML = `
+      <button class="pwa-ios-close" id="iosClose">✕</button>
+      <p>📱 홈 화면에 추가하려면<br>
+      하단 <strong>공유 버튼(□↑)</strong>을 누른 뒤<br>
+      <strong>"홈 화면에 추가"</strong>를 선택하세요.</p>`;
+    document.body.appendChild(banner);
+    document.getElementById('iosClose').addEventListener('click', () => {
+      sessionStorage.setItem('iosDismissed', '1');
+      banner.remove();
+    });
+  }, 3000);
+}
+</script>
 </body>
 </html>

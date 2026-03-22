@@ -8,6 +8,10 @@
 function tmplHeader() {
   return `
   <header class="app-header">
+    <button id="darkModeBtn" class="dark-mode-btn" aria-label="다크모드 전환" title="다크모드">
+      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
     <div class="date-nav">
       <div class="date-center">
         <input type="date" id="datePicker" autocomplete="off"
@@ -28,10 +32,12 @@ function tmplHeader() {
     <div class="team-row">
       <div class="header-actions">
         <button id="undoBtn" class="header-action-btn" aria-label="실행취소" title="실행취소" disabled>
-          <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 5.5 5.5"/></svg>
+          <span class="btn-arrow">↩</span>
+          <span class="btn-label">취소</span>
         </button>
         <button id="redoBtn" class="header-action-btn" aria-label="앞으로" title="앞으로" disabled>
-          <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M21 13A9 9 0 1 1 18.5 5.5"/></svg>
+          <span class="btn-arrow">↪</span>
+          <span class="btn-label">다시</span>
         </button>
       </div>
       <span id="teamLabel" class="team-badge"></span>
@@ -45,16 +51,16 @@ function tmplHeader() {
 
 /* ── 주차 슬롯 그리드 ──────────────────────────────────────── */
 function tmplParkingGrid() {
-  const rows = [
-    { label: '2R', id: 'row-0', row: 0 },
-    { label: '3R', id: 'row-1', row: 1 },
-    { label: '4R', id: 'row-2', row: 2 },
-    { label: '5R', id: 'row-3', row: 3 },
-    { label: '6R', id: 'row-4', row: 4 },
-    { label: '7R', id: 'row-5', row: 5 },
-  ];
   return `
   <main class="parking-main">
+    <div class="vehicle-edit-done-bar" id="vehicleEditDoneBar" style="display:none">
+      <span class="vehicle-edit-done-label">🚌 차량 수정 모드</span>
+      <button id="vehicleEditDoneBtn" class="vehicle-edit-done-btn">✅ 수정 완료</button>
+    </div>
+    <div class="row-edit-done-bar" id="rowEditDoneBar" style="display:none">
+      <span class="vehicle-edit-done-label">📋 행 수정 모드</span>
+      <button id="rowEditDoneBtn" class="vehicle-edit-done-btn">✅ 수정 완료</button>
+    </div>
     <div class="parking-overlay hidden" id="parkingOverlay">
       <div class="parking-overlay-inner">
         <div class="parking-overlay-icon">🅿️</div>
@@ -63,12 +69,6 @@ function tmplParkingGrid() {
       </div>
     </div>
     <div class="parking-grid" id="parkingGrid">
-      ${rows.map(r =>
-        `<div class="p-row">
-          <div class="line-label" data-row="${r.row}">${r.label}</div>
-          <div class="slots-wrap" id="${r.id}"></div>
-        </div>`
-      ).join('\n      ')}
     </div>
   </main>`;
 }
@@ -78,23 +78,39 @@ function tmplBulletin() {
   return `
   <section class="bulletin-section">
     <div class="bulletin-board">
+
+      <!-- 탭 메뉴 -->
+      <div class="bulletin-tabs">
+        <button class="bulletin-tab-btn active" data-tab="all">전체</button>
+        <button class="bulletin-tab-btn" data-tab="notice">📢 공지</button>
+        <button class="bulletin-tab-btn" data-tab="memo">메모</button>
+      </div>
+
+      <!-- 글쓰기 영역 -->
       <div id="bulletinWriteArea" class="bulletin-write-area" style="display:none">
         <div class="reply-input-row">
           <textarea class="bulletinWriteInput"
-                    placeholder="당일 특이사항이 있을 경우 메모해 주세요..." rows="3"></textarea>
+                    placeholder="내용을 입력해주세요..." rows="3"></textarea>
+          <div class="bulletin-write-options" id="noticeCheckboxRow" style="display:none">
+            <label class="notice-check-label">
+              <input type="checkbox" id="noticeCheckbox">
+              <span class="notice-check-text">📢 공지글로 등록</span>
+            </label>
+          </div>
           <div class="reply-action-row">
             <button id="bulletinWriteSubmit" class="replySave">등록</button>
             <button id="bulletinWriteCancel" class="replyCancel">취소</button>
           </div>
         </div>
       </div>
+
       <div class="bulletin-posts" id="bulletinPosts"></div>
     </div>
     <div class="footer-note">
-      <p>※ 보영운수 22번 주차도&nbsp;&nbsp;|&nbsp;&nbsp;<span class="rest-note">노란색 = 당일 휴차</span></p>
-      <p>※ 원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다.</p>
-      <p class="warn-text">※ 각조 팀장 &amp; 부팀장 허락 없이 수정 절대 금지 ※</p>
-      <p class="copyright">Copyright &copy; 2026 ChangHai An. All rights reserved. &nbsp;|&nbsp; v2.1.0</p>
+      <p class="footer-line">※ 보영운수 22번 주차도&nbsp;&nbsp;|&nbsp;&nbsp;<span class="rest-note">노란색 = 당일 휴차</span></p>
+      <p class="footer-line">※ 원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다.</p>
+      <p class="footer-line warn-text">※ 각조 팀장 &amp; 부팀장 허락 없이 수정 절대 금지 ※</p>
+      <p class="copyright">Copyright &copy; 2026 ChangHai An. All rights reserved. &nbsp;|&nbsp; <span id="appVersion">v3.1.0</span></p>
     </div>
   </section>`;
 }
@@ -111,6 +127,17 @@ function tmplBottomNav() {
         <circle cx="18.5" cy="18.5" r="2.5"/>
       </svg></span>
       <span class="nav-label">차량</span>
+    </button>
+    <button class="nav-item admin-ui" id="rowEditBtn">
+      <span class="nav-icon"><svg viewBox="0 0 24 24">
+        <line x1="8" y1="6" x2="21" y2="6"/>
+        <line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/>
+        <line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg></span>
+      <span class="nav-label">행</span>
     </button>
     <button class="nav-item admin-ui" id="popupSettingBtn">
       <span class="nav-icon"><svg viewBox="0 0 24 24">
@@ -133,6 +160,13 @@ function tmplBottomNav() {
       </svg></span>
       <span class="nav-label" id="loginLabel">로그인</span>
     </button>
+    <button class="nav-item admin-ui" id="appSettingsBtn">
+      <span class="nav-icon"><svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg></span>
+      <span class="nav-label">설정</span>
+    </button>
   </nav>`;
 }
 
@@ -147,38 +181,49 @@ function tmplPopupSettingsModal() {
         <h3>팝업 설정</h3>
         <button class="modal-close-btn" id="popupSettingsClose" aria-label="닫기">&#10005;</button>
       </div>
-      <div class="popup-settings-group">
-        <label>내용 입력</label>
-        <textarea id="popupContent" placeholder="팝업에 표시될 내용을 입력하세요..."></textarea>
+
+      <!-- 팝업 탭 목록 -->
+      <div class="popup-tab-bar" id="popupTabBar">
+        <!-- JS로 동적 생성 -->
       </div>
-      <div class="popup-settings-group">
-        <label>요일 선택</label>
-        <div class="popup-days-container">
-          ${days.map((d, i) =>
-            `<div class="popup-day-checkbox">
-              <input type="checkbox" id="day-${vals[i]}" value="${vals[i]}">
-              <label for="day-${vals[i]}">${d}</label>
-            </div>`
-          ).join('\n          ')}
+
+      <!-- 팝업 편집 폼 -->
+      <div id="popupEditForm">
+        <div class="popup-settings-group">
+          <label>내용 입력</label>
+          <textarea id="popupContent" placeholder="팝업에 표시될 내용을 입력하세요..."></textarea>
         </div>
-      </div>
-      <div class="popup-settings-group">
-        <label>시간 설정</label>
-        <div class="popup-time-container">
-          <div class="popup-time-input">
-            <label style="display:block;font-size:12px;margin-bottom:4px;color:#888">시작</label>
-            <input type="time" id="popupStartTime" value="09:00">
-          </div>
-          <div class="popup-time-input">
-            <label style="display:block;font-size:12px;margin-bottom:4px;color:#888">종료</label>
-            <input type="time" id="popupEndTime" value="18:00">
+        <div class="popup-settings-group">
+          <label>요일 선택</label>
+          <div class="popup-days-container">
+            ${days.map((d, i) =>
+              `<div class="popup-day-checkbox">
+                <input type="checkbox" id="day-${vals[i]}" value="${vals[i]}">
+                <label for="day-${vals[i]}">${d}</label>
+              </div>`
+            ).join('\n            ')}
           </div>
         </div>
+        <div class="popup-settings-group">
+          <label>시간 설정</label>
+          <div class="popup-time-container">
+            <div class="popup-time-input">
+              <label style="display:block;font-size:12px;margin-bottom:4px;color:#888">시작</label>
+              <input type="time" id="popupStartTime" value="09:00">
+            </div>
+            <div class="popup-time-input">
+              <label style="display:block;font-size:12px;margin-bottom:4px;color:#888">종료</label>
+              <input type="time" id="popupEndTime" value="18:00">
+            </div>
+          </div>
+        </div>
+        <div class="popup-settings-buttons">
+          <button class="btn-primary"   id="popupSettingsSaveBtn">저장</button>
+          <button class="btn-danger"    id="popupSettingsDeleteBtn">삭제</button>
+          <button class="btn-secondary" id="popupSettingsCancelBtn">취소</button>
+        </div>
       </div>
-      <div class="popup-settings-buttons">
-        <button class="btn-primary" id="popupSettingsSaveBtn">저장</button>
-        <button class="btn-secondary" id="popupSettingsCancelBtn">취소</button>
-      </div>
+
     </div>
   </div>`;
 }
@@ -194,24 +239,86 @@ function tmplPopupNotification() {
 }
 
 /* ── 차량 목록 패널 ─────────────────────────────────────────── */
-function tmplVehiclePanel() {
+/* ── 차량 목록 패널: 인라인 수정 모드로 교체됨 ── */
+function tmplVehiclePanel() { return ''; }
+
+
+/* ── 앱 설정 대시보드 ──────────────────────────────────────── */
+function tmplAppSettingsModal() {
   return `
-  <div id="vehiclePanel">
-    <div class="vehicle-panel-header">
-      <h3>차량 목록</h3>
-      <button id="vehiclePanelCloseBtn" aria-label="닫기">&#10005;</button>
-    </div>
-    <div class="vehicle-list">
-      <button class="vehicle-add-btn" id="vehicleAddBtn">+ 차량번호 추가</button>
-      <div id="vehicleAddInputContainer" style="display:none" class="vehicle-add-input-container">
-        <input type="text" id="vehicleAddInput" placeholder="숫자 3-4자리 입력"
-               maxlength="4" autocomplete="off" inputmode="numeric">
-        <div class="vehicle-add-btn-row">
-          <button id="vehicleAddConfirmBtn" class="btn-confirm">추가</button>
-          <button id="vehicleAddCancelBtn" class="btn-cancel">취소</button>
+  <div class="modal-overlay" id="appSettingsModal">
+    <div class="modal-box settings-modal-box">
+      <div class="modal-header">
+        <h3>⚙️ 앱 설정</h3>
+        <button class="modal-close-btn" id="appSettingsClose" aria-label="닫기">&#10005;</button>
+      </div>
+
+      <!-- 권한 설정 -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔐 권한 설정</div>
+        <label class="settings-row">
+          <span class="settings-label">관리자 로그인 필요</span>
+          <input type="checkbox" class="settings-cb" id="set-requireAdmin">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">게시판 표시</span>
+          <input type="checkbox" class="settings-cb" id="set-showBulletin">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">게시글 작성</span>
+          <input type="checkbox" class="settings-cb" id="set-allowWrite">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">댓글 작성</span>
+          <input type="checkbox" class="settings-cb" id="set-allowComment">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">수정</span>
+          <input type="checkbox" class="settings-cb" id="set-allowEdit">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">삭제</span>
+          <input type="checkbox" class="settings-cb" id="set-allowDelete">
+        </label>
+        <label class="settings-row">
+          <span class="settings-label">공지 등록</span>
+          <input type="checkbox" class="settings-cb" id="set-allowNotice">
+        </label>
+      </div>
+
+      <!-- 팀 표시 -->
+      <div class="settings-section">
+        <div class="settings-section-title">🏷️ 팀 표시</div>
+        <div class="settings-radio-group">
+          <label class="settings-radio">
+            <input type="radio" name="teamMode" value="ab" id="teamMode-ab">
+            <span>A팀 / B팀 (날짜 기준)</span>
+          </label>
+          <label class="settings-radio">
+            <input type="radio" name="teamMode" value="fixed" id="teamMode-fixed">
+            <span>22번 TEAM (고정)</span>
+          </label>
         </div>
       </div>
-      <div id="vehicleListContainer"></div>
+
+      <!-- 하단 안내문 -->
+      <div class="settings-section">
+        <div class="settings-section-title">📝 하단 안내문</div>
+        <div class="settings-footer-group">
+          <input type="text" id="set-footerLine1" class="settings-input" placeholder="첫째 줄">
+          <input type="text" id="set-footerLine2" class="settings-input" placeholder="둘째 줄">
+          <input type="text" id="set-footerLine3" class="settings-input" placeholder="셋째 줄 (경고문)">
+          <div class="settings-version-row">
+            <span class="settings-label">앱 버전</span>
+            <input type="text" id="set-appVersion" class="settings-input settings-input-sm" placeholder="v3.1.0">
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-btns">
+        <button class="btn-primary" id="appSettingsSave">저장</button>
+        <button class="btn-secondary" id="appSettingsCancel">취소</button>
+      </div>
     </div>
   </div>`;
 }
@@ -266,6 +373,7 @@ function tmplDragGhost() {
     tmplPopupNotification() +
     tmplVehiclePanel() +
     tmplAdminModal() +
+    tmplAppSettingsModal() +
     tmplDragGhost();
 
   /* DocumentFragment로 한 번에 삽입 (리플로우 최소화) */
