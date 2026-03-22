@@ -357,6 +357,53 @@ input, textarea, select {
   .legend-text { display: none; }
   .legend { gap: 4px; }
 }
+/* ── 주차도 수정 전 오버레이 ──────────────────────────── */
+.parking-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  border-radius: 12px;
+  background: rgba(238,240,247,0.72);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.parking-overlay.hidden {
+  display: none;
+}
+.parking-overlay-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.parking-overlay-icon {
+  font-size: 32px;
+  opacity: 0.4;
+}
+.parking-overlay-text {
+  font-size: 16px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.28);
+  letter-spacing: -0.3px;
+  font-family: var(--font);
+}
+.parking-overlay-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(0,0,0,0.18);
+  font-family: var(--font);
+}
+
+/* 오버레이가 보일 때만 카드 희미 — hidden이면 항상 정상 */
+.parking-main:has(.parking-overlay:not(.hidden)) .slot-card {
+  opacity: 0.4;
+}
+
+
 
 /* ── Parking Main ─────────────────────────────────────────
    주차 슬롯이 스크롤 없이 정확히 화면에 맞게 표시
@@ -365,6 +412,7 @@ input, textarea, select {
   height: calc((var(--app-vh, 100svh) - var(--header-h) - var(--nav-h) - var(--safe-b)) * 0.62);
   padding: 5px 10px 3px;
   flex-shrink: 0;
+  position: relative;
 }
 
 .parking-grid {
@@ -611,7 +659,7 @@ input, textarea, select {
   justify-content: center;
   gap: 3px;
   padding: 7px 4px;
-  color: #C7C7CC;
+  color: #8E8E93;
   font-family: var(--font);
   border-radius: 12px;
   transition: color 0.15s, background 0.15s;

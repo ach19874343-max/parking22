@@ -340,7 +340,12 @@ function saveData() {
   APP.set(APP.ref(APP.db, 'parking/' + date), {
     values: APP.parkingState.values,
     active: APP.parkingState.active
-  });
+  }).then(() => {
+    /* Firebase 저장 완료 → 해당 날짜 영구 해제 */
+    if (!APP.savedDates) APP.savedDates = new Set();
+    APP.savedDates.add(date);
+    updateParkingOverlay(date);
+  }).catch(() => {});
 }
 
 /* ── Firebase에서 주차 데이터 로드 ─────────────────────── */
@@ -350,19 +355,38 @@ async function loadData(date) {
   const data = snap.val();
 
   if (data && data.values) {
-    /* 저장된 데이터 불러오기 */
+    /* Firebase에 데이터 있음 → savedDates 기록 */
+    if (!APP.savedDates) APP.savedDates = new Set();
+    APP.savedDates.add(date);
     APP.parkingState = {
       values: data.values || {},
       active: data.active || {}
     };
   } else {
-    /* 저장된 데이터 없으면 기본 상태 (차량 목록 순서대로, 전부 운행) */
+    /* 저장된 데이터 없으면 기본 상태 */
     APP.parkingState = buildDefaultState();
   }
 
   /* 날짜 이동 시 해당 날짜 Undo/Redo 버튼 상태 동기화 */
   syncHistoryBtns(date);
+  /* 오버레이 상태 업데이트 */
+  updateParkingOverlay(date);
   renderCards();
+}
+
+/* ── 주차 오버레이 표시/숨김 제어 ──────────────────────── */
+function updateParkingOverlay(date) {
+  const overlay = document.getElementById('parkingOverlay');
+  if (!overlay) return;
+  const d = date || document.getElementById('datePicker')?.value || '';
+  /* savedDates에 있거나 관리자 모드 → hidden(카드 정상)
+     없고 게스트 → 오버레이 표시(카드 희미) */
+  const hasSaved = APP.savedDates && APP.savedDates.has(d);
+  if (hasSaved || APP.isAdmin) {
+    overlay.classList.add('hidden');
+  } else {
+    overlay.classList.remove('hidden');
+  }
 }
 
 /* ── 차량 목록 패널 렌더링 ──────────────────────────────── */

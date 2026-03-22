@@ -22,6 +22,11 @@ function applyPermissionUI() {
   /* 게시판 재렌더링 — 삭제 버튼 권한 즉시 반영 */
   if (typeof loadBulletinPosts === 'function') loadBulletinPosts();
   if (APP.loadBulletinPosts) APP.loadBulletinPosts();
+  /* 주차 오버레이 — 로그인/로그아웃 즉시 반영 */
+  if (typeof updateParkingOverlay === 'function') {
+    const date = document.getElementById('datePicker')?.value || '';
+    updateParkingOverlay(date);
+  }
 }
 
 /* ── 관리자 버튼 & body 클래스 동기화 ───────────────────── */

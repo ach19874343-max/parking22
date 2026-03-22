@@ -55,6 +55,13 @@ function tmplParkingGrid() {
   ];
   return `
   <main class="parking-main">
+    <div class="parking-overlay hidden" id="parkingOverlay">
+      <div class="parking-overlay-inner">
+        <div class="parking-overlay-icon">🅿️</div>
+        <div class="parking-overlay-text">주차도 수정 전</div>
+        <div class="parking-overlay-sub">관리자 로그인 후 수정 가능합니다</div>
+      </div>
+    </div>
     <div class="parking-grid" id="parkingGrid">
       ${rows.map(r =>
         `<div class="p-row">
