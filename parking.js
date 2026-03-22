@@ -11,11 +11,20 @@ function getTodayStr() {
 
 /* ── 날짜 문자열로 요일 표시 업데이트 ───────────────────── */
 function updateDayLabel(dateStr) {
-  const DAYS = ["일","월","화","수","목","금","토"];
-  const d   = new Date(dateStr + "T00:00:00");
-  const day = DAYS[d.getDay()];
-  const btn = document.getElementById("dateDisplayBtn");
-  if (btn) btn.textContent = dateStr + " (" + day + ")";
+  const DAYS    = ["일","월","화","수","목","금","토"];
+  const DAYS_EN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const d     = new Date(dateStr + "T00:00:00");
+  const mm    = String(d.getMonth() + 1).padStart(2, '0');
+  const dd    = String(d.getDate()).padStart(2, '0');
+  const day   = DAYS[d.getDay()];
+  const dayEn = DAYS_EN[d.getDay()];
+  const btn   = document.getElementById("dateDisplayBtn");
+  if (!btn) return;
+  const mainEl = btn.querySelector('.date-main-text');
+  const subEl  = btn.querySelector('.date-sub-text');
+  if (mainEl) mainEl.textContent = mm + ' · ' + dd + ' (' + day + ')';
+  if (subEl)  subEl.textContent  = d.getFullYear() + ' · ' + dayEn;
+  if (!mainEl) btn.textContent = mm + '.' + dd + ' (' + day + ')';
 }
 
 /* ── Firebase 에서 차량 목록 로드 ───────────────────────── */

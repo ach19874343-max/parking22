@@ -9,19 +9,30 @@ function tmplHeader() {
   return `
   <header class="app-header">
     <div class="date-nav">
-      <button id="prevDayBtn" class="date-nav-btn" aria-label="이전날">&#8249;</button>
       <div class="date-center">
         <input type="date" id="datePicker" autocomplete="off"
                style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
-        <button id="dateDisplayBtn" class="date-display-btn" aria-label="날짜 선택"></button>
-        <button id="nextDayBtn" class="date-nav-btn" aria-label="다음날">&#8250;</button>
+        <button id="prevDayBtn" class="date-nav-btn" aria-label="이전날">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button id="dateDisplayBtn" class="date-display-btn" aria-label="날짜 선택">
+          <span class="date-main-text"></span>
+          <span class="date-sub-text"></span>
+        </button>
+        <button id="nextDayBtn" class="date-nav-btn" aria-label="다음날">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
       </div>
       <button id="todayBtn" class="today-chip">오늘</button>
     </div>
     <div class="team-row">
       <div class="header-actions">
-        <button id="undoBtn" class="header-action-btn" aria-label="실행취소" title="실행취소" disabled>&#8634;</button>
-        <button id="redoBtn" class="header-action-btn" aria-label="앞으로" title="앞으로" disabled>&#8635;</button>
+        <button id="undoBtn" class="header-action-btn" aria-label="실행취소" title="실행취소" disabled>
+          <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13A9 9 0 1 0 5.5 5.5"/></svg>
+        </button>
+        <button id="redoBtn" class="header-action-btn" aria-label="앞으로" title="앞으로" disabled>
+          <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M21 13A9 9 0 1 1 18.5 5.5"/></svg>
+        </button>
       </div>
       <span id="teamLabel" class="team-badge"></span>
       <div class="legend">
@@ -225,6 +236,11 @@ function tmplDragGhost() {
    DOMContentLoaded 전에 동기 실행되므로 즉시 호출
 ══════════════════════════════════════════════════════════════ */
 (function renderComponents() {
+  function setAppVh() {
+    document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px');
+  }
+  setAppVh();
+  window.addEventListener('orientationchange', () => setTimeout(setAppVh, 300));
   /* 앱 래퍼 내부 (헤더 + 그리드 + 게시판 + 네비) */
   const wrapper = document.getElementById('app-wrapper');
   if (wrapper) {

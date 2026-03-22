@@ -16,9 +16,12 @@ function getTeamByDate(dateStr) {
 
 /* ── 관리자/게스트에 따라 카드 이벤트 재설정 ────────────── */
 function applyPermissionUI() {
-  /* 카드 재렌더링 (권한에 따라 이벤트 핸들러 유무 결정) */
+  /* 주차 카드 재렌더링 (권한에 따라 이벤트 핸들러 유무 결정) */
   if (typeof renderCards === 'function') renderCards();
   if (APP.renderCards) APP.renderCards();
+  /* 게시판 재렌더링 — 삭제 버튼 권한 즉시 반영 */
+  if (typeof loadBulletinPosts === 'function') loadBulletinPosts();
+  if (APP.loadBulletinPosts) APP.loadBulletinPosts();
 }
 
 /* ── 관리자 버튼 & body 클래스 동기화 ───────────────────── */
