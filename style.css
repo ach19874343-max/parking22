@@ -111,7 +111,7 @@ input, textarea, select {
    게시판(scroll) + 하단 네비(fixed)
    ─────────────────────────────────────────────────────── */
 .app-wrapper {
-  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   max-width: 640px;
@@ -267,7 +267,7 @@ input, textarea, select {
 }
 
 /* 관리자 모드에서만 Undo 버튼 표시 */
-.guest-mode #undoBtn { display: none; }
+.guest-mode #undoBtn, .guest-mode #redoBtn { display: none; }
 
 .team-badge {
   grid-column: 2;
@@ -332,7 +332,7 @@ input, textarea, select {
    주차 슬롯이 스크롤 없이 정확히 화면에 맞게 표시
    ─────────────────────────────────────────────────────── */
 .parking-main {
-  height: calc((100dvh - var(--header-h) - var(--nav-h) - var(--safe-b)) * 0.62);
+  height: calc((100svh - var(--header-h) - var(--nav-h) - var(--safe-b)) * 0.62);
   padding: 5px 10px 3px;
   flex-shrink: 0;
 }
@@ -857,7 +857,7 @@ input, textarea, select {
   top: 0;
   right: 0;
   width: min(300px, 80vw);
-  height: 100dvh;
+  height: 100svh;
   background: var(--surface);
   z-index: 400;
   box-shadow: -8px 0 30px rgba(0,0,0,0.15);
@@ -1101,7 +1101,7 @@ input, textarea, select {
 /* Popup Settings Modal */
 .popup-settings-content {
   max-width: 420px;
-  max-height: 90dvh;
+  max-height: 90svh;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;

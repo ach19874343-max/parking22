@@ -68,25 +68,59 @@ let isTouchDrag    = false;  // 모바일 드래그 진행 중 여부 (미사용
 /* ── 탭-투-스왑 전역 상태 ── */
 let tapFirstSlot   = null;   // 첫 번째 탭 슬롯 인덱스 (null 이면 미선택)
 
-/* ── Undo 스택 (최대 20단계) ── */
+/* ── Undo / Redo 스택 (날짜별, 최대 20단계) ── */
 const UNDO_LIMIT = 20;
-let undoStack = [];
+const undoStacks = {};   /* { 'YYYY-MM-DD': [state, ...] } */
+const redoStacks = {};   /* { 'YYYY-MM-DD': [state, ...] } */
+
+function currentDate() {
+  return document.getElementById('datePicker')?.value || '';
+}
+
+function syncHistoryBtns(date) {
+  const d    = date || currentDate();
+  const undo = document.getElementById('undoBtn');
+  const redo = document.getElementById('redoBtn');
+  if (undo) undo.disabled = !(undoStacks[d]?.length);
+  if (redo) redo.disabled = !(redoStacks[d]?.length);
+}
 
 function pushUndo() {
-  undoStack.push(JSON.stringify(APP.parkingState));
-  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
-  const btn = document.getElementById('undoBtn');
-  if (btn) btn.disabled = false;
+  const date = currentDate();
+  if (!date) return;
+  if (!undoStacks[date]) undoStacks[date] = [];
+  if (!redoStacks[date]) redoStacks[date] = [];
+  undoStacks[date].push(JSON.stringify(APP.parkingState));
+  if (undoStacks[date].length > UNDO_LIMIT) undoStacks[date].shift();
+  /* 새 액션이 생기면 redo 스택 초기화 */
+  redoStacks[date] = [];
+  syncHistoryBtns(date);
 }
 
 function undoAction() {
-  if (!undoStack.length) return;
-  const prev = JSON.parse(undoStack.pop());
+  const date = currentDate();
+  if (!date || !undoStacks[date]?.length) return;
+  if (!redoStacks[date]) redoStacks[date] = [];
+  /* 현재 상태를 redo 스택에 저장 */
+  redoStacks[date].push(JSON.stringify(APP.parkingState));
+  const prev = JSON.parse(undoStacks[date].pop());
   APP.parkingState = prev;
   renderCards();
   saveData();
-  const btn = document.getElementById('undoBtn');
-  if (btn) btn.disabled = undoStack.length === 0;
+  syncHistoryBtns(date);
+}
+
+function redoAction() {
+  const date = currentDate();
+  if (!date || !redoStacks[date]?.length) return;
+  if (!undoStacks[date]) undoStacks[date] = [];
+  /* 현재 상태를 undo 스택에 저장 */
+  undoStacks[date].push(JSON.stringify(APP.parkingState));
+  const next = JSON.parse(redoStacks[date].pop());
+  APP.parkingState = next;
+  renderCards();
+  saveData();
+  syncHistoryBtns(date);
 }
 
 /* 드래그 고스트 요소 */
@@ -317,6 +351,8 @@ async function loadData(date) {
     APP.parkingState = buildDefaultState();
   }
 
+  /* 날짜 이동 시 해당 날짜 Undo/Redo 버튼 상태 동기화 */
+  syncHistoryBtns(date);
   renderCards();
 }
 
@@ -568,12 +604,20 @@ async function initParking() {
 
   APP.applyPermissionUI();
 
-  /* ── Undo 버튼 ── */
+  /* ── Undo / Redo 버튼 ── */
   const undoBtn = document.getElementById('undoBtn');
   if (undoBtn) {
     undoBtn.addEventListener('click', () => {
       if (!APP.isAdmin) return;
       undoAction();
+    });
+  }
+
+  const redoBtn = document.getElementById('redoBtn');
+  if (redoBtn) {
+    redoBtn.addEventListener('click', () => {
+      if (!APP.isAdmin) return;
+      redoAction();
     });
   }
 
