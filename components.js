@@ -119,6 +119,7 @@ function tmplBulletin() {
 function tmplBottomNav() {
   return `
   <nav class="bottom-nav">
+    <!-- 관리자 로그인 순서: 차량(+행) / 팝업 / 메모 / 설정 / 로그아웃 -->
     <button class="nav-item admin-ui" id="currentVehicleBtn">
       <span class="nav-icon"><svg viewBox="0 0 24 24">
         <rect x="1" y="3" width="15" height="13" rx="2"/>
@@ -126,18 +127,7 @@ function tmplBottomNav() {
         <circle cx="5.5" cy="18.5" r="2.5"/>
         <circle cx="18.5" cy="18.5" r="2.5"/>
       </svg></span>
-      <span class="nav-label">차량</span>
-    </button>
-    <button class="nav-item admin-ui" id="rowEditBtn">
-      <span class="nav-icon"><svg viewBox="0 0 24 24">
-        <line x1="8" y1="6" x2="21" y2="6"/>
-        <line x1="8" y1="12" x2="21" y2="12"/>
-        <line x1="8" y1="18" x2="21" y2="18"/>
-        <line x1="3" y1="6" x2="3.01" y2="6"/>
-        <line x1="3" y1="12" x2="3.01" y2="12"/>
-        <line x1="3" y1="18" x2="3.01" y2="18"/>
-      </svg></span>
-      <span class="nav-label">행</span>
+      <span class="nav-label">차량·행</span>
     </button>
     <button class="nav-item admin-ui" id="popupSettingBtn">
       <span class="nav-icon"><svg viewBox="0 0 24 24">
@@ -153,19 +143,19 @@ function tmplBottomNav() {
       </svg></span>
       <span class="nav-label">메모</span>
     </button>
-    <button class="nav-item" id="adminLoginBtn">
-      <span class="nav-icon" id="loginIcon"><svg viewBox="0 0 24 24">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg></span>
-      <span class="nav-label" id="loginLabel">로그인</span>
-    </button>
     <button class="nav-item admin-ui" id="appSettingsBtn">
       <span class="nav-icon"><svg viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg></span>
       <span class="nav-label">설정</span>
+    </button>
+    <button class="nav-item" id="adminLoginBtn">
+      <span class="nav-icon" id="loginIcon"><svg viewBox="0 0 24 24">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg></span>
+      <span class="nav-label" id="loginLabel">로그인</span>
     </button>
   </nav>`;
 }
@@ -256,34 +246,22 @@ function tmplAppSettingsModal() {
       <!-- 권한 설정 -->
       <div class="settings-section">
         <div class="settings-section-title">🔐 권한 설정</div>
-        <label class="settings-row">
-          <span class="settings-label">관리자 로그인 필요</span>
-          <input type="checkbox" class="settings-cb" id="set-requireAdmin">
-        </label>
-        <label class="settings-row">
-          <span class="settings-label">게시판 표시</span>
-          <input type="checkbox" class="settings-cb" id="set-showBulletin">
-        </label>
-        <label class="settings-row">
-          <span class="settings-label">게시글 작성</span>
-          <input type="checkbox" class="settings-cb" id="set-allowWrite">
-        </label>
-        <label class="settings-row">
-          <span class="settings-label">댓글 작성</span>
-          <input type="checkbox" class="settings-cb" id="set-allowComment">
-        </label>
-        <label class="settings-row">
-          <span class="settings-label">수정</span>
-          <input type="checkbox" class="settings-cb" id="set-allowEdit">
-        </label>
-        <label class="settings-row">
-          <span class="settings-label">삭제</span>
-          <input type="checkbox" class="settings-cb" id="set-allowDelete">
-        </label>
-        <label class="settings-row">
-          <span class="settings-label">공지 등록</span>
-          <input type="checkbox" class="settings-cb" id="set-allowNotice">
-        </label>
+        ${[
+          ['requireAdmin', '관리자 로그인 필요'],
+          ['showBulletin', '게시판 표시'],
+          ['allowWrite',   '게시글 작성'],
+          ['allowComment', '댓글 작성'],
+          ['allowEdit',    '수정'],
+          ['allowDelete',  '삭제'],
+          ['allowNotice',  '공지 등록'],
+        ].map(([key, label]) => `
+        <div class="settings-row">
+          <label class="settings-row-label" for="set-${key}">
+            ${label}
+            <button class="settings-help-btn" type="button" onclick="showSettingsHelp('${key}')">?</button>
+          </label>
+          <input type="checkbox" class="settings-cb" id="set-${key}">
+        </div>`).join('')}
       </div>
 
       <!-- 팀 표시 -->

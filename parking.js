@@ -596,14 +596,28 @@ function showSlotEditInput(slotIdx, current) {
   const card = document.querySelector(`.slot-card[data-slot="${slotIdx}"]`);
   if (!card) return;
   card.innerHTML = '';
+  card.className = card.className; /* 유지 */
+
+  /* 인풋 + 확인 버튼 래퍼 */
+  const wrap = document.createElement('div');
+  wrap.className = 'slot-edit-input-wrap';
+
   const inp = document.createElement('input');
   inp.type      = 'text';
   inp.value     = current;
   inp.maxLength = 4;
   inp.inputMode = 'numeric';
   inp.className = 'slot-inline-input';
-  card.appendChild(inp);
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'slot-confirm-btn';
+  confirmBtn.textContent = '✓';
+
+  wrap.appendChild(inp);
+  wrap.appendChild(confirmBtn);
+  card.appendChild(wrap);
   inp.focus(); inp.select();
+
   let done = false;
   const doConfirm = () => {
     if (done) return;
@@ -623,11 +637,13 @@ function showSlotEditInput(slotIdx, current) {
     saveData();
     renderCards();
   };
+  confirmBtn.addEventListener('mousedown', e => e.preventDefault()); /* blur 방지 */
+  confirmBtn.addEventListener('click', doConfirm);
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); doConfirm(); }
+    if (e.key === 'Enter')  { e.preventDefault(); doConfirm(); }
     if (e.key === 'Escape') { done = true; renderCards(); }
   });
-  inp.addEventListener('blur', () => setTimeout(doConfirm, 80));
+  inp.addEventListener('blur', () => setTimeout(() => { if (!done) doConfirm(); }, 150));
 }
 
 /* ── 빈 슬롯 차량 추가 인풋 ── */
@@ -952,7 +968,30 @@ async function initParking() {
   const datePicker = document.getElementById('datePicker');
   /* 날짜 표시 버튼 클릭 → datePicker 열기 */
   const dateDisplayBtn = document.getElementById('dateDisplayBtn');
-  if (dateDisplayBtn) dateDisplayBtn.addEventListener('click', () => datePicker.showPicker?.() || datePicker.click());
+  if (dateDisplayBtn) dateDisplayBtn.addEventListener('click', () => {
+    try {
+      if (datePicker.showPicker) {
+        datePicker.showPicker();
+      } else {
+        /* iOS Safari fallback: input을 visible하게 잠깐 보여줬다가 클릭 */
+        datePicker.style.display = 'block';
+        datePicker.style.opacity = '0';
+        datePicker.style.position = 'fixed';
+        datePicker.style.top = '50%';
+        datePicker.style.left = '50%';
+        datePicker.style.zIndex = '9999';
+        datePicker.click();
+        setTimeout(() => {
+          datePicker.style.display = '';
+          datePicker.style.opacity = '';
+          datePicker.style.position = '';
+          datePicker.style.top = '';
+          datePicker.style.left = '';
+          datePicker.style.zIndex = '';
+        }, 500);
+      }
+    } catch(e) { datePicker.click(); }
+  });
   const prevDayBtn = document.getElementById('prevDayBtn');
   const nextDayBtn = document.getElementById('nextDayBtn');
   const todayBtn   = document.getElementById('todayBtn');
@@ -995,31 +1034,41 @@ async function initParking() {
   });
 
   /* ── 차량 패널 이벤트 ── */
-  /* ── 차량 버튼: 바로 수정 모드 토글 ── */
+  /* ── 차량·행 버튼: 클릭마다 차량모드 → 행모드 → 종료 순환 ── */
   const currentVehicleBtn = document.getElementById('currentVehicleBtn');
+  let vehicleRowState = 0; /* 0=off, 1=차량수정, 2=행수정 */
   currentVehicleBtn.addEventListener('click', () => {
-    if (rowEditMode) toggleRowEditMode(false);
-    toggleVehicleEditMode(!vehicleEditMode);
-    currentVehicleBtn.classList.toggle('active', vehicleEditMode);
+    vehicleRowState = (vehicleRowState + 1) % 3;
+    if (vehicleRowState === 0) {
+      toggleVehicleEditMode(false);
+      toggleRowEditMode(false);
+      currentVehicleBtn.classList.remove('active');
+    } else if (vehicleRowState === 1) {
+      toggleRowEditMode(false);
+      toggleVehicleEditMode(true);
+      currentVehicleBtn.classList.add('active');
+    } else {
+      toggleVehicleEditMode(false);
+      toggleRowEditMode(true);
+      currentVehicleBtn.classList.add('active');
+    }
   });
 
   /* ── 차량 수정 완료 버튼 ── */
   const vehicleEditDoneBtn = document.getElementById('vehicleEditDoneBtn');
   if (vehicleEditDoneBtn) vehicleEditDoneBtn.addEventListener('click', () => {
+    vehicleRowState = 0;
     currentVehicleBtn.classList.remove('active');
     saveVehicleEditDone();
   });
 
-  /* ── 행 수정 버튼 ── */
-  const rowEditBtn = document.getElementById('rowEditBtn');
-  if (rowEditBtn) rowEditBtn.addEventListener('click', () => {
-    if (vehicleEditMode) toggleVehicleEditMode(false);
-    toggleRowEditMode(!rowEditMode);
-  });
-
   /* ── 행 수정 완료 버튼 ── */
   const rowEditDoneBtn = document.getElementById('rowEditDoneBtn');
-  if (rowEditDoneBtn) rowEditDoneBtn.addEventListener('click', () => toggleRowEditMode(false));
+  if (rowEditDoneBtn) rowEditDoneBtn.addEventListener('click', () => {
+    vehicleRowState = 0;
+    currentVehicleBtn.classList.remove('active');
+    toggleRowEditMode(false);
+  });
 
   /* ── 초기 데이터 로드 ── */
   const todayStr = getTodayStr();

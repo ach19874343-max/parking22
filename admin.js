@@ -23,22 +23,30 @@ function getTeamByDate(dateStr) {
 /* ── 앱 설정 전체 적용 ── */
 function applyAppSettings() {
   const s = APP.settings;
-  /* 게시판 표시/숨김 */
-  const bulletinSection = document.querySelector('.bulletin-section');
+
+  /* requireAdmin 해제 → 모든 방문자 관리자 권한 */
+  if (!s.requireAdmin) {
+    APP.isAdmin = true;
+    document.body.classList.remove('guest-mode');
+    document.body.classList.add('admin-mode');
+  }
+
+  /* 게시판 표시/숨김 — bulletin-board + footer-note는 분리 */
+  const bulletinBoard   = document.querySelector('.bulletin-board');
   const writePostBtn    = document.getElementById('writePostBtn');
-  if (bulletinSection) bulletinSection.style.display = s.showBulletin ? '' : 'none';
-  if (writePostBtn)    writePostBtn.style.display    = s.showBulletin ? '' : 'none';
-  /* footer-note 텍스트 반영 */
+  const bulletinWriteArea = document.getElementById('bulletinWriteArea');
+  if (bulletinBoard)   bulletinBoard.style.display     = s.showBulletin !== false ? '' : 'none';
+  if (writePostBtn)    writePostBtn.style.display       = s.showBulletin !== false ? '' : 'none';
+  if (bulletinWriteArea && s.showBulletin === false) bulletinWriteArea.style.display = 'none';
+
+  /* footer-note */
   applyFooterNotes();
+
   /* 팀 라벨 갱신 */
   const datePicker = document.getElementById('datePicker');
   if (datePicker?.value) {
-    document.getElementById('teamLabel').textContent = getTeamByDate(datePicker.value);
-  }
-  /* 관리자 권한 모드 반영 */
-  if (!s.requireAdmin) {
-    document.body.classList.remove('guest-mode');
-    document.body.classList.add('admin-mode');
+    const lbl = document.getElementById('teamLabel');
+    if (lbl) lbl.textContent = getTeamByDate(datePicker.value);
   }
 }
 
@@ -157,6 +165,32 @@ function initAdmin() {
   });
   const saveBtn = document.getElementById('appSettingsSave');
   if (saveBtn) saveBtn.addEventListener('click', saveAppSettings);
+}
+
+/* ── 설정 항목 설명 ── */
+const SETTINGS_HELP = {
+  requireAdmin:  '체크: 관리자 로그인 시에만 관리자 권한\n해제: 모든 방문자가 관리자 권한을 가집니다',
+  showBulletin:  '체크: 게시판과 메모 버튼이 표시됩니다\n해제: 게시판 전체와 메모 버튼이 숨겨집니다',
+  allowWrite:    '체크: 누구나 게시글 작성 가능\n해제: 관리자만 게시글 작성 가능',
+  allowComment:  '체크: 누구나 댓글 작성 가능\n해제: 관리자만 댓글 작성 가능',
+  allowEdit:     '체크: 누구나 수정 가능\n해제: 관리자만 수정 버튼 사용 가능',
+  allowDelete:   '체크: 누구나 삭제 가능 (공지는 항상 관리자만)\n해제: 관리자만 삭제 버튼 사용 가능',
+  allowNotice:   '체크: 관리자만 공지 등록 가능\n해제: 누구나 공지 등록 가능',
+};
+
+function showSettingsHelp(key) {
+  /* 기존 툴팁 제거 */
+  const existing = document.getElementById('settingsTooltip');
+  if (existing) { existing.remove(); return; }
+  const tip = document.createElement('div');
+  tip.id = 'settingsTooltip';
+  tip.className = 'settings-tooltip';
+  tip.textContent = SETTINGS_HELP[key] || '';
+  document.body.appendChild(tip);
+  /* 아무 곳 클릭시 닫기 */
+  setTimeout(() => {
+    document.addEventListener('click', () => tip.remove(), { once: true });
+  }, 10);
 }
 
 /* ── 설정 폼 채우기 ── */

@@ -419,24 +419,25 @@ body.dark-mode textarea {
 }
 
 .date-nav-btn {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: transparent;
-  border: none;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: background 0.15s, transform 0.1s;
   padding: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 .date-nav-btn svg {
-  width: 18px;
-  height: 18px;
-  stroke: var(--text-sec);
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-pri);
   fill: none;
-  stroke-width: 2;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -688,13 +689,13 @@ body.dark-mode textarea {
 
 /* 행 삭제 버튼 — 크고 탭하기 쉽게 */
 .row-del-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  border: 1.5px solid #FCA5A5;
   background: #FEE2E2;
-  color: #DC2626;
-  font-size: 13px;
+  color: #B91C1C;
+  font-size: 14px;
   font-weight: 900;
   cursor: pointer;
   display: flex;
@@ -702,9 +703,10 @@ body.dark-mode textarea {
   justify-content: center;
   flex-shrink: 0;
   transition: background 0.12s, transform 0.1s;
+  box-shadow: 0 1px 3px rgba(239,68,68,0.2);
 }
 .row-del-btn:active { background: #FECACA; transform: scale(0.9); }
-.row-del-btn:disabled { opacity: 0.2; pointer-events: none; }
+.row-del-btn:disabled { opacity: 0.15; pointer-events: none; border-color: #E5E7EB; background: #F9FAFB; color: #9CA3AF; }
 
 /* 행 라벨 인라인 인풋 */
 .row-label-input {
@@ -811,23 +813,47 @@ body.dark-mode textarea {
   gap: 4px;
 }
 .slot-edit-btn {
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 11px;
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 13px;
   border: none;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   font-family: var(--font);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   transition: transform 0.1s, opacity 0.1s;
   white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-.slot-edit-btn.edit { background: #DBEAFE; color: #1E40AF; }
-.slot-edit-btn.del  { background: #FEE2E2; color: #991B1B; }
-.slot-edit-btn:active { transform: scale(0.92); opacity: 0.85; }
+.slot-edit-btn.edit { background: #BFDBFE; color: #1E3A8A; border: 1px solid #93C5FD; }
+.slot-edit-btn.del  { background: #FECACA; color: #7F1D1D; border: 1px solid #FCA5A5; }
+.slot-edit-btn:active { transform: scale(0.9); opacity: 0.85; }
+
+/* 슬롯 수정 인풋 + 확인 버튼 래퍼 */
+.slot-edit-input-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 4px;
+}
+.slot-confirm-btn {
+  width: 100%;
+  height: 22px;
+  border-radius: 8px;
+  border: none;
+  background: #1C1C1E;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.12s, transform 0.1s;
+}
+.slot-confirm-btn:active { opacity: 0.75; transform: scale(0.96); }
 
 /* 빈 슬롯 추가 버튼 */
 .slot-add-btn {
@@ -857,16 +883,16 @@ body.dark-mode textarea {
 
 /* 슬롯 인라인 인풋 */
 .slot-inline-input {
-  width: 80%;
-  height: 32px;
-  border: 2px solid var(--blue);
+  width: 90%;
+  height: 28px;
+  border: 2px solid #1D4ED8;
   border-radius: 8px;
   padding: 0 4px;
   font-size: 14px;
   font-weight: 800;
   font-family: var(--font);
   text-align: center;
-  color: var(--text-pri);
+  color: #1C1C1E;
   background: #fff;
   outline: none;
   position: relative;
@@ -1022,10 +1048,10 @@ body.dark-mode textarea {
 }
 
 .slot-card.rest {
-  background: #FEFCE8;
-  color: #854D0E;
-  border: 1px solid #FEF08A;
-  box-shadow: 0 2px 8px rgba(234,179,8,0.12);
+  background: #FEF9C3;
+  color: #713F12;
+  border: 1px solid #EAB308;
+  box-shadow: 0 2px 8px rgba(234,179,8,0.25);
   font-weight: 900;
 }
 .slot-card.rest::before {
@@ -1033,7 +1059,7 @@ body.dark-mode textarea {
   position: absolute;
   left: 0; top: 18%; height: 64%;
   width: 3px;
-  background: #EAB308;
+  background: #CA8A04;
   border-radius: 0 2px 2px 0;
 }
 
@@ -2109,6 +2135,57 @@ body.dark-mode .copyright {
 .settings-btns .btn-primary,
 .settings-btns .btn-secondary {
   flex: 1;
+}
+
+/* 설정 ? 툴팁 */
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 0;
+}
+.settings-row-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-pri);
+  font-family: var(--font);
+  flex: 1;
+}
+.settings-help-btn {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-hint);
+  background: transparent;
+  color: var(--text-hint);
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.settings-help-btn:active { background: var(--bg); }
+.settings-tooltip {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1C1C1E;
+  color: #F2F2F7;
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 14px 18px;
+  border-radius: 14px;
+  max-width: 280px;
+  white-space: pre-line;
+  z-index: 9999;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  font-family: var(--font);
 }
 
 /* 다크모드 설정 모달 */

@@ -55,7 +55,8 @@ async function savePosts(arr) {
 /* ── 인라인 수정창 (공지 체크 옵션 포함) ── */
 function openInlineEdit(container, currentText, isCurrentNotice, placeholder, onSave) {
   if (container.innerHTML !== '') { container.innerHTML = ''; return; }
-  const noticeRow = (APP.isAdmin && APP.settings?.allowNotice !== false)
+  const canNoticeEdit = APP.isAdmin || APP.settings?.allowNotice === false;
+  const noticeRow = canNoticeEdit
     ? `<div class="bulletin-write-options">
          <label class="notice-check-label">
            <input type="checkbox" class="editNoticeCheckbox" ${isCurrentNotice ? 'checked' : ''}>
@@ -384,7 +385,8 @@ async function initBulletin() {
       if (cb) cb.checked = false;
       /* 공지 체크박스: 로그인 시에만 표시 */
       const noticeRow = document.getElementById('noticeCheckboxRow');
-      if (noticeRow) noticeRow.style.display = (APP.isAdmin && APP.settings?.allowNotice !== false) ? 'flex' : 'none';
+      const canNoticeWrite = APP.isAdmin || APP.settings?.allowNotice === false;
+      if (noticeRow) noticeRow.style.display = canNoticeWrite ? 'flex' : 'none';
       setTimeout(() => area.querySelector('.bulletinWriteInput').focus(), 80);
     }
   });
@@ -400,7 +402,7 @@ async function initBulletin() {
     if (!text) { alert('내용을 입력해주세요.'); return; }
     try {
       const arr      = await fetchPosts();
-      const isNotice = APP.isAdmin && cb && cb.checked;
+      const isNotice = (APP.isAdmin || APP.settings?.allowNotice === false) && cb && cb.checked;
       arr.push({ text, time: new Date().toISOString(), isNotice });
       await savePosts(arr);
       input.value = '';
