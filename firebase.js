@@ -28,6 +28,7 @@ window.APP = {
     footerLine2:     '※ 원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다.',
     footerLine3:     '※ 각조 팀장 & 부팀장 허락 없이 수정 절대 금지 ※',
     appVersion:      'v3.1.0',
+    dispatchApiBase: 'https://api.kiki-bus.com/dispatch/126', /* 배차 API 기본 URL */
   },
 };
 
@@ -63,6 +64,7 @@ async function initFirebase() {
     initUI();
     initAdmin();
     await loadBusListFromDB();
+    initDispatch();          /* 배차 섹션 초기화 — busList 로드 후 */
     await initParking();
     await initBulletin();
     await checkAndShowPopup();

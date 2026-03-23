@@ -85,6 +85,10 @@ async function saveRowsToDB() {
 /* ── 행 수정 모드 상태 ── */
 let rowEditMode = false;
 
+/* ── 수정 모드 스냅샷 (취소 시 복원용) ── */
+let vehicleEditSnapshot = null; /* { busList, values, active } */
+let rowEditSnapshot     = null; /* { rowLabels, rowCount, values, active } */
+
 /* ── 그리드 DOM 재렌더링 (행 추가/삭제 시) ── */
 function renderGrid() {
   const grid = document.getElementById('parkingGrid');
@@ -130,8 +134,7 @@ function renderGrid() {
         }
         APP.parkingState.values = newValues;
         APP.parkingState.active = newActive;
-        saveRowsToDB();
-        saveData();
+        /* ※ DB 저장은 수정 완료 버튼 클릭 시에만 */
         renderGrid();
         renderCards();
       });
@@ -170,7 +173,7 @@ function renderGrid() {
         APP.parkingState.values[startSlot + i] = '';
         APP.parkingState.active[startSlot + i] = false;
       }
-      saveRowsToDB();
+      /* ※ DB 저장은 수정 완료 버튼 클릭 시에만 */
       renderGrid();
       renderCards();
     });
@@ -192,7 +195,7 @@ function showRowLabelInput(rowIdx, current) {
   const done = () => {
     const newVal = inp.value.trim();
     if (newVal) APP.rowLabels[rowIdx] = newVal;
-    saveRowsToDB();
+    /* ※ DB 저장은 수정 완료 버튼 클릭 시에만 */
     renderGrid();
     renderCards();
   };
@@ -202,6 +205,14 @@ function showRowLabelInput(rowIdx, current) {
 
 /* ── 행 수정 모드 토글 ── */
 function toggleRowEditMode(on) {
+  if (on) {
+    rowEditSnapshot = {
+      rowLabels: [...APP.rowLabels],
+      rowCount:  APP.rowCount,
+      values:    {...APP.parkingState.values},
+      active:    {...APP.parkingState.active},
+    };
+  }
   rowEditMode = on;
   const parkingMain = document.querySelector('.parking-main');
   if (parkingMain) parkingMain.classList.toggle('row-edit-mode', on);
@@ -568,9 +579,8 @@ function renderCards() {
             if (li !== -1) APP.currentBusList.splice(li, 1);
             APP.parkingState.values[slotIdx] = '';
             APP.parkingState.active[slotIdx] = false;
-            saveBusListToDB();
+            /* ※ DB 저장은 수정 완료 버튼 클릭 시에만 */
             renderCards();
-            saveData();
           });
           card.appendChild(overlay);
         }
@@ -633,8 +643,7 @@ function showSlotEditInput(slotIdx, current) {
     const li = APP.currentBusList.indexOf(current);
     if (li !== -1) APP.currentBusList[li] = newNum;
     APP.parkingState.values[slotIdx] = newNum;
-    saveBusListToDB();
-    saveData();
+    /* ※ DB 저장은 수정 완료 버튼 클릭 시에만 */
     renderCards();
   };
   confirmBtn.addEventListener('mousedown', e => e.preventDefault()); /* blur 방지 */
@@ -687,8 +696,7 @@ function showSlotAddInput(slotIdx) {
     APP.currentBusList.push(newNum);
     APP.parkingState.values[slotIdx] = newNum;
     APP.parkingState.active[slotIdx] = false;
-    saveBusListToDB();
-    saveData();
+    /* ※ DB 저장은 수정 완료 버튼 클릭 시에만 */
     renderCards();
   };
   confirmBtn.addEventListener('mousedown', e => e.preventDefault());
@@ -790,6 +798,13 @@ let vehicleEditMode = false;
 
 /* ── 수정 모드 토글 ── */
 function toggleVehicleEditMode(on) {
+  if (on) {
+    vehicleEditSnapshot = {
+      busList: [...APP.currentBusList],
+      values:  {...APP.parkingState.values},
+      active:  {...APP.parkingState.active},
+    };
+  }
   vehicleEditMode = on;
   const parkingMain = document.querySelector('.parking-main');
   if (parkingMain) parkingMain.classList.toggle('vehicle-edit-mode', on);
@@ -812,6 +827,7 @@ function saveVehicleEditDone() {
   /* 슬롯에 없는 차량도 유지 */
   APP.currentBusList.forEach(b => { if (!newList.includes(b)) newList.push(b); });
   APP.currentBusList = newList;
+  vehicleEditSnapshot = null;
   saveBusListToDB();
   saveData();
   toggleVehicleEditMode(false);
@@ -1044,9 +1060,12 @@ async function initParking() {
 
   /* 날짜 변경 */
   datePicker.addEventListener('change', () => {
-    loadData(datePicker.value);
-    document.getElementById('teamLabel').textContent = APP.getTeamByDate(datePicker.value);
-    updateDayLabel(datePicker.value);
+    const val = datePicker.value;
+    loadData(val);
+    document.getElementById('teamLabel').textContent = APP.getTeamByDate(val);
+    updateDayLabel(val);
+    /* 배차 현황 날짜 연동 */
+    if (APP.loadDispatchForDate) APP.loadDispatchForDate(val);
   });
 
   prevDayBtn.addEventListener('click', () => {
@@ -1057,6 +1076,8 @@ async function initParking() {
     loadData(s);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
     updateDayLabel(s);
+    /* 배차 현황 날짜 연동 */
+    if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
   });
 
   if (nextDayBtn) {
@@ -1067,7 +1088,9 @@ async function initParking() {
       datePicker.value = s;
       loadData(s);
       document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
-    updateDayLabel(s);
+      updateDayLabel(s);
+      /* 배차 현황 날짜 연동 */
+      if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
     });
   }
 
@@ -1077,6 +1100,8 @@ async function initParking() {
     loadData(s);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
     updateDayLabel(s);
+    /* 배차 현황 날짜 연동 */
+    if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
   });
 
   /* ── 차량 패널 이벤트 ── */
@@ -1108,9 +1133,41 @@ async function initParking() {
     saveVehicleEditDone();
   });
 
+  /* ── 차량 수정 취소 버튼 ── */
+  const vehicleEditCancelBtn = document.getElementById('vehicleEditCancelBtn');
+  if (vehicleEditCancelBtn) vehicleEditCancelBtn.addEventListener('click', () => {
+    if (vehicleEditSnapshot) {
+      APP.currentBusList          = [...vehicleEditSnapshot.busList];
+      APP.parkingState.values     = {...vehicleEditSnapshot.values};
+      APP.parkingState.active     = {...vehicleEditSnapshot.active};
+      vehicleEditSnapshot = null;
+    }
+    vehicleRowState = 0;
+    currentVehicleBtn.classList.remove('active');
+    toggleVehicleEditMode(false);
+  });
+
   /* ── 행 수정 완료 버튼 ── */
   const rowEditDoneBtn = document.getElementById('rowEditDoneBtn');
   if (rowEditDoneBtn) rowEditDoneBtn.addEventListener('click', () => {
+    vehicleRowState = 0;
+    currentVehicleBtn.classList.remove('active');
+    rowEditSnapshot = null;
+    saveRowsToDB();
+    saveData();
+    toggleRowEditMode(false);
+  });
+
+  /* ── 행 수정 취소 버튼 ── */
+  const rowEditCancelBtn = document.getElementById('rowEditCancelBtn');
+  if (rowEditCancelBtn) rowEditCancelBtn.addEventListener('click', () => {
+    if (rowEditSnapshot) {
+      APP.rowLabels               = [...rowEditSnapshot.rowLabels];
+      APP.rowCount                = rowEditSnapshot.rowCount;
+      APP.parkingState.values     = {...rowEditSnapshot.values};
+      APP.parkingState.active     = {...rowEditSnapshot.active};
+      rowEditSnapshot = null;
+    }
     vehicleRowState = 0;
     currentVehicleBtn.classList.remove('active');
     toggleRowEditMode(false);

@@ -50,6 +50,31 @@ function applyAppSettings() {
   }
 }
 
+function getFooterEmoji(text) {
+  /* 전화번호 패턴 먼저 */
+  if (/\d{2,4}[-\s]?\d{3,4}[-\s]?\d{4}/.test(text) || /전화|☎|tel/i.test(text)) return '📞';
+  if (/버스|차량|운행|배차|마을버스/.test(text)) return '🚌';
+  if (/주의|금지|경고|절대|위험|금/.test(text)) return '⚠️';
+  if (/시간|오전|오후|AM|PM|\d+시|스케줄|일정/.test(text)) return '🕐';
+  if (/식사|점심|저녁|아침|음식|밥|급식/.test(text)) return '🍽️';
+  if (/날씨|비|눈|맑음|흐림|안개/.test(text)) return '🌤️';
+  if (/회의|미팅|회식|집합|모임/.test(text)) return '📅';
+  if (/공지|안내|알림|공고/.test(text)) return '📢';
+  if (/수리|정비|점검|고장/.test(text)) return '🔧';
+  if (/주차|차고|주차장/.test(text)) return '🅿️';
+  if (/팀장|부팀장|기사|운전/.test(text)) return '👤';
+  if (/노선|번호|\d+번/.test(text)) return '🔢';
+  return '📌';
+}
+
+function linkifyPhones(text) {
+  /* 전화번호를 tel: 링크로 변환 (000-0000-0000 / 000 0000 0000 등) */
+  return text.replace(
+    /(\d{2,4})[-\s](\d{3,4})[-\s](\d{4})/g,
+    '<a href="tel:$1$2$3" style="color:inherit;text-decoration:underline;text-underline-offset:2px">$1-$2-$3</a>'
+  );
+}
+
 function applyFooterNotes() {
   const s = APP.settings;
   const lines = document.querySelectorAll('.footer-line');
@@ -68,8 +93,11 @@ function applyFooterNotes() {
         const div = document.createElement('div');
         div.className = 'fn-row';
         const safe = line.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-        div.innerHTML = '<span class="fn-icon">📌</span>' +
-          '<span class="fn-text footer-extra-line">' + safe + '</span>';
+        const emoji = getFooterEmoji(line);
+        /* 전화번호 링크 변환 */
+        const linked = linkifyPhones(safe);
+        div.innerHTML = '<span class="fn-icon">' + emoji + '</span>' +
+          '<span class="fn-text footer-extra-line">' + linked + '</span>';
         extra.appendChild(div);
       }
     }
@@ -78,6 +106,9 @@ function applyFooterNotes() {
 
 /* ── 관리자/게스트에 따라 카드 이벤트 재설정 ────────────── */
 function applyPermissionUI() {
+  /* 배차 현황 섹션 권한 즉시 반영 */
+  if (typeof renderDispatchSection === 'function') renderDispatchSection();
+  if (APP.renderDispatchSection) APP.renderDispatchSection();
   /* 주차 카드 재렌더링 (권한에 따라 이벤트 핸들러 유무 결정) */
   if (typeof renderCards === 'function') renderCards();
   if (APP.renderCards) APP.renderCards();
@@ -129,6 +160,9 @@ function initAdmin() {
     if (APP.isAdmin) {
       APP.isAdmin = false;
       sessionStorage.removeItem('isAdmin');
+      /* 배차 현황 세션 초기화 */
+      if (typeof resetDispatchState === 'function') resetDispatchState();
+      if (APP.resetDispatch) APP.resetDispatch();
       applyPermissionUI();
       updateAdminButton();
       alert('Logout 되었습니다');
@@ -243,6 +277,7 @@ function fillSettingsForm() {
   setVal('set-footerLine2', s.footerLine2);
   setVal('set-footerLine3', s.footerLine3);
   setVal('set-appVersion',  s.appVersion);
+  setVal('set-dispatchApiBase', s.dispatchApiBase);
   /* 동적 추가 줄 렌더링 */
   renderFooterExtraInputs(s);
 }
@@ -317,6 +352,7 @@ async function saveAppSettings() {
     footerLine2:   getV('set-footerLine2'),
     footerLine3:   getV('set-footerLine3'),
     appVersion:    getV('set-appVersion'),
+    dispatchApiBase: getV('set-dispatchApiBase') || 'https://api.kiki-bus.com/dispatch/126',
   };
   /* 동적 추가 줄 4~10 */
   for (let i = 4; i <= 10; i++) {

@@ -321,6 +321,7 @@ body {
 </script>
 <nav class="toc">
   <a href="#s1">화면 구성</a>
+  <a href="#s-dispatch">배차 현황</a>
   <a href="#s3">주차칸 설정</a>
   <a href="#s5">관리자 기능</a>
   <a href="#s2">날짜 이동</a>
@@ -351,6 +352,13 @@ body {
       <div class="item">
         <div class="item-dot"></div>
         <div class="item-body">
+          <div class="item-title">배차 현황 (관리자 전용)</div>
+          <div class="item-desc">헤더 날짜 기준 오늘·내일 배차 버스 번호 표시. 파란색=총5회차(조기완료), 흰색=총6회차, 노란색=휴차</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
           <div class="item-title">주차 그리드</div>
           <div class="item-desc">2R~7R(+추가 행) 각 6칸씩 구성. 흰색=운행, 노란색=휴차, 빈칸=미배정</div>
         </div>
@@ -371,6 +379,53 @@ body {
       </div>
     </div>
   </div>
+
+  <!-- 배차 현황 -->
+  <div class="section" id="s-dispatch">
+    <div class="section-head">
+      <div class="section-icon ic-blue">🚌</div>
+      <div>
+        <h2>배차 현황</h2>
+        <p>오늘 · 내일 배차 버스 번호 확인 (관리자 전용)</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="tag-grid">
+        <div class="tag" style="background:#F3F4F6;border-color:#D1D5DB;color:#374151;">⬜ 흰색 = 총6회차 (일반)</div>
+        <div class="tag" style="background:#DBEAFE;border-color:#93C5FD;color:#1D4ED8;">🔵 파란색 = 총5회차 (조기완료)</div>
+        <div class="tag" style="background:#FEF3C7;border-color:#FDE68A;color:#92400E;">🟡 노란색 = 휴차</div>
+      </div>
+      <div class="divider-text">사용 방법</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">관리자 로그인 후 배차 현황 섹션 확인</div>
+            <div class="step-desc">로그인하면 주차 그리드 위에 배차 현황 섹션이 나타납니다</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">불러오기 버튼 탭</div>
+            <div class="step-desc"><b>불러오기</b> 버튼을 누르면 API에서 오늘·내일 배차 데이터를 가져와 Firebase에 저장합니다</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">날짜 변경 시 자동 연동</div>
+            <div class="step-desc">헤더 날짜를 바꾸면 해당 날짜에 저장된 배차 데이터를 자동으로 불러옵니다. 저장된 데이터가 없으면 불러오기 버튼 안내가 표시됩니다</div>
+          </div>
+        </div>
+      </div>
+      <div class="highlight">
+        <span class="highlight-icon">💡</span>
+        <span>배차 데이터는 2일 지나면 자동 삭제됩니다. 불러온 데이터는 날짜별로 저장되어 같은 날짜 재접속 시 즉시 표시됩니다.</span>
+      </div>
+    </div>
+  </div>
+
 
   <!-- 2. 날짜 이동 -->
     <div class="section" id="s3">
