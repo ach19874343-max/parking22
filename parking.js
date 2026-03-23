@@ -1003,30 +1003,41 @@ async function initParking() {
   const datePicker = document.getElementById('datePicker');
   /* 날짜 표시 버튼 클릭 → datePicker 열기 */
   const dateDisplayBtn = document.getElementById('dateDisplayBtn');
-  if (dateDisplayBtn) dateDisplayBtn.addEventListener('click', () => {
-    try {
-      if (datePicker.showPicker) {
-        datePicker.showPicker();
-      } else {
-        /* iOS Safari fallback: input을 visible하게 잠깐 보여줬다가 클릭 */
-        datePicker.style.display = 'block';
-        datePicker.style.opacity = '0';
-        datePicker.style.position = 'fixed';
-        datePicker.style.top = '50%';
-        datePicker.style.left = '50%';
-        datePicker.style.zIndex = '9999';
-        datePicker.click();
-        setTimeout(() => {
-          datePicker.style.display = '';
-          datePicker.style.opacity = '';
-          datePicker.style.position = '';
-          datePicker.style.top = '';
-          datePicker.style.left = '';
-          datePicker.style.zIndex = '';
-        }, 500);
-      }
-    } catch(e) { datePicker.click(); }
-  });
+  /* iOS Safari 대응: dateDisplayBtn 위에 투명 date input 덮어씌우기 */
+  if (dateDisplayBtn) {
+    /* 투명 오버레이 input 생성 */
+    const iosDateOverlay = document.createElement('input');
+    iosDateOverlay.type = 'date';
+    iosDateOverlay.style.cssText = [
+      'position:absolute',
+      'inset:0',
+      'width:100%',
+      'height:100%',
+      'opacity:0',
+      'cursor:pointer',
+      'z-index:5',
+      'border:none',
+      'background:transparent',
+      '-webkit-appearance:none',
+    ].join(';');
+    iosDateOverlay.value = datePicker.value;
+    dateDisplayBtn.style.position = 'relative';
+    dateDisplayBtn.appendChild(iosDateOverlay);
+
+    /* 오버레이 input 변경 → 실제 datePicker와 동기화 */
+    iosDateOverlay.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (!val) return;
+      datePicker.value = val;
+      datePicker.dispatchEvent(new Event('change'));
+    });
+
+    /* 기존 click 핸들러도 유지 (Android/PC) */
+    dateDisplayBtn.addEventListener('click', (e) => {
+      if (e.target === iosDateOverlay) return;
+      try { datePicker.showPicker?.(); } catch(e2) {}
+    });
+  }
   const prevDayBtn = document.getElementById('prevDayBtn');
   const nextDayBtn = document.getElementById('nextDayBtn');
   const todayBtn   = document.getElementById('todayBtn');

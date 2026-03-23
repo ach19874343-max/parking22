@@ -36,7 +36,7 @@ body {
 .header {
   background: #1C1C1E;
   color: #fff;
-  padding: 2px 2px 2px;
+  padding: 20px 20px 16px;
   text-align: center;
 }
 .header-badge {
@@ -66,13 +66,14 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 5px 5px;
+  padding: 10px 16px;
   background: #fff;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
 }
+#backBar { position: sticky; top: 0; z-index: 11; }
 .toc a {
   font-size: 11px;
   font-weight: 700;
@@ -276,6 +277,20 @@ body {
   <p>사용설명서 — 주요 기능 안내</p>
 </div>
 
+<div id="backBar" style="display:none;background:#1C1C1E;padding:10px 16px;">
+  <button onclick="history.back()" style="background:none;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:-apple-system,sans-serif;">
+    ‹ 돌아가기
+  </button>
+</div>
+<script>
+  /* iOS Safari에서 이전 페이지가 있으면 뒤로가기 버튼 표시 */
+  if (document.referrer && document.referrer !== '') {
+    document.getElementById('backBar').style.display = 'block';
+  }
+  /* iOS 앱 내에서 열린 경우 항상 표시 */
+  const isIOSApp = window.navigator.standalone === true;
+  if (isIOSApp) document.getElementById('backBar').style.display = 'block';
+</script>
 <nav class="toc">
   <a href="#s1">화면 구성</a>
   <a href="#s3">주차칸 설정</a>
@@ -349,14 +364,14 @@ body {
         <div class="item-dot"></div>
         <div class="item-body">
           <div class="item-title">운행 ↔ 휴차 전환 <span class="badge badge-admin">관리자</span></div>
-          <div class="item-desc">주차칸을 꾹누르면(0.5초 이상) 운행↔휴차 상태가 전환됩니다</div>
+          <div class="item-desc">주차칸을 탭하면 운행↔휴차 상태가 전환됩니다</div>
         </div>
       </div>
       <div class="item">
         <div class="item-dot"></div>
         <div class="item-body">
           <div class="item-title">차량 위치 이동 <span class="badge badge-admin">관리자</span></div>
-          <div class="item-desc">칸을 탭해 선택(파란 테두리)한 뒤 다른 칸을 탭하면 위치가 바뀝니다</div>
+          <div class="item-desc">칸을 탭해 선택(파란 테두리)한 뒤 다른 칸을 탭하면 위치가 바뀝니다. 또는 꾹 눌러 드래그도 가능합니다</div>
         </div>
       </div>
       <div class="item">

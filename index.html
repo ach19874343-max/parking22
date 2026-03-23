@@ -115,18 +115,59 @@ const isStandalone = window.navigator.standalone === true;
 if (isIOS && isSafari && !isStandalone && !sessionStorage.getItem('iosDismissed')) {
   setTimeout(() => {
     const banner = document.createElement('div');
-    banner.className = 'pwa-ios-banner';
+    banner.id = 'iosBanner';
+    banner.style.cssText = `
+      position:fixed; bottom:0; left:0; right:0;
+      background:#1C1C1E; color:#fff;
+      border-radius:20px 20px 0 0;
+      padding:20px 20px 36px;
+      z-index:9999;
+      box-shadow:0 -4px 30px rgba(0,0,0,0.4);
+      font-family:-apple-system,sans-serif;
+      animation:slideUpBanner 0.35s ease;
+    `;
     banner.innerHTML = `
-      <button class="pwa-ios-close" id="iosClose">✕</button>
-      <p>📱 홈 화면에 추가하려면<br>
-      하단 <strong>공유 버튼(□↑)</strong>을 누른 뒤<br>
-      <strong>"홈 화면에 추가"</strong>를 선택하세요.</p>`;
+      <style>
+        @keyframes slideUpBanner{from{transform:translateY(100%)}to{transform:translateY(0)}}
+        @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        #iosShareArrow{display:inline-block;animation:bounce 1.2s ease infinite;}
+      </style>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:44px;height:44px;background:#fff;border-radius:10px;overflow:hidden;flex-shrink:0;">
+            <img src="https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:800;">홈 화면에 추가</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px;">앱처럼 바로 실행 가능</div>
+          </div>
+        </div>
+        <button id="iosClose" style="background:rgba(255,255,255,0.12);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span id="iosShareArrow" style="font-size:18px;">⬆️</span>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:700;">1단계</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:1px;">하단 가운데 <strong style="color:#60A5FA;">공유 버튼(□↑)</strong> 탭</div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;">➕</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;">2단계</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:1px;"><strong style="color:#60A5FA;">"홈 화면에 추가"</strong> 선택 후 추가</div>
+          </div>
+        </div>
+      </div>`;
     document.body.appendChild(banner);
     document.getElementById('iosClose').addEventListener('click', () => {
       sessionStorage.setItem('iosDismissed', '1');
       banner.remove();
     });
-  }, 3000);
+  }, 2000);
 }
 </script>
 </body>
