@@ -371,43 +371,13 @@ function swapSlots(srcIdx, dstIdx) {
   saveData();
 }
 
-/* ── 스켈레톤 카드 표시 ── */
-function showSkeletonCards() {
-  for (let rowIdx = 0; rowIdx < (APP.rowCount || 6); rowIdx++) {
-    const wrap = document.getElementById(`row-${rowIdx}`);
-    if (!wrap) continue;
-    wrap.innerHTML = '';
-    for (let col = 0; col < 3; col++) {
-      const s = document.createElement('div');
-      s.className = 'slot-card skeleton-card';
-      wrap.appendChild(s);
-    }
-  }
-}
-
-/* ── 슬롯 상태 토글 (운행 ↔ 휴차) + 플립 애니메이션 ── */
+/* ── 슬롯 상태 토글 (운행 ↔ 휴차) ─────────────────────── */
 function toggleCardState(slotIdx) {
   if (!APP.isAdmin) return;
-  if (!APP.parkingState.values[slotIdx]) return;
+  if (!APP.parkingState.values[slotIdx]) return; // 빈 슬롯 무시
   pushUndo();
   APP.parkingState.active[slotIdx] = !APP.parkingState.active[slotIdx];
-  /* 플립 애니메이션: 먼저 front half 회전 후 상태 변경 */
-  const card = document.querySelector(`.slot-card[data-slot="${slotIdx}"]`);
-  if (card) {
-    card.classList.add('flipping');
-    setTimeout(() => {
-      renderCards();
-      setTimeout(() => {
-        const newCard = document.querySelector(`.slot-card[data-slot="${slotIdx}"]`);
-        if (newCard) newCard.classList.add('flip-in');
-        setTimeout(() => {
-          if (newCard) newCard.classList.remove('flip-in');
-        }, 200);
-      }, 10);
-    }, 150);
-  } else {
-    renderCards();
-  }
+  renderCards();
   saveData();
 }
 
@@ -752,14 +722,14 @@ function saveData() {
 function updateLastSavedUI(isoStr) {
   const el = document.getElementById('lastSavedText');
   if (!el) return;
-  if (!isoStr) { el.textContent = '저장 기록 없음'; return; }
+  if (!isoStr) { el.textContent = '갱신 기록 없음'; return; }
   const d    = new Date(isoStr);
   const now  = new Date();
   const hm   = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
   const isToday = d.toDateString() === now.toDateString();
   const isYesterday = new Date(now - 86400000).toDateString() === d.toDateString();
   let label;
-  if (isToday)          label = hm + ' 저장';
+  if (isToday)          label = hm + ' 갱신';
   else if (isYesterday) label = '어제 ' + hm;
   else                  label = (d.getMonth()+1) + '/' + d.getDate() + ' ' + hm;
   el.textContent = label;
@@ -768,8 +738,6 @@ function updateLastSavedUI(isoStr) {
 /* ── Firebase에서 주차 데이터 로드 ─────────────────────── */
 async function loadData(date) {
   if (!date) return;
-  /* 스켈레톤 표시 */
-  showSkeletonCards();
   const snap = await APP.get(APP.ref(APP.db, 'parking/' + date));
   const data = snap.val();
 

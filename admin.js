@@ -58,6 +58,22 @@ function applyFooterNotes() {
   if (lines[2]) lines[2].textContent = s.footerLine3 || '';
   const ver = document.getElementById('appVersion');
   if (ver) ver.textContent = s.appVersion || 'v3.1.0';
+  /* 추가 줄 4~10 — fn-card 안에 표시 */
+  const extra = document.getElementById('footerExtraLines');
+  if (extra) {
+    extra.innerHTML = '';
+    for (let i = 4; i <= 10; i++) {
+      const line = s['footerLine' + i];
+      if (line && line.trim()) {
+        const div = document.createElement('div');
+        div.className = 'fn-row';
+        const safe = line.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+        div.innerHTML = '<span class="fn-icon">📌</span>' +
+          '<span class="fn-text footer-extra-line">' + safe + '</span>';
+        extra.appendChild(div);
+      }
+    }
+  }
 }
 
 /* ── 관리자/게스트에 따라 카드 이벤트 재설정 ────────────── */
@@ -165,6 +181,19 @@ function initAdmin() {
   });
   const saveBtn = document.getElementById('appSettingsSave');
   if (saveBtn) saveBtn.addEventListener('click', saveAppSettings);
+
+  /* + 줄 추가 버튼 */
+  const addFooterBtn = document.getElementById('addFooterLineBtn');
+  if (addFooterBtn) addFooterBtn.addEventListener('click', () => {
+    const container = document.getElementById('footerExtraInputs');
+    if (!container) return;
+    const rows = container.querySelectorAll('.footer-input-row');
+    const total = 3 + rows.length;
+    if (total >= 10) return;
+    const newIdx = rows.length + 4;
+    addFooterInputRow(container, newIdx, '');
+    if (total + 1 >= 10) addFooterBtn.style.display = 'none';
+  });
 }
 
 /* ── 설정 항목 설명 ── */
@@ -214,8 +243,59 @@ function fillSettingsForm() {
   setVal('set-footerLine2', s.footerLine2);
   setVal('set-footerLine3', s.footerLine3);
   setVal('set-appVersion',  s.appVersion);
-  setVal('set-githubToken', s.githubToken || '');
-  setVal('set-githubRepo',  s.githubRepo  || '');
+  /* 동적 추가 줄 렌더링 */
+  renderFooterExtraInputs(s);
+}
+
+function renderFooterExtraInputs(s) {
+  const container = document.getElementById('footerExtraInputs');
+  const addBtn    = document.getElementById('addFooterLineBtn');
+  if (!container) return;
+  container.innerHTML = '';
+  let count = 0;
+  for (let i = 4; i <= 10; i++) {
+    const val = s['footerLine' + i];
+    if (val !== undefined && val !== '') {
+      addFooterInputRow(container, i, val);
+      count++;
+    }
+  }
+  if (addBtn) addBtn.style.display = (3 + count >= 10) ? 'none' : '';
+}
+
+function addFooterInputRow(container, idx, val) {
+  const row = document.createElement('div');
+  row.className = 'footer-input-row';
+  row.dataset.idx = idx;
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.id   = 'set-footerLine' + idx;
+  inp.className   = 'settings-input';
+  inp.placeholder = idx + '번째 줄';
+  inp.value = val || '';
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = 'footer-del-btn';
+  delBtn.textContent = '✕';
+  delBtn.onclick = () => {
+    row.remove();
+    reindexFooterInputs();
+    const ab = document.getElementById('addFooterLineBtn');
+    if (ab) ab.style.display = '';
+  };
+  row.appendChild(inp);
+  row.appendChild(delBtn);
+  container.appendChild(row);
+}
+
+function reindexFooterInputs() {
+  const rows = document.querySelectorAll('#footerExtraInputs .footer-input-row');
+  rows.forEach((row, i) => {
+    const newIdx = i + 4;
+    row.dataset.idx = newIdx;
+    const inp = row.querySelector('input');
+    if (inp) { inp.id = 'set-footerLine' + newIdx; inp.placeholder = newIdx + '번째 줄'; }
+  });
 }
 
 /* ── 설정 저장 ── */
@@ -237,9 +317,12 @@ async function saveAppSettings() {
     footerLine2:   getV('set-footerLine2'),
     footerLine3:   getV('set-footerLine3'),
     appVersion:    getV('set-appVersion'),
-    githubToken:   getV('set-githubToken'),
-    githubRepo:    getV('set-githubRepo'),
   };
+  /* 동적 추가 줄 4~10 */
+  for (let i = 4; i <= 10; i++) {
+    const el = document.getElementById('set-footerLine' + i);
+    newSettings['footerLine' + i] = el ? el.value.trim() : '';
+  }
 
   try {
     await APP.set(APP.ref(APP.db, 'appSettings'), newSettings);

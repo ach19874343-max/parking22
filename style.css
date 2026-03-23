@@ -1046,41 +1046,6 @@ body.dark-mode textarea {
   gap: 5px;
 }
 
-/* ── 슬롯 카드 플립 애니메이션 ── */
-@keyframes flipOut {
-  0%   { transform: perspective(400px) rotateY(0); }
-  100% { transform: perspective(400px) rotateY(90deg); opacity: 0.3; }
-}
-@keyframes flipIn {
-  0%   { transform: perspective(400px) rotateY(-90deg); opacity: 0.3; }
-  100% { transform: perspective(400px) rotateY(0); }
-}
-.slot-card.flipping {
-  animation: flipOut 0.15s ease-in forwards;
-}
-.slot-card.flip-in {
-  animation: flipIn 0.2s ease-out forwards;
-}
-
-/* ── 스켈레톤 카드 ── */
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.skeleton-card {
-  background: linear-gradient(90deg,
-    #E5E7EB 25%, #F3F4F6 50%, #E5E7EB 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
-  border: none !important;
-  border-radius: 12px;
-}
-body.dark-mode .skeleton-card {
-  background: linear-gradient(90deg,
-    #3A3A3C 25%, #48484A 50%, #3A3A3C 75%);
-  background-size: 200% 100%;
-}
-
 /* ── Slot Card ─────────────────────────────────────────── */
 .slot-card {
   height: 100%;
@@ -2171,11 +2136,69 @@ body.dark-mode .copyright {
 /* ── 앱 설정 대시보드 ── */
 .settings-modal-box {
   max-height: 85vh;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   gap: 0;
 }
+.settings-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.settings-btns-fixed {
+  display: flex;
+  gap: 8px;
+  padding: 12px 0 0;
+  border-top: 0.5px solid var(--border);
+  flex-shrink: 0;
+}
+.settings-btns-fixed .btn-primary,
+.settings-btns-fixed .btn-secondary { flex: 1; }
+
+/* 동적 추가 줄 */
+.footer-add-btn {
+  height: 32px;
+  border-radius: 16px;
+  border: 1.5px dashed #60A5FA;
+  background: transparent;
+  color: #3B82F6;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.12s;
+}
+.footer-add-btn:active { background: #EFF6FF; }
+.footer-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.footer-input-row .settings-input { flex: 1; }
+.footer-del-btn {
+  width: 30px;
+  height: 38px;
+  border-radius: 8px;
+  border: none;
+  background: #FEE2E2;
+  color: #DC2626;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.footer-del-btn:active { background: #FECACA; }
+.footer-extra-line {
+  font-size: 12px;
+  color: #3A3A3C;
+  line-height: 1.5;
+  font-family: var(--font);
+  font-weight: 500;
+}
+body.dark-mode .footer-extra-line { color: #AEAEB2; }
 .settings-section {
   border-bottom: 0.5px solid var(--border);
   padding: 14px 0 10px;
@@ -2258,6 +2281,8 @@ body.dark-mode .copyright {
 .settings-btns .btn-secondary {
   flex: 1;
 }
+/* 다크모드 footer-del-btn */
+body.dark-mode .footer-del-btn { background: #3B1A1A; color: #FCA5A5; }
 
 /* 설정 ? 툴팁 */
 .settings-row {
@@ -2309,68 +2334,6 @@ body.dark-mode .copyright {
   box-shadow: 0 8px 30px rgba(0,0,0,0.3);
   font-family: var(--font);
 }
-
-/* ── guest-only: 게스트 모드에서만 표시 ── */
-.guest-only { display: none !important; }
-body.guest-mode .guest-only { display: flex !important; }
-body.admin-mode .guest-only { display: none !important; }
-
-/* ── 팀 선택 모달 ── */
-.team-select-box {
-  max-width: 320px;
-}
-.team-select-desc {
-  font-size: 13px;
-  color: var(--text-sec);
-  line-height: 1.6;
-  margin-bottom: 16px;
-  font-family: var(--font);
-}
-.team-select-btns {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.team-select-opt {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1.5px solid var(--border);
-  background: var(--surface);
-  cursor: pointer;
-  font-family: var(--font);
-  transition: border-color 0.15s, background 0.15s;
-}
-.team-select-opt:active { transform: scale(0.98); }
-.team-opt-badge {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.team-opt-label {
-  flex: 1;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-pri);
-  text-align: left;
-}
-.team-opt-check {
-  font-size: 16px;
-  font-weight: 900;
-  color: #1D4ED8;
-  width: 20px;
-  text-align: center;
-}
-
-/* 다크모드 */
-body.dark-mode .team-select-opt { background: #2C2C2E; }
 
 /* 다크모드 설정 모달 */
 body.dark-mode .settings-input {

@@ -325,7 +325,6 @@ body {
   <a href="#s5">관리자 기능</a>
   <a href="#s2">날짜 이동</a>
   <a href="#s4">게시판</a>
-  <a href="#s8">알림</a>
   <a href="#s6">설정</a>
   <a href="#s7">앱 설치</a>
 </nav>
@@ -393,7 +392,7 @@ body {
         <div class="item-dot"></div>
         <div class="item-body">
           <div class="item-title">운행 ↔ 휴차 전환 <span class="badge badge-admin">관리자</span></div>
-          <div class="item-desc">주차칸을 꾹누르면(0.5초) 운행↔휴차 상태가 전환됩니다</div>
+          <div class="item-desc">주차칸을 꾹누르면(0.5초 이상) 운행↔휴차 상태가 전환됩니다</div>
         </div>
       </div>
       <div class="item">
@@ -450,13 +449,6 @@ body {
           <div class="step-body">
             <div class="step-title">앱 설정</div>
             <div class="step-desc">권한 제어 / 팀 표시 방식 / 하단 안내문 수정 가능. 저장 시 모든 방문자에게 즉시 반영</div>
-          </div>
-        </div>
-        <div class="step">
-          <div class="step-num">5</div>
-          <div class="step-body">
-            <div class="step-title">알림 보내기</div>
-            <div class="step-desc">하단 <b>알림(🔔)</b> 버튼 탭 → 현재 선택된 날짜 기준 팀에게만 자동 발송.<br>예) 03/23이 A팀 날짜면 A팀 구독자 + 모두 구독자에게만 전송. 알림 내용: <b>"03/23 마감 주차도 업데이트"</b></div>
           </div>
         </div>
       </div>
@@ -556,50 +548,6 @@ body {
   </div>
 
   <!-- 5. 관리자 -->
-    <div class="section" id="s8">
-    <div class="section-head">
-      <div class="section-icon ic-blue">🔔</div>
-      <div>
-        <h2>알림 설정</h2>
-        <p>업데이트 알림 받기</p>
-      </div>
-    </div>
-    <div class="section-body">
-      <div class="item">
-        <div class="item-dot"></div>
-        <div class="item-body">
-          <div class="item-title">내 팀 선택</div>
-          <div class="item-desc">하단 메뉴 <b>내 팀</b> 버튼 탭 → A TEAM / B TEAM / 모두 중 선택. 처음 방문 시 자동으로 선택 창이 표시됩니다</div>
-        </div>
-      </div>
-      <div class="item">
-        <div class="item-dot"></div>
-        <div class="item-body">
-          <div class="item-title">알림 허용</div>
-          <div class="item-desc">팀 선택 후 <b>알림 허용</b> 배너가 표시됩니다. 허용하면 관리자가 알림을 보낼 때 내 기기로 수신됩니다</div>
-        </div>
-      </div>
-      <div class="item">
-        <div class="item-dot"></div>
-        <div class="item-body">
-          <div class="item-title">팀별 알림 분리</div>
-          <div class="item-desc">A팀 날짜엔 A팀 구독자에게만, B팀 날짜엔 B팀 구독자에게만 알림이 전송됩니다. <b>모두</b>를 선택하면 날짜 상관없이 모든 알림을 받습니다</div>
-        </div>
-      </div>
-      <div class="item">
-        <div class="item-dot"></div>
-        <div class="item-body">
-          <div class="item-title">팀 변경</div>
-          <div class="item-desc">하단 메뉴 <b>내 팀</b> 버튼을 다시 탭하면 언제든지 팀을 변경할 수 있습니다</div>
-        </div>
-      </div>
-      <div class="highlight">
-        <span class="highlight-icon">💡</span>
-        <span>PWA(홈 화면 설치) 상태에서 알림을 허용해야 백그라운드에서도 알림을 받을 수 있어요</span>
-      </div>
-    </div>
-  </div>
-
     <div class="section" id="s6">
     <div class="section-head">
       <div class="section-icon ic-purple">⚙️</div>
