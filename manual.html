@@ -73,7 +73,7 @@ body {
   top: 0;
   z-index: 10;
 }
-#backBar { position: sticky; top: 0; z-index: 11; }
+
 .toc a {
   font-size: 11px;
   font-weight: 700;
@@ -277,19 +277,42 @@ body {
   <p>사용설명서 — 주요 기능 안내</p>
 </div>
 
-<div id="backBar" style="display:none;background:#1C1C1E;padding:10px 16px;">
-  <button onclick="history.back()" style="background:none;border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:-apple-system,sans-serif;">
-    ‹ 돌아가기
-  </button>
-</div>
-<script>
-  /* iOS Safari에서 이전 페이지가 있으면 뒤로가기 버튼 표시 */
-  if (document.referrer && document.referrer !== '') {
-    document.getElementById('backBar').style.display = 'block';
+<style>
+  #backBtn {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 999;
+    background: rgba(28,28,30,0.85);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.22);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 9px 16px 9px 12px;
+    border-radius: 22px;
+    cursor: pointer;
+    font-family: -apple-system, sans-serif;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    letter-spacing: 0.01em;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.1s, transform 0.1s;
   }
-  /* iOS 앱 내에서 열린 경우 항상 표시 */
-  const isIOSApp = window.navigator.standalone === true;
-  if (isIOSApp) document.getElementById('backBar').style.display = 'block';
+  #backBtn:active { opacity: 0.75; transform: scale(0.96); }
+</style>
+<button id="backBtn" onclick="history.back()">‹ 주차도</button>
+<script>
+  (function(){
+    const btn = document.getElementById('backBtn');
+    const show = () => btn.style.display = 'inline-flex';
+    if (document.referrer && document.referrer !== '') show();
+    if (window.navigator.standalone === true) show();
+    if (window.history.length > 1) show();
+  })();
 </script>
 <nav class="toc">
   <a href="#s1">화면 구성</a>
