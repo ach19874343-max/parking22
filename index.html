@@ -112,7 +112,12 @@ const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isSafari = /safari/i.test(navigator.userAgent) && !/chrome/i.test(navigator.userAgent);
 const isStandalone = window.navigator.standalone === true;
 
-if (isIOS && isSafari && !isStandalone && !sessionStorage.getItem('iosDismissed')) {
+/* isInAppBrowser: 카카오톡, 인스타 등 인앱브라우저 */
+const isInAppBrowser = isIOS && !isSafari && !isStandalone;
+/* isSafariBrowser: 순수 Safari */
+const isSafariBrowser = isIOS && isSafari && !isStandalone;
+
+if ((isInAppBrowser || isSafariBrowser) && !sessionStorage.getItem('iosDismissed')) {
   setTimeout(() => {
     /* 딤 배경 */
     const dim = document.createElement('div');
@@ -158,52 +163,36 @@ if (isIOS && isSafari && !isStandalone && !sessionStorage.getItem('iosDismissed'
         <button id="iosClose" style="background:rgba(255,255,255,0.1);border:none;color:rgba(255,255,255,0.6);width:30px;height:30px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
       </div>
 
-      <!-- 단계 -->
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="ios-step">
-          <div class="ios-step-icon" style="animation:iosBounce 1.5s ease infinite;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
-              <polyline points="16 6 12 2 8 6"/>
-              <line x1="12" y1="2" x2="12" y2="15"/>
-            </svg>
-          </div>
-          <div>
-            <div class="ios-step-num">STEP 1</div>
-            <div style="font-size:14px;font-weight:800;">Safari 하단 가운데</div>
-            <div class="ios-step-desc"><b>공유 버튼 (네모+화살표)</b> 탭</div>
-          </div>
-        </div>
-        <div class="ios-step">
-          <div class="ios-step-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="9"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <polyline points="12 12 15 14"/>
-            </svg>
-          </div>
-          <div>
-            <div class="ios-step-num">STEP 2</div>
-            <div style="font-size:14px;font-weight:800;">Safari로 열기</div>
-            <div class="ios-step-desc">다른 브라우저라면 <b>Safari에서 열어야</b> 설치 가능</div>
-          </div>
-        </div>
-        <div class="ios-step">
-          <div class="ios-step-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="3"/>
-              <line x1="12" y1="8" x2="12" y2="16"/>
-              <line x1="8" y1="12" x2="16" y2="12"/>
-            </svg>
-          </div>
-          <div>
-            <div class="ios-step-num">STEP 3</div>
-            <div style="font-size:14px;font-weight:800;">스크롤해서 찾기</div>
-            <div class="ios-step-desc"><b>"홈 화면에 추가"</b> 선택 → 추가</div>
-          </div>
-        </div>
-      </div>`;
+      <!-- 단계: JS로 동적 구성 -->
+      <div style="display:flex;flex-direction:column;gap:8px;" id="iosStepList"></div>`;
 
+    document.body.appendChild(banner);
+
+    /* Safari vs 인앱브라우저 분기 */
+    const stepList = document.getElementById('iosStepList');
+    const mkStep = (num, color, svgPath, title, desc, bounce) => {
+      const d = document.createElement('div');
+      d.className = 'ios-step';
+      d.innerHTML = '<div class="ios-step-icon"' + (bounce ? ' style="animation:iosBounce 1.5s ease infinite"' : '') + '>' +
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' + svgPath + '</svg>' +
+        '</div><div>' +
+        '<div class="ios-step-num">STEP ' + num + '</div>' +
+        '<div style="font-size:14px;font-weight:800;">' + title + '</div>' +
+        '<div class="ios-step-desc">' + desc + '</div></div>';
+      return d;
+    };
+    const svgShare  = '<path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>';
+    const svgSafari = '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><polyline points="12 12 15 14"/>';
+    const svgAdd    = '<rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>';
+
+    if (isInAppBrowser) {
+      stepList.appendChild(mkStep(1,'#FBBF24',svgSafari,'Safari로 열기','카카오톡·인스타 등 앱 안에서는 설치 불가<br><b>Safari 브라우저에서 열어주세요</b>',true));
+      stepList.appendChild(mkStep(2,'#60A5FA',svgShare,'Safari 하단 가운데','<b>공유 버튼 (네모+화살표)</b> 탭',false));
+      stepList.appendChild(mkStep(3,'#34D399',svgAdd,'스크롤해서 찾기','<b>"홈 화면에 추가"</b> 선택 → 추가',false));
+    } else {
+      stepList.appendChild(mkStep(1,'#60A5FA',svgShare,'Safari 하단 가운데','<b>공유 버튼 (네모+화살표)</b> 탭',true));
+      stepList.appendChild(mkStep(2,'#34D399',svgAdd,'스크롤해서 찾기','<b>"홈 화면에 추가"</b> 선택 → 추가',false));
+    }
     document.body.appendChild(banner);
 
     const closeFn = () => {

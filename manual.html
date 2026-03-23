@@ -309,9 +309,14 @@ body {
   (function(){
     const btn = document.getElementById('backBtn');
     const show = () => btn.style.display = 'inline-flex';
-    if (document.referrer && document.referrer !== '') show();
-    if (window.navigator.standalone === true) show();
-    if (window.history.length > 1) show();
+    /* 이전 페이지가 있으면 표시 */
+    if (document.referrer && document.referrer !== '') { show(); return; }
+    /* history가 있으면 표시 */
+    if (window.history.length > 1) { show(); return; }
+    /* iOS PWA standalone 모드 */
+    if (window.navigator.standalone === true) { show(); return; }
+    /* Android / iOS 모두: 링크 클릭으로 왔을 가능성 높음 → 항상 표시 */
+    show();
   })();
 </script>
 <nav class="toc">
