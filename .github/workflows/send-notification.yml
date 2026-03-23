@@ -8,66 +8,54 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
-      - name: Send FCM Notification
+      - name: Install dependencies
+        run: pip install pywebpush
+
+      - name: Send Web Push Notifications
         run: |
-          pip install google-auth requests
-
           python3 << 'EOF'
-          import json, os, requests
-          import google.auth.transport.requests
-          from google.oauth2 import service_account
+          import json, os
+          from pywebpush import webpush, WebPushException
 
-          # 서비스 계정 키
-          sa_info = json.loads(os.environ['FCM_SERVICE_ACCOUNT'])
-          project_id = sa_info['project_id']
+          notification  = json.loads(os.environ['NOTIFICATION_PAYLOAD'])
+          subscriptions = json.loads(os.environ['PUSH_SUBSCRIPTIONS'])
+          vapid_private = os.environ['VAPID_PRIVATE_KEY']
+          vapid_email   = os.environ.get('VAPID_EMAIL', 'mailto:admin@parking22.com')
 
-          # OAuth2 토큰 발급
-          credentials = service_account.Credentials.from_service_account_info(
-            sa_info,
-            scopes=['https://www.googleapis.com/auth/firebase.messaging']
-          )
-          auth_req = google.auth.transport.requests.Request()
-          credentials.refresh(auth_req)
-          token = credentials.token
-
-          # 알림 내용
-          payload = json.loads(os.environ['NOTIFICATION_PAYLOAD'])
-          tokens  = json.loads(os.environ['PUSH_TOKENS'])
-
-          url = f'https://fcm.googleapis.com/v1/projects/{project_id}/messages:send'
-          headers = {
-            'Authorization': f'Bearer {token}',
-            'Content-Type': 'application/json',
-          }
+          data = json.dumps({
+            'title': notification.get('title', '보영운수 22번 주차도'),
+            'body':  notification.get('body',  '주차도가 업데이트됐습니다.'),
+          })
 
           success = fail = 0
-          for t in tokens:
-            body = {
-              'message': {
-                'token': t,
-                'notification': {
-                  'title': payload.get('title', '보영운수 22번 주차도'),
-                  'body':  payload.get('body',  '주차도가 업데이트됐습니다.'),
+          for sub in subscriptions:
+            try:
+              webpush(
+                subscription_info={
+                  'endpoint': sub['endpoint'],
+                  'keys': {
+                    'p256dh': sub['keys']['p256dh'],
+                    'auth':   sub['keys']['auth'],
+                  },
                 },
-                'webpush': {
-                  'notification': {
-                    'icon': 'https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png',
-                    'badge': 'https://ach19874343-max.github.io/parking22/f82ad08a-7649-49a3-9783-c426fac7c7f8.png',
-                    'vibrate': [200, 100, 200],
-                  }
-                }
-              }
-            }
-            res = requests.post(url, headers=headers, json=body)
-            if res.status_code == 200:
+                data=data,
+                vapid_private_key=vapid_private,
+                vapid_claims={'sub': vapid_email},
+              )
               success += 1
-            else:
+            except WebPushException as ex:
+              print(f'실패: {ex}')
               fail += 1
-              print(f'실패: {res.text}')
+            except Exception as ex:
+              print(f'오류: {ex}')
+              fail += 1
 
           print(f'발송 완료 — 성공: {success}, 실패: {fail}')
+          if fail > 0 and success == 0:
+            exit(1)
           EOF
         env:
-          FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
           NOTIFICATION_PAYLOAD: ${{ github.event.client_payload.notification }}
-          PUSH_TOKENS: ${{ github.event.client_payload.tokens }}
+          PUSH_SUBSCRIPTIONS:   ${{ github.event.client_payload.subscriptions }}
+          VAPID_PRIVATE_KEY:    ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_EMAIL:          ${{ secrets.VAPID_EMAIL }}
