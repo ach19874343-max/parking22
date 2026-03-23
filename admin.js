@@ -214,6 +214,8 @@ function fillSettingsForm() {
   setVal('set-footerLine2', s.footerLine2);
   setVal('set-footerLine3', s.footerLine3);
   setVal('set-appVersion',  s.appVersion);
+  setVal('set-githubToken', s.githubToken || '');
+  setVal('set-githubRepo',  s.githubRepo  || '');
 }
 
 /* ── 설정 저장 ── */
@@ -235,6 +237,8 @@ async function saveAppSettings() {
     footerLine2:   getV('set-footerLine2'),
     footerLine3:   getV('set-footerLine3'),
     appVersion:    getV('set-appVersion'),
+    githubToken:   getV('set-githubToken'),
+    githubRepo:    getV('set-githubRepo'),
   };
 
   try {

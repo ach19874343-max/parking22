@@ -371,13 +371,43 @@ function swapSlots(srcIdx, dstIdx) {
   saveData();
 }
 
-/* ── 슬롯 상태 토글 (운행 ↔ 휴차) ─────────────────────── */
+/* ── 스켈레톤 카드 표시 ── */
+function showSkeletonCards() {
+  for (let rowIdx = 0; rowIdx < (APP.rowCount || 6); rowIdx++) {
+    const wrap = document.getElementById(`row-${rowIdx}`);
+    if (!wrap) continue;
+    wrap.innerHTML = '';
+    for (let col = 0; col < 3; col++) {
+      const s = document.createElement('div');
+      s.className = 'slot-card skeleton-card';
+      wrap.appendChild(s);
+    }
+  }
+}
+
+/* ── 슬롯 상태 토글 (운행 ↔ 휴차) + 플립 애니메이션 ── */
 function toggleCardState(slotIdx) {
   if (!APP.isAdmin) return;
-  if (!APP.parkingState.values[slotIdx]) return; // 빈 슬롯 무시
+  if (!APP.parkingState.values[slotIdx]) return;
   pushUndo();
   APP.parkingState.active[slotIdx] = !APP.parkingState.active[slotIdx];
-  renderCards();
+  /* 플립 애니메이션: 먼저 front half 회전 후 상태 변경 */
+  const card = document.querySelector(`.slot-card[data-slot="${slotIdx}"]`);
+  if (card) {
+    card.classList.add('flipping');
+    setTimeout(() => {
+      renderCards();
+      setTimeout(() => {
+        const newCard = document.querySelector(`.slot-card[data-slot="${slotIdx}"]`);
+        if (newCard) newCard.classList.add('flip-in');
+        setTimeout(() => {
+          if (newCard) newCard.classList.remove('flip-in');
+        }, 200);
+      }, 10);
+    }, 150);
+  } else {
+    renderCards();
+  }
   saveData();
 }
 
@@ -738,6 +768,8 @@ function updateLastSavedUI(isoStr) {
 /* ── Firebase에서 주차 데이터 로드 ─────────────────────── */
 async function loadData(date) {
   if (!date) return;
+  /* 스켈레톤 표시 */
+  showSkeletonCards();
   const snap = await APP.get(APP.ref(APP.db, 'parking/' + date));
   const data = snap.val();
 

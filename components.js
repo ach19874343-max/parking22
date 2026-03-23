@@ -118,7 +118,7 @@ function tmplBulletin() {
         <div class="fn-row"><span class="fn-icon">📅</span><span class="fn-text footer-line">원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다</span></div>
       </div>
       <div class="fn-warn footer-line warn-text">⚠️ 각조 팀장 &amp; 부팀장 허락 없이 수정 절대 금지</div>
-      <p class="copyright">Copyright &copy; 2026 ChangHai An. &nbsp;|&nbsp; <span id="appVersion">v3.1.0</span> &nbsp;|&nbsp; <a href="manual.html" target="_blank" class="manual-link">사용설명서</a></p>
+      <p class="copyright">Copyright &copy; 2026 ChangHai An. All rights reserved. &nbsp;|&nbsp; <span id="appVersion">v3.1.0</span> &nbsp;|&nbsp; <a href="manual.html" target="_blank" class="manual-link">사용설명서</a></p>
     </div>
   </section>`;
 }
@@ -151,12 +151,31 @@ function tmplBottomNav() {
       </svg></span>
       <span class="nav-label">메모</span>
     </button>
+    <button class="nav-item admin-ui" id="sendNotiBtn">
+      <span class="nav-icon"><svg viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        <line x1="12" y1="2" x2="12" y2="4"/>
+      </svg></span>
+      <span class="nav-label">알림</span>
+    </button>
     <button class="nav-item admin-ui" id="appSettingsBtn">
       <span class="nav-icon"><svg viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3"/>
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg></span>
       <span class="nav-label">설정</span>
+    </button>
+    <button class="nav-item guest-only" id="myTeamBtn" onclick="showTeamSelectModal()">
+      <span class="nav-icon" id="myTeamNavIcon">
+        <svg viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
+      <span class="nav-label" id="myTeamNavLabel">내 팀</span>
     </button>
     <button class="nav-item" id="adminLoginBtn">
       <span class="nav-icon" id="loginIcon"><svg viewBox="0 0 24 24">
@@ -241,6 +260,38 @@ function tmplPopupNotification() {
 function tmplVehiclePanel() { return ''; }
 
 
+/* ── 팀 선택 모달 ────────────────────────────────────────── */
+function tmplTeamSelectModal() {
+  return `
+  <div class="modal-overlay" id="teamSelectModal">
+    <div class="modal-box team-select-box">
+      <div class="modal-header">
+        <h3>내 팀 선택</h3>
+        <button class="modal-close-btn" id="teamSelectClose">&#10005;</button>
+      </div>
+      <p class="team-select-desc">알림을 받을 팀을 선택하세요.<br>선택한 팀의 업데이트 날짜에만 알림이 전송됩니다.</p>
+      <div class="team-select-btns">
+        <button class="team-select-opt" id="selectTeamA">
+          <span class="team-opt-badge" style="background:#EFF6FF;color:#1D4ED8;">🔵</span>
+          <span class="team-opt-label">A TEAM</span>
+          <span class="team-opt-check" id="checkA"></span>
+        </button>
+        <button class="team-select-opt" id="selectTeamB">
+          <span class="team-opt-badge" style="background:#FFF1F2;color:#BE123C;">🔴</span>
+          <span class="team-opt-label">B TEAM</span>
+          <span class="team-opt-check" id="checkB"></span>
+        </button>
+        <button class="team-select-opt" id="selectTeamAll">
+          <span class="team-opt-badge" style="background:#F0FDF4;color:#15803D;">🟢</span>
+          <span class="team-opt-label">모두 받기</span>
+          <span class="team-opt-check" id="checkAll"></span>
+        </button>
+      </div>
+      <button class="btn-primary" id="teamSelectSave" style="margin-top:8px;">저장</button>
+    </div>
+  </div>`;
+}
+
 /* ── 앱 설정 대시보드 ──────────────────────────────────────── */
 function tmplAppSettingsModal() {
   return `
@@ -298,6 +349,26 @@ function tmplAppSettingsModal() {
             <span class="settings-label">앱 버전</span>
             <input type="text" id="set-appVersion" class="settings-input settings-input-sm" placeholder="v3.1.0">
           </div>
+        </div>
+      </div>
+
+      <!-- FCM 서버키 -->
+      <div class="settings-section">
+        <div class="settings-section-title">🔔 알림 설정</div>
+        <div class="settings-footer-group">
+          <div class="settings-version-row">
+            <span class="settings-label">FCM 서버 키
+              <button class="settings-help-btn" type="button" onclick="showSettingsHelp('fcmKey')">?</button>
+            </span>
+          </div>
+          <input type="text" id="set-githubToken" class="settings-input" placeholder="GitHub Personal Access Token (repo 권한)">
+          <input type="text" id="set-githubRepo"  class="settings-input" placeholder="저장소 (예: username/parking22)">
+        </div>
+      </div>
+
+      <!-- 하단 안내문 (중복 방지용 더미 닫는 태그 제거) -->
+      <div class="settings-section" style="display:none">
+        <div class="settings-footer-group">
         </div>
       </div>
 
@@ -360,6 +431,7 @@ function tmplDragGhost() {
     tmplVehiclePanel() +
     tmplAdminModal() +
     tmplAppSettingsModal() +
+    tmplTeamSelectModal() +
     tmplDragGhost();
 
   /* DocumentFragment로 한 번에 삽입 (리플로우 최소화) */
