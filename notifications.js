@@ -198,13 +198,14 @@ async function sendPushNotification() {
       dateTeam = diff % 2 === 0 ? 'B' : 'A';
     }
 
-    /* 팀 필터링 — fcmToken 있는 것만 */
+
+    /* 팀 필터링 — endpoint 있는 Web Push 구독자만 */
     const filtered = allTokens.filter(t =>
-      t.fcmToken && (!t.team || t.team === 'ALL' || t.team === dateTeam)
+      t.endpoint && (!t.team || t.team === 'ALL' || t.team === dateTeam)
     );
 
     if (!filtered.length) {
-      alert('발송할 구독자가 없습니다.\n(FCM 토큰 없음)');
+      alert('발송할 구독자가 없습니다.\n먼저 방문자가 알림을 허용해야 합니다.');
       return;
     }
 
@@ -219,9 +220,14 @@ async function sendPushNotification() {
       return;
     }
 
-    const ghToken = ghSnap.val();   /* GitHub Personal Access Token */
-    const repo    = repoSnap.val(); /* ex: username/parking22 */
-    const tokens  = filtered.map(t => t.fcmToken);
+    const ghToken = ghSnap.val();
+    const repo    = repoSnap.val();
+
+    /* Web Push 구독 정보 전체 전달 */
+    const subscriptions = filtered.map(t => ({
+      endpoint: t.endpoint,
+      keys: t.keys,
+    }));
 
     /* GitHub Actions 워크플로우 트리거 */
     const res = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
@@ -235,13 +241,13 @@ async function sendPushNotification() {
         event_type: 'send-notification',
         client_payload: {
           notification: JSON.stringify({ title: '보영운수 22번 주차도', body }),
-          tokens: JSON.stringify(tokens),
+          subscriptions: JSON.stringify(subscriptions),
         },
       }),
     });
 
     if (res.status === 204) {
-      alert(`알림 발송 요청 완료!\n대상: ${tokens.length}명`);
+      alert(`알림 발송 요청 완료!\n대상: ${filtered.length}명`);
     } else {
       const err = await res.json().catch(() => ({}));
       alert('발송 실패: ' + (err.message || res.status));
