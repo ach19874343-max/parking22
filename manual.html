@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보영운수 22번 주차도 — 사용설명서</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root {
+  --bg: #F5F5F0;
+  --surface: #FFFFFF;
+  --text: #1C1C1E;
+  --muted: #6B6B6B;
+  --hint: #AEAEB2;
+  --border: rgba(0,0,0,0.08);
+  --accent: #1C1C1E;
+  --blue: #2563EB;
+  --green: #16A34A;
+  --yellow: #CA8A04;
+  --red: #DC2626;
+  --radius: 16px;
+  --font: 'Pretendard', -apple-system, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* 헤더 */
+.header {
+  background: #1C1C1E;
+  color: #fff;
+  padding: 2px 2px 2px;
+  text-align: center;
+}
+.header-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 6px;
+}
+.header h1 {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 3px;
+}
+.header p {
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* 목차 */
+.toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px 5px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.toc a {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bg);
+  transition: all 0.15s;
+}
+.toc a:hover { background: #1C1C1E; color: #fff; }
+
+/* 메뉴 클릭 시 sticky 목차에 가리지 않도록 오프셋 */
+.section {
+  scroll-margin-top: 56px;
+}
+
+/* 본문 */
+.content {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 20px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 섹션 카드 */
+.section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  scroll-margin-top: 56px;
+}
+.section-head {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.section-head h2 {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.section-head p {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.section-body {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 아이템 */
+.item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hint);
+  margin-top: 9px;
+  flex-shrink: 0;
+}
+.item-body { flex: 1; }
+.item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.item-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* 배지 */
+.badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.badge-admin  { background: #FEF9C3; color: #713F12; }
+.badge-all    { background: #DCFCE7; color: #14532D; }
+.badge-blue   { background: #DBEAFE; color: #1E3A8A; }
+
+/* 하이라이트 박스 */
+.highlight {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #713F12;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.highlight-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* 단계별 */
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.step:last-child { border-bottom: none; }
+.step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #1C1C1E;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-body { flex: 1; }
+.step-title { font-size: 14px; font-weight: 700; }
+.step-desc  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+/* 태그 그리드 */
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag {
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: var(--bg);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* 구분선 텍스트 */
+.divider-text {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--hint);
+  letter-spacing: 0.1em;
+  padding: 8px 0 4px;
+}
+
+/* 푸터 */
+.footer {
+  text-align: center;
+  padding: 24px 20px;
+  font-size: 12px;
+  color: var(--hint);
+}
+
+/* 색상별 아이콘 배경 */
+.ic-gray   { background: #F2F2F7; }
+.ic-blue   { background: #DBEAFE; }
+.ic-green  { background: #DCFCE7; }
+.ic-yellow { background: #FEF9C3; }
+.ic-red    { background: #FEE2E2; }
+.ic-purple { background: #EDE9FE; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">USER GUIDE</div>
+  <h1>보영운수 22번 주차도</h1>
+  <p>사용설명서 — 주요 기능 안내</p>
+</div>
+
+<nav class="toc">
+  <a href="#s1">화면 구성</a>
+  <a href="#s3">주차칸 설정</a>
+  <a href="#s5">관리자 기능</a>
+  <a href="#s2">날짜 이동</a>
+  <a href="#s4">게시판</a>
+  <a href="#s6">설정</a>
+  <a href="#s7">앱 설치</a>
+</nav>
+
+<div class="content">
+
+  <!-- 1. 화면 구성 -->
+    <div class="section" id="s1">
+    <div class="section-head">
+      <div class="section-icon ic-gray">📱</div>
+      <div>
+        <h2>화면 구성</h2>
+        <p>앱의 전체 레이아웃</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">상단 헤더</div>
+          <div class="item-desc">날짜 이동 버튼 / 팀 배지 / 취소·다시 버튼 / 운행·휴차 범례 / 다크모드 토글(왼쪽 상단)</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">주차 그리드</div>
+          <div class="item-desc">2R~7R(+추가 행) 각 6칸씩 구성. 흰색=운행, 노란색=휴차, 빈칸=미배정</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">게시판</div>
+          <div class="item-desc">전체·공지·메모 탭으로 구분. 특이사항 메모 및 공지 확인</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">하단 메뉴</div>
+          <div class="item-desc">메모 / 로그인 버튼 (관리자 로그인 시: 차량·행 / 팝업 / 메모 / 설정 / 로그아웃)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 날짜 이동 -->
+    <div class="section" id="s3">
+    <div class="section-head">
+      <div class="section-icon ic-yellow">🅿️</div>
+      <div>
+        <h2>주차칸 설정</h2>
+        <p>운행·휴차 배치 및 상태 관리</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="tag-grid">
+        <div class="tag">⬜ 흰색 = 운행 중</div>
+        <div class="tag" style="background:#FEF9C3;border-color:#FDE68A;color:#713F12;">🟡 노란색 = 당일 휴차</div>
+        <div class="tag" style="background:#F9FAFB;border-color:#E5E7EB;color:#9CA3AF;">□ 빈칸 = 미배정</div>
+      </div>
+      <div class="divider-text">관리자 전용 기능</div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">운행 ↔ 휴차 전환 <span class="badge badge-admin">관리자</span></div>
+          <div class="item-desc">주차칸을 꾹누르면(0.5초 이상) 운행↔휴차 상태가 전환됩니다</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">차량 위치 이동 <span class="badge badge-admin">관리자</span></div>
+          <div class="item-desc">칸을 탭해 선택(파란 테두리)한 뒤 다른 칸을 탭하면 위치가 바뀝니다</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">↩ 취소 / ↪ 다시 <span class="badge badge-admin">관리자</span></div>
+          <div class="item-desc">헤더의 취소/다시 버튼으로 최근 변경을 되돌릴 수 있습니다 (날짜별로 독립 관리)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 게시판 -->
+    <div class="section" id="s5">
+    <div class="section-head">
+      <div class="section-icon ic-red">🔐</div>
+      <div>
+        <h2>관리자 기능</h2>
+        <p>로그인 후 사용 가능</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">관리자 로그인</div>
+            <div class="step-desc">하단 <b>로그인</b> 버튼 → 비밀번호 입력 → 하단 메뉴 전체 활성화</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">차량·행 수정</div>
+            <div class="step-desc"><b>차량·행</b> 버튼 1회 탭 = 차량 수정 모드 / 2회 탭 = 행 수정 모드 / 3회 탭 = 종료. 수정 후 ✅ 수정 완료 버튼으로 저장</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">팝업 설정</div>
+            <div class="step-desc">특정 요일·시간에 자동 안내 팝업 표시. 팝업1, 팝업2 등 여러 개 설정 가능</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">앱 설정</div>
+            <div class="step-desc">권한 제어 / 팀 표시 방식 / 하단 안내문 수정 가능. 저장 시 모든 방문자에게 즉시 반영</div>
+          </div>
+        </div>
+      </div>
+      <div class="highlight">
+        <span class="highlight-icon">⚠️</span>
+        <span>각조 팀장 &amp; 부팀장 허락 없이 주차도 수정 절대 금지</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. 설정 -->
+    <div class="section" id="s2">
+    <div class="section-head">
+      <div class="section-icon ic-blue">📅</div>
+      <div>
+        <h2>날짜 이동</h2>
+        <p>원하는 날짜의 주차도 확인</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">‹ › 버튼</div>
+            <div class="step-desc">하루씩 이전/다음 날짜로 이동합니다</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">날짜 직접 선택</div>
+            <div class="step-desc">가운데 날짜를 탭하면 달력이 열립니다. 원하는 날짜를 선택하세요</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">오늘 버튼</div>
+            <div class="step-desc">오른쪽 검정 버튼을 누르면 오늘 날짜로 즉시 이동합니다</div>
+          </div>
+        </div>
+      </div>
+      <div class="highlight">
+        <span class="highlight-icon">💡</span>
+        <span>날짜가 저장된 적 없으면 주차칸이 흐릿하게 표시됩니다. 관리자가 배치를 저장하면 정상 표시됩니다.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 주차칸 -->
+    <div class="section" id="s4">
+    <div class="section-head">
+      <div class="section-icon ic-green">📋</div>
+      <div>
+        <h2>게시판</h2>
+        <p>메모 · 공지 · 댓글</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">탭 구분</div>
+          <div class="item-desc"><b>전체</b> — 최신 활동순 / <b>📢 공지</b> — 공지글만 / <b>메모</b> — 일반 메모만</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">글쓰기</div>
+          <div class="item-desc">하단 <b>메모</b> 버튼 탭 → 내용 입력 → 등록. 관리자는 📢 공지글 체크박스로 공지 등록 가능</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">펼치기 / 접기</div>
+          <div class="item-desc">게시글은 기본 1줄 요약. ▼ 버튼으로 전체 내용을 펼칠 수 있습니다</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">댓글</div>
+          <div class="item-desc">댓글 N개 ▼ 버튼으로 펼치기. 가장 최신 댓글이 위에 표시됩니다</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">페이지</div>
+          <div class="item-desc">게시글이 많으면 하단 페이지 번호로 이동합니다 (페이지당 5개)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. 관리자 -->
+    <div class="section" id="s6">
+    <div class="section-head">
+      <div class="section-icon ic-purple">⚙️</div>
+      <div>
+        <h2>개인 설정</h2>
+        <p>내 기기에만 적용되는 설정</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">다크모드</div>
+          <div class="item-desc">헤더 왼쪽 상단 ☀️/🌙 버튼으로 전환. 내 기기에만 적용되며 재접속해도 유지됩니다</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">앱 설치 (PWA)</div>
+          <div class="item-desc">처음 접속 시 하단에 설치 안내가 표시됩니다. 설치하면 홈 화면에서 앱처럼 바로 실행 가능합니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. 앱 설치 -->
+    <div class="section" id="s7">
+    <div class="section-head">
+      <div class="section-icon ic-green">📲</div>
+      <div>
+        <h2>홈 화면에 추가</h2>
+        <p>앱처럼 설치하기</p>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">Android (크롬)</div>
+          <div class="item-desc">접속 후 하단 설치 배너에서 <b>설치</b> 버튼을 탭하세요</div>
+        </div>
+      </div>
+      <div class="item">
+        <div class="item-dot"></div>
+        <div class="item-body">
+          <div class="item-title">iPhone / iPad (사파리)</div>
+          <div class="item-desc">사파리에서 접속 → 하단 <b>공유 버튼(□↑)</b> 탭 → <b>"홈 화면에 추가"</b> 선택</div>
+        </div>
+      </div>
+      <div class="highlight">
+        <span class="highlight-icon">💡</span>
+        <span>설치 후에는 인터넷 연결만 있으면 앱처럼 전체화면으로 이용할 수 있습니다</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  보영운수 22번 주차도 &nbsp;|&nbsp; Copyright © 2026 ChangHai An
+</div>
+
+</body>
+</html>

@@ -652,15 +652,27 @@ function showSlotAddInput(slotIdx) {
   if (!card) return;
   card.innerHTML = '';
   card.className = 'slot-card empty vehicle-edit-empty';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'slot-edit-input-wrap';
+
   const inp = document.createElement('input');
   inp.type        = 'text';
   inp.maxLength   = 4;
   inp.inputMode   = 'numeric';
   inp.placeholder = '번호';
   inp.className   = 'slot-inline-input';
-  card.appendChild(inp);
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'slot-confirm-btn';
+  confirmBtn.textContent = '✓';
+
+  wrap.appendChild(inp);
+  wrap.appendChild(confirmBtn);
+  card.appendChild(wrap);
   inp.focus();
-  let done = false; /* 중복 실행 방지 플래그 */
+
+  let done = false;
   const doConfirm = () => {
     if (done) return;
     const newNum = inp.value.trim();
@@ -676,14 +688,16 @@ function showSlotAddInput(slotIdx) {
     APP.parkingState.values[slotIdx] = newNum;
     APP.parkingState.active[slotIdx] = false;
     saveBusListToDB();
-    saveData(); /* 위치도 저장 */
+    saveData();
     renderCards();
   };
+  confirmBtn.addEventListener('mousedown', e => e.preventDefault());
+  confirmBtn.addEventListener('click', doConfirm);
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter') { e.preventDefault(); doConfirm(); }
     if (e.key === 'Escape') { done = true; renderCards(); }
   });
-  inp.addEventListener('blur', () => setTimeout(doConfirm, 80));
+  inp.addEventListener('blur', () => setTimeout(() => { if (!done) doConfirm(); }, 150));
 }
 
 /* ── Firebase에 주차 데이터 저장 ────────────────────────── */
@@ -691,15 +705,34 @@ function saveData() {
   if (!APP.isAdmin) return;
   const date = document.getElementById('datePicker').value;
   if (!date) return;
+  const now = new Date().toISOString();
   APP.set(APP.ref(APP.db, 'parking/' + date), {
     values: APP.parkingState.values,
-    active: APP.parkingState.active
+    active: APP.parkingState.active,
+    lastSaved: now
   }).then(() => {
-    /* Firebase 저장 완료 → 해당 날짜 영구 해제 */
     if (!APP.savedDates) APP.savedDates = new Set();
     APP.savedDates.add(date);
     updateParkingOverlay(date);
+    updateLastSavedUI(now);
   }).catch(() => {});
+}
+
+/* ── 마지막 저장 시간 UI 업데이트 ── */
+function updateLastSavedUI(isoStr) {
+  const el = document.getElementById('lastSavedText');
+  if (!el) return;
+  if (!isoStr) { el.textContent = '저장 기록 없음'; return; }
+  const d    = new Date(isoStr);
+  const now  = new Date();
+  const hm   = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+  const isToday = d.toDateString() === now.toDateString();
+  const isYesterday = new Date(now - 86400000).toDateString() === d.toDateString();
+  let label;
+  if (isToday)          label = hm + ' 저장';
+  else if (isYesterday) label = '어제 ' + hm;
+  else                  label = (d.getMonth()+1) + '/' + d.getDate() + ' ' + hm;
+  el.textContent = label;
 }
 
 /* ── Firebase에서 주차 데이터 로드 ─────────────────────── */
@@ -732,6 +765,8 @@ async function loadData(date) {
   syncHistoryBtns(date);
   /* 오버레이 상태 업데이트 */
   updateParkingOverlay(date);
+  /* 날짜별 마지막 저장 시간 표시 */
+  updateLastSavedUI(data?.lastSaved || null);
   renderCards();
 }
 

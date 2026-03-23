@@ -31,14 +31,20 @@ function tmplHeader() {
     </div>
     <div class="team-row">
       <div class="header-actions">
-        <button id="undoBtn" class="header-action-btn" aria-label="실행취소" title="실행취소" disabled>
+        <!-- 관리자: 취소/다시 버튼 -->
+        <button id="undoBtn" class="header-action-btn admin-ui" aria-label="실행취소" title="실행취소" disabled>
           <span class="btn-arrow">↩</span>
           <span class="btn-label">취소</span>
         </button>
-        <button id="redoBtn" class="header-action-btn" aria-label="앞으로" title="앞으로" disabled>
+        <button id="redoBtn" class="header-action-btn admin-ui" aria-label="앞으로" title="앞으로" disabled>
           <span class="btn-arrow">↪</span>
           <span class="btn-label">다시</span>
         </button>
+        <!-- 게스트: 마지막 저장 시간 -->
+        <div id="lastSavedWrap" class="last-saved-wrap">
+          <span class="last-saved-dot"></span>
+          <span id="lastSavedText" class="last-saved-text">—</span>
+        </div>
       </div>
       <span id="teamLabel" class="team-badge"></span>
       <div class="legend">
@@ -107,10 +113,12 @@ function tmplBulletin() {
       <div class="bulletin-posts" id="bulletinPosts"></div>
     </div>
     <div class="footer-note">
-      <p class="footer-line">※ 보영운수 22번 주차도&nbsp;&nbsp;|&nbsp;&nbsp;<span class="rest-note">노란색 = 당일 휴차</span></p>
-      <p class="footer-line">※ 원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다.</p>
-      <p class="footer-line warn-text">※ 각조 팀장 &amp; 부팀장 허락 없이 수정 절대 금지 ※</p>
-      <p class="copyright">Copyright &copy; 2026 ChangHai An. All rights reserved. &nbsp;|&nbsp; <span id="appVersion">v3.1.0</span></p>
+      <div class="fn-card">
+        <div class="fn-row"><span class="fn-icon">🚌</span><span class="fn-text footer-line"><b>보영운수 22번 주차도</b> &nbsp;|&nbsp; <span class="rest-note">노란색 = 당일 휴차</span></span></div>
+        <div class="fn-row"><span class="fn-icon">📅</span><span class="fn-text footer-line">원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다</span></div>
+      </div>
+      <div class="fn-warn footer-line warn-text">⚠️ 각조 팀장 &amp; 부팀장 허락 없이 수정 절대 금지</div>
+      <p class="copyright">Copyright &copy; 2026 ChangHai An. &nbsp;|&nbsp; <span id="appVersion">v3.1.0</span> &nbsp;|&nbsp; <a href="manual.html" target="_blank" class="manual-link">사용설명서</a></p>
     </div>
   </section>`;
 }
