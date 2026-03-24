@@ -138,7 +138,7 @@ function tmplDispatch() {
         border: 1.5px solid #D1D5DB;
         border-radius: 6px;
         padding: 3px 7px;
-        font-size: 13.5px;
+        font-size: 14.5px;
         font-weight: 600;
         color: #374151;
         line-height: 1.5;
