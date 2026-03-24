@@ -175,93 +175,6 @@ function tmplDispatch() {
         color: #1F2937;
       }
 
-      /* ── 하단 푸터 (색상 분리, 버튼형) ── */
-      .dispatch-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 8px 12px;
-        background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
-        border-top: 1px solid #D1FAE5;
-      }
-      .dark-mode .dispatch-footer {
-        background: linear-gradient(135deg, #14532D 0%, #064E3B 100%);
-        border-top-color: #065F46;
-      }
-      .dispatch-footer-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      /* ── 배차 현황 버튼형 라벨 ── */
-      .dispatch-footer-title {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 4px 10px;
-        background: #10B981;
-        border-radius: 6px;
-        font-size: 11px;
-        font-weight: 700;
-        color: #fff;
-        letter-spacing: .02em;
-        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
-      }
-      .dark-mode .dispatch-footer-title {
-        background: #059669;
-      }
-      .dispatch-footer-title-icon {
-        font-size: 12px;
-      }
-
-      /* ── 범례 ── */
-      .dispatch-legend {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      .dispatch-legend-item {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-size: 10px;
-        font-weight: 500;
-        color: #065F46;
-      }
-      .dark-mode .dispatch-legend-item {
-        color: #A7F3D0;
-      }
-      .dispatch-legend-dot {
-        width: 10px; height: 10px;
-        border-radius: 3px;
-        flex-shrink: 0;
-      }
-      .dispatch-legend-dot.normal {
-        background: #FFFFFF;
-        border: 1.5px solid #D1D5DB;
-      }
-      .dispatch-legend-dot.early {
-        background: #1D4ED8;
-        border: 1.5px solid #1E40AF;
-      }
-      .dispatch-legend-dot.absent {
-        background: #D97706;
-        border: 1.5px solid #B45309;
-      }
-      .dark-mode .dispatch-legend-dot.normal {
-        background: #4B5563;
-        border-color: #6B7280;
-      }
-      .dark-mode .dispatch-legend-dot.early {
-        background: #2563EB;
-        border-color: #1D4ED8;
-      }
-      .dark-mode .dispatch-legend-dot.absent {
-        background: #F59E0B;
-        border-color: #D97706;
-      }
-
       /* ── 불러오기 버튼 (버튼형, 크게) ── */
       .dispatch-load-btn-sm {
         display: inline-flex;
@@ -344,6 +257,22 @@ function tmplDispatch() {
         text-align: center;
         background: var(--color-background-secondary);
       }
+      /* ── 주차 슬롯 탭 선택 시 매칭 칩 (빨간 테두리) ── */
+      .dc-chip--matched {
+        outline: 2px solid #EF4444 !important;
+        outline-offset: 1px;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.25) !important;
+        animation: dc-match-pulse 0.7s ease-in-out infinite alternate;
+      }
+      @keyframes dc-match-pulse {
+        from { box-shadow: 0 0 0 0 rgba(239,68,68,0.35); }
+        to   { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+      }
+
+      /* ── 휴차 칩 매칭 시 오버라이드 ── */
+      .dc-chip--absent.dc-chip--matched {
+        outline-color: #EF4444 !important;
+      }
     </style>
 
     <!-- ── 로딩 ── -->
@@ -356,7 +285,7 @@ function tmplDispatch() {
 
     <!-- ── 빈 힌트 ── -->
     <div id="dispatchEmptyHint" class="dispatch-empty-hint">
-      하단 불러오기 버튼을 눌러 오늘 · 내일 데이터를 불러오세요
+      ✚ 버튼 → 불러오기 를 눌러 오늘 · 내일 배차를 불러오세요
     </div>
 
     <!-- ── 결과 ── -->
@@ -376,37 +305,6 @@ function tmplDispatch() {
           <span class="dispatch-date-label" id="dispatchTomorrowLbl"></span>
         </div>
         <div class="dispatch-chips" id="dispatchTomorrowChips"></div>
-      </div>
-    </div>
-
-    <!-- ── 하단 푸터 (범례 + 불러오기 버튼) ── -->
-    <div class="dispatch-footer">
-      <div class="dispatch-footer-left">
-        <span class="dispatch-footer-title">
-          <span class="dispatch-footer-title-icon">🚌</span>
-          배차 현황
-        </span>
-        <div class="dispatch-legend">
-          <div class="dispatch-legend-item">
-            <span class="dispatch-legend-dot normal"></span>총6회차
-          </div>
-          <div class="dispatch-legend-item">
-            <span class="dispatch-legend-dot early"></span>총5회차
-          </div>
-          <div class="dispatch-legend-item">
-            <span class="dispatch-legend-dot absent"></span>휴차
-          </div>
-        </div>
-      </div>
-      <!-- 불러오기 버튼 (버튼형) -->
-      <div id="dispatchBtnWrap">
-        <button id="dispatchLoadBtn" class="dispatch-load-btn-sm" title="배차 현황 불러오기">
-          <svg viewBox="0 0 24 24">
-            <polyline points="23 4 23 10 17 10"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
-          불러오기
-        </button>
       </div>
     </div>
 
@@ -488,49 +386,106 @@ function tmplBulletin() {
   </section>`;
 }
 
-/* ── 하단 네비게이션 ────────────────────────────────────────── */
+/* ── FAB 플로팅 버튼 ────────────────────────────────────────── */
 function tmplBottomNav() {
   return `
-  <nav class="bottom-nav">
-    <!-- 관리자 로그인 순서: 차량(+행) / 팝업 / 메모 / 설정 / 로그아웃 -->
-    <button class="nav-item admin-ui" id="currentVehicleBtn">
-      <span class="nav-icon"><svg viewBox="0 0 24 24">
-        <rect x="1" y="3" width="15" height="13" rx="2"/>
-        <path d="M16 8h4l3 5v4h-7V8z"/>
-        <circle cx="5.5" cy="18.5" r="2.5"/>
-        <circle cx="18.5" cy="18.5" r="2.5"/>
-      </svg></span>
-      <span class="nav-label">차량·행</span>
+  <!-- FAB 딤 배경 -->
+  <div class="fab-backdrop" id="fabBackdrop"></div>
+
+  <!-- FAB 컨테이너: flex-direction: row-reverse → + 우측 고정, 아이템 왼쪽으로 펼침 -->
+  <div class="fab-container" id="fabContainer">
+
+    <!-- ⓪ 메인 FAB (+) — DOM 첫 번째 = 가장 오른쪽 -->
+    <button class="fab-main" id="fabMain" aria-label="메뉴 열기">
+      <svg class="fab-main-icon fab-icon-plus" viewBox="0 0 24 24"
+           stroke="currentColor" fill="none" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <svg class="fab-main-icon fab-icon-x" viewBox="0 0 24 24"
+           stroke="currentColor" fill="none" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
     </button>
-    <button class="nav-item admin-ui" id="popupSettingBtn">
-      <span class="nav-icon"><svg viewBox="0 0 24 24">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg></span>
-      <span class="nav-label">팝업</span>
-    </button>
-    <button class="nav-item" id="writePostBtn">
-      <span class="nav-icon"><svg viewBox="0 0 24 24">
-        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-      </svg></span>
-      <span class="nav-label">메모</span>
-    </button>
-    <button class="nav-item admin-ui" id="appSettingsBtn">
-      <span class="nav-icon"><svg viewBox="0 0 24 24">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg></span>
-      <span class="nav-label">설정</span>
-    </button>
-    <button class="nav-item" id="adminLoginBtn">
-      <span class="nav-icon" id="loginIcon"><svg viewBox="0 0 24 24">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg></span>
-      <span class="nav-label" id="loginLabel">로그인</span>
-    </button>
-  </nav>`;
+
+    <!-- ① 로그인/로그아웃 — 항상 표시 (+ 바로 왼쪽) -->
+    <div class="fab-item" id="fabItemLogin">
+      <span class="fab-item-label" id="loginLabel">로그인</span>
+      <button class="fab-action-btn" id="adminLoginBtn" aria-label="로그인">
+        <span id="loginIcon">
+          <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+      </button>
+    </div>
+
+    <!-- ② 설정 — 관리자만 -->
+    <div class="fab-item admin-ui" id="fabItemSettings">
+      <span class="fab-item-label">설정</span>
+      <button class="fab-action-btn" id="appSettingsBtn" aria-label="설정">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ③ 팝업 — 관리자만 -->
+    <div class="fab-item admin-ui" id="fabItemPopup">
+      <span class="fab-item-label">팝업</span>
+      <button class="fab-action-btn" id="popupSettingBtn" aria-label="팝업 설정">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ④ 차량·행 — 관리자만 -->
+    <div class="fab-item admin-ui" id="fabItemVehicle">
+      <span class="fab-item-label">차량·행</span>
+      <button class="fab-action-btn" id="currentVehicleBtn" aria-label="차량·행">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="3" width="15" height="13" rx="2"/>
+          <path d="M16 8h4l3 5v4h-7V8z"/>
+          <circle cx="5.5" cy="18.5" r="2.5"/>
+          <circle cx="18.5" cy="18.5" r="2.5"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ⑤ 메모(글쓰기) — 설정에 따라 표시 -->
+    <div class="fab-item" id="fabItemMemo">
+      <span class="fab-item-label">메모</span>
+      <button class="fab-action-btn" id="writePostBtn" aria-label="메모 작성">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ⑥ 배차 불러오기 — 관리자만 (가장 왼쪽) -->
+    <div class="fab-item admin-ui" id="fabItemDispatch">
+      <span class="fab-item-label">불러오기</span>
+      <button class="fab-action-btn fab-action-btn--dispatch" id="dispatchLoadBtn" aria-label="배차 불러오기">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>`;
 }
 
 /* ── 팝업 설정 모달 ─────────────────────────────────────────── */
@@ -747,6 +702,35 @@ function tmplDragGhost() {
     tmplAdminModal() +
     tmplAppSettingsModal() +
     tmplDragGhost();
+
+  /* ── FAB 토글 로직 (DOM 삽입 직후 바인딩) ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    const fabMain     = document.getElementById('fabMain');
+    const fabBackdrop = document.getElementById('fabBackdrop');
+    const fabContainer = document.getElementById('fabContainer');
+    if (!fabMain) return;
+
+    function openFab() {
+      fabContainer.classList.add('fab-open');
+      fabBackdrop.classList.add('fab-open');
+    }
+    function closeFab() {
+      fabContainer.classList.remove('fab-open');
+      fabBackdrop.classList.remove('fab-open');
+    }
+    function toggleFab() {
+      if (fabContainer.classList.contains('fab-open')) closeFab();
+      else openFab();
+    }
+
+    fabMain.addEventListener('click', toggleFab);
+    fabBackdrop.addEventListener('click', closeFab);
+
+    /* 메뉴 아이템 클릭 시 자동 닫기 (+ 버튼 제외) */
+    fabContainer.querySelectorAll('.fab-action-btn').forEach(btn => {
+      btn.addEventListener('click', () => setTimeout(closeFab, 120));
+    });
+  });
 
   /* DocumentFragment로 한 번에 삽입 (리플로우 최소화) */
   const frag = document.createDocumentFragment();

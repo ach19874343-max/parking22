@@ -369,10 +369,7 @@ body.dark-mode textarea {
 /* PWA 설치 배너 */
 .pwa-banner {
   position: fixed;
-  bottom: calc(var(--nav-h) + var(--safe-b) + 10px);
-  left: 12px;
-  right: 12px;
-  background: #1C1C1E;
+  bottom: calc(var(--safe-b) + 90px);
   color: #fff;
   border-radius: 16px;
   padding: 12px 16px;
@@ -410,7 +407,7 @@ body.dark-mode textarea {
 /* iOS 안내 배너 */
 .pwa-ios-banner {
   position: fixed;
-  bottom: calc(var(--nav-h) + var(--safe-b) + 10px);
+  bottom: calc(var(--safe-b) + 90px);
   left: 12px; right: 12px;
   background: #1C1C1E;
   color: #fff;
@@ -1084,7 +1081,7 @@ body.dark-mode textarea {
   letter-spacing: -0.5px;
   user-select: none;
   -webkit-user-select: none;
-  touch-action: manipulation;
+  touch-action: pan-y;
   transition: transform 0.12s cubic-bezier(0.34,1.56,0.64,1),
               box-shadow 0.12s ease,
               opacity 0.12s ease;
@@ -1140,7 +1137,7 @@ body.dark-mode textarea {
 /* 관리자 모드: 인터랙션 */
 .admin-mode .slot-card:not(.empty) {
   cursor: grab;
-  touch-action: none;
+  touch-action: pan-y;
 }
 
 .admin-mode .slot-card.run:active,
@@ -1178,6 +1175,20 @@ body.dark-mode textarea {
 @keyframes tap-pulse {
   from { box-shadow: 0 0 0 0 rgba(59,130,246,0.35); }
   to   { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
+}
+
+/* 배차 칩 클릭으로 선택된 슬롯 (chip-to-swap 첫 번째 선택) */
+.slot-card.dispatch-slot-selected {
+  outline: 2.5px solid var(--blue);
+  outline-offset: -2px;
+  background: var(--blue-light) !important;
+  color: var(--blue) !important;
+  transform: scale(1.04);
+  z-index: 10;
+  animation: tap-pulse 0.7s ease-in-out infinite alternate;
+}
+.slot-card.dispatch-slot-selected::before {
+  background: var(--blue) !important;
 }
 
 /* 휴차 카드에 세로 선 액센트 */
@@ -1235,104 +1246,181 @@ body.dark-mode textarea {
   border: 2px solid var(--rest-border);
 }
 
-/* ── Bottom Navigation ──────────────────────────────────── */
-.bottom-nav {
+/* ── FAB 플로팅 액션 버튼 ────────────────────────────────── */
+.fab-container {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 200;
+  bottom: calc(var(--safe-b) + 20px);
+  right: 20px;
+  z-index: 300;
   display: flex;
-  align-items: stretch;
-  justify-content: space-around;
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 0.5px solid rgba(0,0,0,0.06);
-  height: calc(var(--nav-h) + var(--safe-b));
-  padding-bottom: var(--safe-b);
-  padding-top: 4px;
-  padding-left: 8px;
-  padding-right: 8px;
-  gap: 3px;
-  max-width: 640px;
-  margin: 0 auto;
-  right: calc(50% - min(320px, 50vw));
-  left: calc(50% - min(320px, 50vw));
+  flex-direction: row-reverse;   /* + 버튼 우측 고정, 아이템 왼쪽으로 펼침 */
+  align-items: flex-end;
+  gap: 8px;
+  max-width: calc(100vw - 24px); /* 화면 넘침 방지 */
+}
+/* 최대 너비 제한 맞추기 */
+@media (min-width: 641px) {
+  .fab-container {
+    right: calc(50% - 300px);
+  }
 }
 
-.nav-item {
-  flex: 1;
+/* 딤 배경 */
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0);
+  z-index: 299;
+  pointer-events: none;
+  transition: background 0.25s ease;
+}
+.fab-backdrop.fab-open {
+  background: rgba(0,0,0,0.32);
+  pointer-events: auto;
+}
+
+/* 메인 FAB (+) 버튼 */
+.fab-main {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(29,78,216,0.45);
+  cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 6px 4px;
-  color: #8E8E93;
-  font-family: var(--font);
-  border-radius: 12px;
-  transition: color 0.15s, background 0.15s;
   position: relative;
-  min-height: 44px;
+  transition: box-shadow 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+.fab-main:active { transform: scale(0.93); }
+.fab-container.fab-open .fab-main {
+  box-shadow: 0 6px 20px rgba(29,78,216,0.55);
 }
 
-.nav-item:active {
-  background: rgba(0,0,0,0.04);
-}
-
-.nav-item.active {
-  background: #EFF6FF;
-  color: #1D4ED8;
-}
-.nav-item.active::before {
-  content: '';
+/* 아이콘 전환 */
+.fab-main-icon {
+  width: 24px; height: 24px;
   position: absolute;
-  top: 0;
-  left: 20%;
-  right: 20%;
-  height: 2.5px;
-  background: #1D4ED8;
-  border-radius: 0 0 3px 3px;
+  transition: opacity 0.18s ease, transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.fab-icon-plus {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+.fab-icon-x {
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+.fab-container.fab-open .fab-icon-plus {
+  opacity: 0;
+  transform: rotate(90deg);
+}
+.fab-container.fab-open .fab-icon-x {
+  opacity: 1;
+  transform: rotate(0deg);
 }
 
-.nav-item.active .nav-icon { color: #1D4ED8; }
-.nav-item.active .nav-label { color: #1D4ED8; font-weight: 700; }
+/* 서브 FAB 아이템 */
+.fab-item {
+  display: flex;
+  flex-direction: column;        /* 라벨 위, 버튼 아래 */
+  align-items: center;
+  gap: 4px;
+  opacity: 0;
+  transform: translateX(14px) scale(0.85); /* 오른쪽(+ 방향)에서 왼쪽으로 등장 */
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+  will-change: opacity, transform;
+}
+.fab-container.fab-open .fab-item {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  pointer-events: auto;
+}
+/* 스태거 딜레이 — + 버튼에서 왼쪽으로 순차 등장 (DOM 2번째~7번째 자식) */
+.fab-container.fab-open .fab-item:nth-child(2) { transition-delay: 0.00s; }
+.fab-container.fab-open .fab-item:nth-child(3) { transition-delay: 0.04s; }
+.fab-container.fab-open .fab-item:nth-child(4) { transition-delay: 0.08s; }
+.fab-container.fab-open .fab-item:nth-child(5) { transition-delay: 0.12s; }
+.fab-container.fab-open .fab-item:nth-child(6) { transition-delay: 0.16s; }
+.fab-container.fab-open .fab-item:nth-child(7) { transition-delay: 0.20s; }
 
-.nav-icon {
-  width: 22px;
-  height: 22px;
+/* 라벨 (버튼 위에 표시) */
+.fab-item-label {
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 3px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  pointer-events: none;
+  user-select: none;
+  max-width: 60px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark-mode .fab-item-label {
+  background: rgba(40,40,50,0.88);
+}
+
+/* 서브 액션 버튼 (원형) */
+.fab-action-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #374151;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: inherit;
+  flex-shrink: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.nav-icon svg {
-  width: 21px;
-  height: 21px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.fab-action-btn:active { transform: scale(0.91); }
+.fab-action-btn svg {
+  width: 19px; height: 19px;
+  stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
 }
-
-.nav-label {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: inherit;
-  transition: color 0.15s;
+.dark-mode .fab-action-btn {
+  background: #1C1C1E;
+  color: #F2F2F7;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
 
-/* 관리자 전용 아이템: 게스트 모드에서 숨김 */
+/* 불러오기 버튼 — 파란색 강조 */
+.fab-action-btn--dispatch {
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  color: #fff;
+}
+.fab-action-btn--dispatch.spinning svg {
+  animation: dc-spin .7s linear infinite;
+}
+@keyframes dc-spin { to { transform: rotate(360deg); } }
+
+/* 게스트 전용 로그인 아이템 — 항상 표시 제거: 열렸을 때만 보임 */
+/* .fab-item--always 는 더 이상 항상 표시되지 않음 (일반 fab-item 동작) */
+
+/* 관리자 전용 — 게스트 숨김 */
 .guest-mode .admin-ui { display: none !important; }
 .admin-mode .admin-ui { display: flex; }
 
 /* ── Bulletin Section ─────────────────────────────────── */
 .bulletin-section {
   flex: 1;
-  padding: 8px 10px calc(var(--nav-h) + var(--safe-b) + 12px);
+  padding: 8px 10px calc(var(--safe-b) + 96px);
   min-height: 80px;
 }
 
@@ -2648,10 +2736,6 @@ body.dark-mode .settings-input:focus { border-color: #F2F2F7; }
     background: rgba(15,17,23,0.88);
     border-bottom-color: rgba(255,255,255,0.06);
   }
-  .bottom-nav {
-    background: rgba(28,30,38,0.92);
-    border-top-color: rgba(255,255,255,0.06);
-  }
   .date-display-btn {
     border-color: rgba(255,255,255,0.1);
     background: rgba(255,255,255,0.05);
@@ -2694,10 +2778,5 @@ body.dark-mode .settings-input:focus { border-color: #F2F2F7; }
 
   .parking-main {
     padding: 10px 16px 8px;
-  }
-
-  .bottom-nav {
-    border-left:  1px solid var(--border);
-    border-right: 1px solid var(--border);
   }
 }

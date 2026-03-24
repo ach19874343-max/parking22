@@ -140,12 +140,33 @@ function buildChipsHTML(numsArr, missing) {
   const parts = [];
   numsArr.forEach(({ num, isEarly }) => {
     const cls = isEarly ? 'dc-chip dc-chip--early' : 'dc-chip';
-    parts.push(`<span class="${cls}">${num}</span>`);
+    parts.push(`<span class="${cls}" data-num="${num}" style="cursor:pointer">${num}</span>`);
   });
   missing.forEach(n => {
-    parts.push(`<span class="dc-chip dc-chip--absent">${n}</span>`);
+    parts.push(`<span class="dc-chip dc-chip--absent" data-num="${n}" style="cursor:pointer">${n}</span>`);
   });
   return parts.join('');
+}
+
+/* ── 칩 클릭 이벤트 바인딩 (렌더링 후 호출) ─────────────────── */
+function bindChipClickEvents() {
+  document.querySelectorAll('.dc-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const num = chip.dataset.num;
+      if (!num) return;
+      /* 이미 선택된 칩을 다시 클릭하면 해제 */
+      if (chip.classList.contains('dc-chip--matched')) {
+        if (typeof clearDispatchChipHighlight === 'function') clearDispatchChipHighlight();
+        document.querySelectorAll('.slot-card.dispatch-slot-selected').forEach(c => c.classList.remove('dispatch-slot-selected'));
+        /* tapFirstSlot 초기화 */
+        if (typeof highlightDispatchChip === 'function') highlightDispatchChip(null, null);
+        return;
+      }
+      if (typeof highlightDispatchChip === 'function') {
+        highlightDispatchChip(chip, num);
+      }
+    });
+  });
 }
 
 /* ── Firebase: 날짜별 저장 ──────────────────────────────────── */
@@ -209,14 +230,12 @@ function renderDispatchSection() {
   if (!APP.isAdmin) { section.style.display = 'none'; return; }
   section.style.display = '';
 
-  const btnWrap   = document.getElementById('dispatchBtnWrap');
   const loading   = document.getElementById('dispatchLoading');
   const content   = document.getElementById('dispatchContent');
   const emptyHint = document.getElementById('dispatchEmptyHint');
   const loadBtn   = document.getElementById('dispatchLoadBtn');
 
   if (!dispatchState.loaded) {
-    if (btnWrap)   btnWrap.style.display   = '';
     if (loading)   loading.style.display   = 'none';
     if (content)   content.style.display   = 'none';
     if (emptyHint) emptyHint.style.display = '';
@@ -241,6 +260,9 @@ function renderDispatchSection() {
     todayEl.innerHTML    = buildChipsHTML(dispatchState.todayNums,    dispatchState.todayMissing);
   if (tomorrowEl)
     tomorrowEl.innerHTML = buildChipsHTML(dispatchState.tomorrowNums, dispatchState.tomorrowMissing);
+
+  /* 칩 클릭 이벤트 바인딩 */
+  bindChipClickEvents();
 }
 
 /* ── 날짜별 배차 데이터 로드 ────────────────────────────────── */
