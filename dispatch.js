@@ -3,7 +3,7 @@
    · 관리자 전용 (게스트 완전 숨김)
    · 성공한 프록시 기억 → 다음번에 우선 시도
    · Firebase 날짜별 저장 / 2일 지난 데이터 자동 삭제
-   · 조기완료 판정: busRound 최댓값 === 4
+   · 총5회차 판정: busRound 최댓값 === 4
    ============================================================ */
 'use strict';
 
@@ -92,7 +92,7 @@ async function fetchDispatchItems(dateStr) {
 }
 
 /* ── 오늘 추출: startOrder별 busRound 최댓값 항목
-       isEarly = 최대 busRound === 4 (0~4 = 조기완료)
+       isEarly = 최대 busRound === 4 (총5회차 → isEarly=true)
        busRound 0~5 인 경우 최대 5 → 일반 ─────────────────── */
 function extractTodayNums(items) {
   const groups = {};

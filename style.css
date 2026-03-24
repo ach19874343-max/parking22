@@ -1787,11 +1787,11 @@ body.dark-mode textarea {
   align-items: center;
   gap: 8px;
 }
-.fn-icon { font-size: 14px; flex-shrink: 0; }
+.fn-icon { font-size: 16px; flex-shrink: 0; }
 .fn-text {
-  font-size: 12px;
+  font-size: 14px;
   color: #3A3A3C;
-  line-height: 1.5;
+  line-height: 1.55;
   font-weight: 500;
 }
 .fn-text b { font-weight: 800; color: #1C1C1E; }
@@ -1800,8 +1800,8 @@ body.dark-mode textarea {
 .fn-warn {
   background: #FFF1F2;
   border-radius: 10px;
-  padding: 8px 12px;
-  font-size: 11px;
+  padding: 9px 12px;
+  font-size: 13px;
   font-weight: 800;
   color: #BE123C;
   text-align: center;
@@ -1816,12 +1816,12 @@ body.dark-mode textarea {
 .warn-text {
   color: #BE123C !important;
   font-weight: 800 !important;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .copyright {
-  font-size: 10px !important;
-  margin-top: 2px;
+  font-size: 12px !important;
+  margin-top: 4px;
   color: var(--text-hint);
 }
 
@@ -2217,7 +2217,7 @@ body.dark-mode .copyright {
 }
 .footer-del-btn:active { background: #FECACA; }
 .footer-extra-line {
-  font-size: 12px;
+  font-size: 14px;
   color: #3A3A3C;
   line-height: 1.5;
   font-family: var(--font);
