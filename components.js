@@ -62,8 +62,8 @@ function tmplDispatch() {
 
     <style>
       /* ══════════════════════════════════════
-         Dispatch Section — Redesigned v1.2
-         (헤더 제거, 하단 범례+버튼 통합)
+         Dispatch Section — Redesigned v1.3
+         (색상 구분 강화, 버튼형 디자인)
          ══════════════════════════════════════ */
       .dispatch-section {
         padding: 0;
@@ -74,12 +74,13 @@ function tmplDispatch() {
 
       /* ── 오늘 행 (블루 배경) ── */
       .dispatch-row-today {
-        background: #F8FAFF;
-        padding: 8px 12px;
-        border-top: 0.5px solid var(--color-border-tertiary);
+        background: linear-gradient(135deg, #EEF4FF 0%, #F8FAFF 100%);
+        padding: 10px 12px;
+        border-left: 3px solid #1D4ED8;
       }
       .dark-mode .dispatch-row-today {
-        background: #1E293B;
+        background: linear-gradient(135deg, #1E3A5F 0%, #1E293B 100%);
+        border-left-color: #3B82F6;
       }
       .dispatch-row-today .dispatch-day-label {
         font-size: 10px;
@@ -91,17 +92,25 @@ function tmplDispatch() {
         color: #60A5FA;
       }
 
-      /* ── 내일 행 (일반 배경) ── */
+      /* ── 내일 행 (그레이 배경) ── */
       .dispatch-row-tomorrow {
-        background: var(--color-background-secondary);
-        padding: 8px 12px;
-        border-top: 0.5px solid var(--color-border-tertiary);
+        background: linear-gradient(135deg, #F3F4F6 0%, #F9FAFB 100%);
+        padding: 10px 12px;
+        border-top: 1px solid var(--color-border-tertiary);
+        border-left: 3px solid #9CA3AF;
+      }
+      .dark-mode .dispatch-row-tomorrow {
+        background: linear-gradient(135deg, #374151 0%, #1F2937 100%);
+        border-left-color: #6B7280;
       }
       .dispatch-row-tomorrow .dispatch-day-label {
         font-size: 10px;
         font-weight: 800;
         letter-spacing: .05em;
-        color: var(--color-text-tertiary);
+        color: #6B7280;
+      }
+      .dark-mode .dispatch-row-tomorrow .dispatch-day-label {
+        color: #9CA3AF;
       }
 
       /* ── 행 내 레이아웃 ── */
@@ -123,71 +132,93 @@ function tmplDispatch() {
         gap: 4px;
       }
 
-      /* ── 칩 ── */
+      /* ── 칩 (총6회차 - 기본, 테두리 강조) ── */
       .dc-chip {
-        background: var(--color-background-secondary);
-        border: 1px solid var(--color-border-secondary);
-        border-radius: 5px;
-        padding: 2px 6px;
+        background: #FFFFFF;
+        border: 1.5px solid #D1D5DB;
+        border-radius: 6px;
+        padding: 3px 7px;
         font-size: 11.5px;
         font-weight: 600;
-        color: var(--color-text-primary);
-        line-height: 1.55;
+        color: #374151;
+        line-height: 1.5;
         letter-spacing: .01em;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       }
+      .dark-mode .dc-chip {
+        background: #4B5563;
+        border-color: #6B7280;
+        color: #F9FAFB;
+      }
+
+      /* ── 총5회차 (파란색) ── */
       .dc-chip--early {
         background: #1D4ED8;
-        border: none;
+        border: 1.5px solid #1E40AF;
         color: #fff;
       }
       .dark-mode .dc-chip--early {
         background: #2563EB;
-        border: none;
+        border-color: #1D4ED8;
         color: #fff;
       }
+
+      /* ── 휴차 (주황색) ── */
       .dc-chip--absent {
         background: #D97706;
-        border: none;
+        border: 1.5px solid #B45309;
         color: #fff;
       }
       .dark-mode .dc-chip--absent {
-        background: #B45309;
-        border: none;
-        color: #fff;
-      }
-      .dark-mode .dc-chip {
-        background: #374151;
-        border-color: #4B5563;
-        color: #F9FAFB;
+        background: #F59E0B;
+        border-color: #D97706;
+        color: #1F2937;
       }
 
-      /* ── 하단 푸터 (범례 + 버튼) ── */
+      /* ── 하단 푸터 (색상 분리, 버튼형) ── */
       .dispatch-footer {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 7px 12px 8px;
-        border-top: 0.5px solid var(--color-border-tertiary);
+        padding: 8px 12px;
+        background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
+        border-top: 1px solid #D1FAE5;
+      }
+      .dark-mode .dispatch-footer {
+        background: linear-gradient(135deg, #14532D 0%, #064E3B 100%);
+        border-top-color: #065F46;
       }
       .dispatch-footer-left {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
       }
+
+      /* ── 배차 현황 버튼형 라벨 ── */
       .dispatch-footer-title {
-        font-size: 11px;
-        font-weight: 700;
-        color: var(--color-text-primary);
-        display: flex;
+        display: inline-flex;
         align-items: center;
         gap: 5px;
+        padding: 4px 10px;
+        background: #10B981;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: .02em;
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.3);
+      }
+      .dark-mode .dispatch-footer-title {
+        background: #059669;
       }
       .dispatch-footer-title-icon {
-        font-size: 13px;
+        font-size: 12px;
       }
+
+      /* ── 범례 ── */
       .dispatch-legend {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         align-items: center;
       }
       .dispatch-legend-item {
@@ -195,49 +226,73 @@ function tmplDispatch() {
         align-items: center;
         gap: 4px;
         font-size: 10px;
-        color: var(--color-text-tertiary);
+        font-weight: 500;
+        color: #065F46;
+      }
+      .dark-mode .dispatch-legend-item {
+        color: #A7F3D0;
       }
       .dispatch-legend-dot {
-        width: 8px; height: 8px;
+        width: 10px; height: 10px;
         border-radius: 3px;
         flex-shrink: 0;
       }
       .dispatch-legend-dot.normal {
-        background: var(--color-background-secondary);
-        border: 1px solid var(--color-border-secondary);
+        background: #FFFFFF;
+        border: 1.5px solid #D1D5DB;
       }
-      .dispatch-legend-dot.early  { background: #1D4ED8; border: none; }
-      .dispatch-legend-dot.absent { background: #D97706; border: none; }
+      .dispatch-legend-dot.early {
+        background: #1D4ED8;
+        border: 1.5px solid #1E40AF;
+      }
+      .dispatch-legend-dot.absent {
+        background: #D97706;
+        border: 1.5px solid #B45309;
+      }
       .dark-mode .dispatch-legend-dot.normal {
-        background: #374151;
-        border-color: #4B5563;
+        background: #4B5563;
+        border-color: #6B7280;
       }
-      .dark-mode .dispatch-legend-dot.early  { background: #2563EB; border: none; }
-      .dark-mode .dispatch-legend-dot.absent { background: #B45309; border: none; }
+      .dark-mode .dispatch-legend-dot.early {
+        background: #2563EB;
+        border-color: #1D4ED8;
+      }
+      .dark-mode .dispatch-legend-dot.absent {
+        background: #F59E0B;
+        border-color: #D97706;
+      }
 
-      /* ── 불러오기 버튼 (소형) ── */
+      /* ── 불러오기 버튼 (버튼형, 크게) ── */
       .dispatch-load-btn-sm {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        padding: 3px 8px 3px 6px;
-        border-radius: 14px;
-        border: 1px solid var(--color-border-secondary);
-        background: var(--color-background-secondary);
-        color: var(--color-text-secondary);
-        font-size: 10px;
-        font-weight: 600;
+        justify-content: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: 6px;
+        border: none;
+        background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
         cursor: pointer;
-        transition: background .12s, transform .1s;
+        transition: all .15s ease;
         white-space: nowrap;
-        letter-spacing: .01em;
+        letter-spacing: .02em;
+        box-shadow: 0 2px 4px rgba(29, 78, 216, 0.3);
+      }
+      .dispatch-load-btn-sm:hover {
+        background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%);
+        box-shadow: 0 3px 6px rgba(29, 78, 216, 0.4);
       }
       .dispatch-load-btn-sm:active {
-        background: var(--color-background-tertiary);
         transform: scale(.97);
       }
+      .dark-mode .dispatch-load-btn-sm {
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+      }
       .dispatch-load-btn-sm svg {
-        width: 10px; height: 10px;
+        width: 12px; height: 12px;
         stroke: currentColor;
         stroke-width: 2.2;
         stroke-linecap: round;
@@ -258,9 +313,10 @@ function tmplDispatch() {
         display: flex;
         align-items: center;
         gap: 7px;
-        padding: 10px 12px;
+        padding: 12px;
         font-size: 11px;
         color: var(--color-text-tertiary);
+        background: var(--color-background-secondary);
       }
       .dispatch-loading-dots {
         display: inline-flex; gap: 3px;
@@ -280,11 +336,13 @@ function tmplDispatch() {
 
       /* ── 빈 힌트 ── */
       .dispatch-empty-hint {
-        padding: 10px 12px;
+        padding: 12px;
         font-size: 11px;
         color: var(--color-text-tertiary);
         font-style: italic;
         letter-spacing: .01em;
+        text-align: center;
+        background: var(--color-background-secondary);
       }
     </style>
 
@@ -298,7 +356,7 @@ function tmplDispatch() {
 
     <!-- ── 빈 힌트 ── -->
     <div id="dispatchEmptyHint" class="dispatch-empty-hint">
-      하단 버튼을 눌러 오늘 · 내일 배차를 확인하세요
+      하단 불러오기 버튼을 눌러 오늘 · 내일 데이터를 불러오세요
     </div>
 
     <!-- ── 결과 ── -->
@@ -340,7 +398,7 @@ function tmplDispatch() {
           </div>
         </div>
       </div>
-      <!-- 불러오기 버튼 (소형) -->
+      <!-- 불러오기 버튼 (버튼형) -->
       <div id="dispatchBtnWrap">
         <button id="dispatchLoadBtn" class="dispatch-load-btn-sm" title="배차 현황 불러오기">
           <svg viewBox="0 0 24 24">
