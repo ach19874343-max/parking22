@@ -83,7 +83,7 @@ function tmplDispatch() {
         border-left-color: #3B82F6;
       }
       .dispatch-row-today .dispatch-day-label {
-        font-size: 10px;
+        font-size: 13px;
         font-weight: 800;
         letter-spacing: .05em;
         color: #1D4ED8;
@@ -104,7 +104,7 @@ function tmplDispatch() {
         border-left-color: #6B7280;
       }
       .dispatch-row-tomorrow .dispatch-day-label {
-        font-size: 10px;
+        font-size: 13px;
         font-weight: 800;
         letter-spacing: .05em;
         color: #6B7280;
@@ -138,7 +138,7 @@ function tmplDispatch() {
         border: 1.5px solid #D1D5DB;
         border-radius: 6px;
         padding: 3px 7px;
-        font-size: 11.5px;
+        font-size: 13.5px;
         font-weight: 600;
         color: #374151;
         line-height: 1.5;
