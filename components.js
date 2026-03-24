@@ -153,9 +153,9 @@ function tmplDispatch() {
 
       /* ── 총5회차 (파란색) ── */
       .dc-chip--early {
-        background: #1D4ED8;
+        background: #bbdefb;
         border: 1.5px solid #1E40AF;
-        color: #fff;
+        color: #374151;
       }
       .dark-mode .dc-chip--early {
         background: #2563EB;
@@ -165,9 +165,9 @@ function tmplDispatch() {
 
       /* ── 휴차 (주황색) ── */
       .dc-chip--absent {
-        background: #D97706;
-        border: 1.5px solid #B45309;
-        color: #fff;
+        background: #FEF9C3;
+        border: 1.5px solid #EAB308;
+        color: #713F12;
       }
       .dark-mode .dc-chip--absent {
         background: #F59E0B;
