@@ -31,13 +31,23 @@ function applyAppSettings() {
     document.body.classList.add('admin-mode');
   }
 
-  /* 게시판 표시/숨김 — bulletin-board + footer-note는 분리 */
-  const bulletinBoard   = document.querySelector('.bulletin-board');
-  const writePostBtn    = document.getElementById('writePostBtn');
+  /* 게시판 표시/숨김 — 전체 fab-item 포함 */
+  const bulletinBoard     = document.querySelector('.bulletin-board');
   const bulletinWriteArea = document.getElementById('bulletinWriteArea');
-  if (bulletinBoard)   bulletinBoard.style.display     = s.showBulletin !== false ? '' : 'none';
-  if (writePostBtn)    writePostBtn.style.display       = s.showBulletin !== false ? '' : 'none';
-  if (bulletinWriteArea && s.showBulletin === false) bulletinWriteArea.style.display = 'none';
+  const fabItemMemo       = document.getElementById('fabItemMemo');
+  const showBulletin      = s.showBulletin !== false;
+  if (bulletinBoard)     bulletinBoard.style.display     = showBulletin ? '' : 'none';
+  if (bulletinWriteArea && !showBulletin) bulletinWriteArea.style.display = 'none';
+  /* fab-item 전체 숨김/표시 — 라벨 글씨 포함 */
+  if (fabItemMemo) fabItemMemo.style.display = showBulletin ? '' : 'none';
+
+  /* 팝업 설정 메뉴 표시/숨김 */
+  const fabItemPopup  = document.getElementById('fabItemPopup');
+  if (fabItemPopup) fabItemPopup.style.display = s.showPopupMenu !== false ? '' : 'none';
+
+  /* 차량·행 설정 메뉴 표시/숨김 */
+  const fabItemVehicle = document.getElementById('fabItemVehicle');
+  if (fabItemVehicle) fabItemVehicle.style.display = s.showVehicleMenu !== false ? '' : 'none';
 
   /* footer-note */
   applyFooterNotes();
@@ -104,21 +114,75 @@ function applyFooterNotes() {
   }
 }
 
+/* ── 데이터 정리: 10일 지난 bulletin / dispatch / parking 삭제 ── */
+async function cleanAllOldData() {
+  if (!APP.isAdmin) return;
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 10);
+  const cutoffStr    = cutoff.toISOString().split('T')[0];
+  const cutoffISO    = cutoff.toISOString();
+  let   totalDeleted = 0;
+
+  try {
+    /* ── 1) parking ── */
+    const snapP = await APP.get(APP.ref(APP.db, 'parking'));
+    if (snapP.exists()) {
+      const tasks = [];
+      snapP.forEach(child => {
+        if (child.key < cutoffStr)
+          tasks.push(APP.set(APP.ref(APP.db, `parking/${child.key}`), null));
+      });
+      if (tasks.length) { await Promise.all(tasks); totalDeleted += tasks.length; }
+    }
+
+    /* ── 2) dispatch ── */
+    const snapD = await APP.get(APP.ref(APP.db, 'dispatch'));
+    if (snapD.exists()) {
+      const tasks = [];
+      snapD.forEach(child => {
+        if (child.key < cutoffStr)
+          tasks.push(APP.set(APP.ref(APP.db, `dispatch/${child.key}`), null));
+      });
+      if (tasks.length) { await Promise.all(tasks); totalDeleted += tasks.length; }
+    }
+
+    /* ── 3) bulletin/posts ── */
+    const snapB = await APP.get(APP.ref(APP.db, 'bulletin/posts'));
+    if (snapB.exists()) {
+      const raw      = snapB.val();
+      const arr      = Array.isArray(raw) ? raw : Object.values(raw);
+      const filtered = arr.filter(p => p && p.time && p.time > cutoffISO);
+      if (filtered.length < arr.length) {
+        await APP.set(APP.ref(APP.db, 'bulletin/posts'), filtered);
+        totalDeleted += arr.length - filtered.length;
+      }
+    }
+
+    alert(`🗑️ 데이터 정리 완료!\n10일 이전 데이터 ${totalDeleted}건이 삭제되었습니다.`);
+    console.log(`[cleanAllOldData] ${totalDeleted}건 삭제 (기준: ${cutoffStr})`);
+
+    /* 게시판 갱신 */
+    if (APP.loadBulletinPosts) APP.loadBulletinPosts();
+
+  } catch (err) {
+    console.error('데이터 정리 실패:', err);
+    alert('데이터 정리 중 오류가 발생했습니다.\n' + err.message);
+  }
+}
+
 /* ── 관리자/게스트에 따라 카드 이벤트 재설정 ────────────── */
 function applyPermissionUI() {
   /* 배차 현황 섹션 권한 즉시 반영 */
-  if (typeof renderDispatchSection === 'function') renderDispatchSection();
   if (APP.renderDispatchSection) APP.renderDispatchSection();
   /* 주차 카드 재렌더링 (권한에 따라 이벤트 핸들러 유무 결정) */
-  if (typeof renderCards === 'function') renderCards();
   if (APP.renderCards) APP.renderCards();
   /* 게시판 재렌더링 — 삭제 버튼 권한 즉시 반영 */
-  if (typeof loadBulletinPosts === 'function') loadBulletinPosts();
   if (APP.loadBulletinPosts) APP.loadBulletinPosts();
   /* 주차 오버레이 — 로그인/로그아웃 즉시 반영 */
-  if (typeof updateParkingOverlay === 'function') {
+  if (APP.updateParkingOverlay) {
     const date = document.getElementById('datePicker')?.value || '';
-    updateParkingOverlay(date);
+    APP.updateParkingOverlay(date);
   }
 }
 
@@ -147,6 +211,7 @@ function initAdmin() {
   APP.getTeamByDate     = getTeamByDate;
   APP.applyAppSettings  = applyAppSettings;
   APP.applyFooterNotes  = applyFooterNotes;
+  APP.cleanAllOldData   = cleanAllOldData;
   applyAppSettings();
 
   const adminLoginBtn = document.getElementById('adminLoginBtn');
@@ -161,7 +226,6 @@ function initAdmin() {
       APP.isAdmin = false;
       sessionStorage.removeItem('isAdmin');
       /* 배차 현황 세션 초기화 */
-      if (typeof resetDispatchState === 'function') resetDispatchState();
       if (APP.resetDispatch) APP.resetDispatch();
       applyPermissionUI();
       updateAdminButton();
@@ -183,8 +247,6 @@ function initAdmin() {
       adminPw.value = '';
       applyPermissionUI();
       updateAdminButton();
-      /* 로그인 시 30일 지난 데이터 자동 삭제 */
-      if (typeof cleanOldParkingData === 'function') cleanOldParkingData();
       alert('Login 되었습니다');
     } else {
       alert('비밀번호 오류');
@@ -216,6 +278,16 @@ function initAdmin() {
   const saveBtn = document.getElementById('appSettingsSave');
   if (saveBtn) saveBtn.addEventListener('click', saveAppSettings);
 
+  /* ── 데이터 정리 버튼 (설정 모달 하단) ── */
+  const cleanDataBtn = document.getElementById('cleanDataBtn');
+  if (cleanDataBtn) {
+    cleanDataBtn.addEventListener('click', () => {
+      if (!APP.isAdmin) return;
+      if (!confirm('10일 이전의 주차도 / 배차 / 게시판 데이터를 모두 삭제합니다.\n계속하시겠습니까?')) return;
+      cleanAllOldData();
+    });
+  }
+
   /* + 줄 추가 버튼 */
   const addFooterBtn = document.getElementById('addFooterLineBtn');
   if (addFooterBtn) addFooterBtn.addEventListener('click', () => {
@@ -232,13 +304,10 @@ function initAdmin() {
 
 /* ── 설정 항목 설명 ── */
 const SETTINGS_HELP = {
-  requireAdmin:  '체크: 관리자 로그인 시에만 관리자 권한\n해제: 모든 방문자가 관리자 권한을 가집니다',
-  showBulletin:  '체크: 게시판과 메모 버튼이 표시됩니다\n해제: 게시판 전체와 메모 버튼이 숨겨집니다',
-  allowWrite:    '체크: 누구나 게시글 작성 가능\n해제: 관리자만 게시글 작성 가능',
-  allowComment:  '체크: 누구나 댓글 작성 가능\n해제: 관리자만 댓글 작성 가능',
-  allowEdit:     '체크: 누구나 수정 가능\n해제: 관리자만 수정 버튼 사용 가능',
-  allowDelete:   '체크: 누구나 삭제 가능 (공지는 항상 관리자만)\n해제: 관리자만 삭제 버튼 사용 가능',
-  allowNotice:   '체크: 관리자만 공지 등록 가능\n해제: 누구나 공지 등록 가능',
+  requireAdmin:   '체크: 관리자 로그인 시에만 관리자 권한\n해제: 모든 방문자가 관리자 권한을 가집니다',
+  showBulletin:   '체크: 게시판·메모버튼 표시, 쓰기/댓글/수정/삭제/공지 모두 허용\n해제: 게시판 전체와 메모 버튼이 숨겨집니다',
+  showPopupMenu:  '체크: + 메뉴에 팝업 설정 버튼 표시\n해제: + 메뉴에서 팝업 설정 버튼 숨김',
+  showVehicleMenu:'체크: + 메뉴에 차량·행 설정 버튼 표시\n해제: + 메뉴에서 차량·행 설정 버튼 숨김',
 };
 
 function showSettingsHelp(key) {
@@ -260,13 +329,10 @@ function showSettingsHelp(key) {
 function fillSettingsForm() {
   const s = APP.settings;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
-  set('set-requireAdmin',  s.requireAdmin  !== false);
-  set('set-showBulletin',  s.showBulletin  !== false);
-  set('set-allowWrite',    s.allowWrite    !== false);
-  set('set-allowComment',  s.allowComment  !== false);
-  set('set-allowEdit',     s.allowEdit     !== false);
-  set('set-allowDelete',   s.allowDelete   !== false);
-  set('set-allowNotice',   s.allowNotice   !== false);
+  set('set-requireAdmin',   s.requireAdmin   !== false);
+  set('set-showBulletin',   s.showBulletin   !== false);
+  set('set-showPopupMenu',  s.showPopupMenu  !== false);
+  set('set-showVehicleMenu',s.showVehicleMenu !== false);
   /* 팀 표시 */
   const teamMode = s.teamMode || 'ab';
   const tmEl = document.getElementById('teamMode-' + teamMode);
@@ -339,19 +405,23 @@ async function saveAppSettings() {
   const getV = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const teamRadio = document.querySelector('input[name="teamMode"]:checked');
 
+  const showBulletin  = get('set-showBulletin');
   const newSettings = {
-    requireAdmin:  get('set-requireAdmin'),
-    showBulletin:  get('set-showBulletin'),
-    allowWrite:    get('set-allowWrite'),
-    allowComment:  get('set-allowComment'),
-    allowEdit:     get('set-allowEdit'),
-    allowDelete:   get('set-allowDelete'),
-    allowNotice:   get('set-allowNotice'),
-    teamMode:      teamRadio ? teamRadio.value : 'ab',
-    footerLine1:   getV('set-footerLine1'),
-    footerLine2:   getV('set-footerLine2'),
-    footerLine3:   getV('set-footerLine3'),
-    appVersion:    getV('set-appVersion'),
+    requireAdmin:   get('set-requireAdmin'),
+    showBulletin,
+    /* 게시판 표시 체크 시 하위 권한 모두 true, 해제 시 모두 false */
+    allowWrite:     showBulletin,
+    allowComment:   showBulletin,
+    allowEdit:      showBulletin,
+    allowDelete:    showBulletin,
+    allowNotice:    showBulletin,
+    showPopupMenu:  get('set-showPopupMenu'),
+    showVehicleMenu:get('set-showVehicleMenu'),
+    teamMode:       teamRadio ? teamRadio.value : 'ab',
+    footerLine1:    getV('set-footerLine1'),
+    footerLine2:    getV('set-footerLine2'),
+    footerLine3:    getV('set-footerLine3'),
+    appVersion:     getV('set-appVersion'),
     dispatchApiBase: getV('set-dispatchApiBase') || 'https://api.kiki-bus.com/dispatch/126',
   };
   /* 동적 추가 줄 4~10 */
@@ -364,8 +434,8 @@ async function saveAppSettings() {
     await APP.set(APP.ref(APP.db, 'appSettings'), newSettings);
     Object.assign(APP.settings, newSettings);
     applyAppSettings();
-    if (typeof renderCards === 'function') renderCards();
-    if (typeof loadBulletinPosts === 'function') loadBulletinPosts();
+    if (APP.renderCards) APP.renderCards();
+    if (APP.loadBulletinPosts) APP.loadBulletinPosts();
     document.getElementById('appSettingsModal').classList.remove('active');
     alert('설정이 저장되었습니다.');
   } catch(e) {

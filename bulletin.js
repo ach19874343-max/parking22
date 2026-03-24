@@ -416,7 +416,7 @@ async function initBulletin() {
   });
 
   await loadBulletinPosts();
-  cleanOldBulletinPosts();
+  /* 게시판 오래된 글 정리 — 관리자 로그인 시 cleanOldParkingData()가 bulletin도 함께 처리 */
 }
 
 async function cleanOldBulletinPosts() {

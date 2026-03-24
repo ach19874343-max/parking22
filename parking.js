@@ -1057,50 +1057,14 @@ function renderVehicleList() {
   });
 }
 
-/* ── 주차도 초기화 ──────────────────────────────────────── */
-async function cleanOldParkingData() {
-  /* 관리자 로그인 시 & 앱 접속 시 — 30일 지난 데이터 자동 삭제 */
-  if (!APP.isAdmin) return; /* 관리자만 실행 */
-  try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    const cutoffStr = cutoff.toISOString().split('T')[0];
-    let total = 0;
-
-    /* ── 주차 데이터 삭제 ── */
-    const snapP = await APP.get(APP.ref(APP.db, 'parking'));
-    if (snapP.exists()) {
-      const delP = [];
-      snapP.forEach(child => {
-        if (child.key < cutoffStr) delP.push(APP.set(APP.ref(APP.db, 'parking/' + child.key), null));
-      });
-      if (delP.length) { await Promise.all(delP); total += delP.length; }
-    }
-
-    /* ── 게시판 데이터 삭제 ── */
-    const snapB = await APP.get(APP.ref(APP.db, 'bulletin/posts'));
-    if (snapB.exists()) {
-      const raw  = snapB.val();
-      const arr  = Array.isArray(raw) ? raw : Object.values(raw);
-      const cutoffISO = cutoff.toISOString();
-      const filtered  = arr.filter(p => p && p.time && p.time > cutoffISO);
-      if (filtered.length < arr.length) {
-        await APP.set(APP.ref(APP.db, 'bulletin/posts'), filtered);
-        total += arr.length - filtered.length;
-      }
-    }
-
-    if (total > 0) console.log(`🗑️ 30일 지난 데이터 ${total}건 삭제 완료`);
-  } catch (err) {
-    console.error('오래된 데이터 삭제 실패:', err);
-  }
-}
-
 async function initParking() {
   /* 다른 모듈에서 사용 */
-  APP.loadData    = loadData;
-  APP.renderCards = renderCards;
-  APP.saveData    = saveData;
+  APP.loadData                   = loadData;
+  APP.renderCards                = renderCards;
+  APP.saveData                   = saveData;
+  APP.highlightDispatchChip      = highlightDispatchChip;
+  APP.clearDispatchChipHighlight = clearDispatchChipHighlight;
+  APP.updateParkingOverlay       = updateParkingOverlay;
 
   /* 행 목록 로드 */
   await loadRowsFromDB();
@@ -1152,51 +1116,33 @@ async function initParking() {
   const nextDayBtn = document.getElementById('nextDayBtn');
   const todayBtn   = document.getElementById('todayBtn');
 
-  /* 날짜 변경 */
-  datePicker.addEventListener('change', () => {
-    const val = datePicker.value;
-    loadData(val);
-    document.getElementById('teamLabel').textContent = APP.getTeamByDate(val);
-    updateDayLabel(val);
-    /* 배차 현황 날짜 연동 */
-    if (APP.loadDispatchForDate) APP.loadDispatchForDate(val);
-  });
-
-  prevDayBtn.addEventListener('click', () => {
-    const d = new Date(datePicker.value);
-    d.setDate(d.getDate() - 1);
-    const s = d.toISOString().split('T')[0];
+  /* ── 날짜 변경 공통 헬퍼 ── */
+  function changeDate(s) {
     datePicker.value = s;
     loadData(s);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
     updateDayLabel(s);
-    /* 배차 현황 날짜 연동 */
     if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
+  }
+
+  /* 날짜 변경 */
+  datePicker.addEventListener('change', () => changeDate(datePicker.value));
+
+  prevDayBtn.addEventListener('click', () => {
+    const d = new Date(datePicker.value);
+    d.setDate(d.getDate() - 1);
+    changeDate(d.toISOString().split('T')[0]);
   });
 
   if (nextDayBtn) {
     nextDayBtn.addEventListener('click', () => {
       const d = new Date(datePicker.value);
       d.setDate(d.getDate() + 1);
-      const s = d.toISOString().split('T')[0];
-      datePicker.value = s;
-      loadData(s);
-      document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
-      updateDayLabel(s);
-      /* 배차 현황 날짜 연동 */
-      if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
+      changeDate(d.toISOString().split('T')[0]);
     });
   }
 
-  todayBtn.addEventListener('click', () => {
-    const s = getTodayStr();
-    datePicker.value = s;
-    loadData(s);
-    document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
-    updateDayLabel(s);
-    /* 배차 현황 날짜 연동 */
-    if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
-  });
+  todayBtn.addEventListener('click', () => changeDate(getTodayStr()));
 
   /* ── 차량 패널 이벤트 ── */
   /* ── 차량·행 버튼: 클릭마다 차량모드 → 행모드 → 종료 순환 ── */
@@ -1294,6 +1240,5 @@ async function initParking() {
     });
   }
 
-  /* 백그라운드에서 오래된 데이터 정리 (UI 블로킹 없음) */
-  cleanOldParkingData();
+  /* 백그라운드 자동 데이터 정리 제거 — 수동(데이터 정리 버튼)으로만 운영 */
 }

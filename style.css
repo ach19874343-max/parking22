@@ -1410,6 +1410,15 @@ body.dark-mode textarea {
 }
 @keyframes dc-spin { to { transform: rotate(360deg); } }
 
+/* 데이터정리 버튼 — 붉은색 강조 */
+.fab-action-btn--danger {
+  background: linear-gradient(135deg, #F87171 0%, #DC2626 100%);
+  color: #fff;
+}
+.dark-mode .fab-action-btn--danger {
+  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+}
+
 /* 게스트 전용 로그인 아이템 — 항상 표시 제거: 열렸을 때만 보임 */
 /* .fab-item--always 는 더 이상 항상 표시되지 않음 (일반 fab-item 동작) */
 
@@ -2268,6 +2277,7 @@ body.dark-mode .copyright {
 }
 .settings-btns-fixed .btn-primary,
 .settings-btns-fixed .btn-secondary { flex: 1; }
+.settings-btns-fixed .btn-danger { flex: 1; }
 
 /* 동적 추가 줄 */
 .footer-add-btn {

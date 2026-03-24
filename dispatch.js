@@ -156,15 +156,13 @@ function bindChipClickEvents() {
       if (!num) return;
       /* 이미 선택된 칩을 다시 클릭하면 해제 */
       if (chip.classList.contains('dc-chip--matched')) {
-        if (typeof clearDispatchChipHighlight === 'function') clearDispatchChipHighlight();
-        document.querySelectorAll('.slot-card.dispatch-slot-selected').forEach(c => c.classList.remove('dispatch-slot-selected'));
-        /* tapFirstSlot 초기화 */
-        if (typeof highlightDispatchChip === 'function') highlightDispatchChip(null, null);
+        if (APP.clearDispatchChipHighlight) APP.clearDispatchChipHighlight();
+        document.querySelectorAll('.slot-card.dispatch-slot-selected')
+          .forEach(c => c.classList.remove('dispatch-slot-selected'));
+        if (APP.highlightDispatchChip) APP.highlightDispatchChip(null, null);
         return;
       }
-      if (typeof highlightDispatchChip === 'function') {
-        highlightDispatchChip(chip, num);
-      }
+      if (APP.highlightDispatchChip) APP.highlightDispatchChip(chip, num);
     });
   });
 }
@@ -186,27 +184,6 @@ async function loadDispatchFromDB(todayStr) {
     const snap = await APP.get(APP.ref(APP.db, `dispatch/${todayStr}`));
     return snap.exists() ? snap.val() : null;
   } catch { return null; }
-}
-
-/* ── Firebase: 2일 지난 배차 데이터 자동 삭제 ──────────────── */
-async function cleanOldDispatchData() {
-  if (!APP.isAdmin) return;
-  try {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 2);
-    const cutoffStr = cutoff.toISOString().split('T')[0];
-    const snap = await APP.get(APP.ref(APP.db, 'dispatch'));
-    if (!snap.exists()) return;
-    const delTasks = [];
-    snap.forEach(child => {
-      if (child.key < cutoffStr)
-        delTasks.push(APP.set(APP.ref(APP.db, `dispatch/${child.key}`), null));
-    });
-    if (delTasks.length) {
-      await Promise.all(delTasks);
-      console.log(`🗑️ 오래된 배차 데이터 ${delTasks.length}건 삭제`);
-    }
-  } catch (e) { console.error('dispatch 삭제 실패', e); }
 }
 
 /* ── DB 데이터 → dispatchState 적용 ────────────────────────── */
@@ -317,8 +294,6 @@ async function loadDispatchData() {
       todayStr,
       tomorrowStr,
     });
-
-    cleanOldDispatchData();
 
   } catch (err) {
     console.error('배차 로드 실패:', err);

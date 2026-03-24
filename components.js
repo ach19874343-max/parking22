@@ -435,7 +435,19 @@ function tmplBottomNav() {
       </button>
     </div>
 
-    <!-- ③ 팝업 — 관리자만 -->
+    <!-- ③ 배차 불러오기 — 관리자만 -->
+    <div class="fab-item admin-ui" id="fabItemDispatch">
+      <span class="fab-item-label">불러오기</span>
+      <button class="fab-action-btn fab-action-btn--dispatch" id="dispatchLoadBtn" aria-label="배차 불러오기">
+        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ④ 팝업 — 관리자만, 설정으로 표시/숨김 -->
     <div class="fab-item admin-ui" id="fabItemPopup">
       <span class="fab-item-label">팝업</span>
       <button class="fab-action-btn" id="popupSettingBtn" aria-label="팝업 설정">
@@ -447,7 +459,7 @@ function tmplBottomNav() {
       </button>
     </div>
 
-    <!-- ④ 차량·행 — 관리자만 -->
+    <!-- ⑤ 차량·행 — 관리자만, 설정으로 표시/숨김 -->
     <div class="fab-item admin-ui" id="fabItemVehicle">
       <span class="fab-item-label">차량·행</span>
       <button class="fab-action-btn" id="currentVehicleBtn" aria-label="차량·행">
@@ -461,7 +473,7 @@ function tmplBottomNav() {
       </button>
     </div>
 
-    <!-- ⑤ 메모(글쓰기) — 설정에 따라 표시 -->
+    <!-- ⑥ 메모(글쓰기) — 설정에 따라 표시 (가장 왼쪽) -->
     <div class="fab-item" id="fabItemMemo">
       <span class="fab-item-label">메모</span>
       <button class="fab-action-btn" id="writePostBtn" aria-label="메모 작성">
@@ -469,18 +481,6 @@ function tmplBottomNav() {
              stroke-linecap="round" stroke-linejoin="round">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
           <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-        </svg>
-      </button>
-    </div>
-
-    <!-- ⑥ 배차 불러오기 — 관리자만 (가장 왼쪽) -->
-    <div class="fab-item admin-ui" id="fabItemDispatch">
-      <span class="fab-item-label">불러오기</span>
-      <button class="fab-action-btn fab-action-btn--dispatch" id="dispatchLoadBtn" aria-label="배차 불러오기">
-        <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2.2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"/>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
         </svg>
       </button>
     </div>
@@ -577,12 +577,7 @@ function tmplAppSettingsModal() {
         <div class="settings-section-title">🔐 권한 설정</div>
         ${[
           ['requireAdmin', '관리자 로그인 필요'],
-          ['showBulletin', '게시판 표시'],
-          ['allowWrite',   '게시글 작성'],
-          ['allowComment', '댓글 작성'],
-          ['allowEdit',    '수정'],
-          ['allowDelete',  '삭제'],
-          ['allowNotice',  '공지 등록'],
+          ['showBulletin', '게시판 표시 (공지·댓글·작성·수정·삭제 포함)'],
         ].map(([key, label]) => `
         <div class="settings-row">
           <label class="settings-row-label" for="set-${key}">
@@ -591,6 +586,25 @@ function tmplAppSettingsModal() {
           </label>
           <input type="checkbox" class="settings-cb" id="set-${key}">
         </div>`).join('')}
+      </div>
+
+      <!-- 메뉴 표시 설정 -->
+      <div class="settings-section">
+        <div class="settings-section-title">📋 메뉴 표시 설정</div>
+        <div class="settings-row">
+          <label class="settings-row-label" for="set-showPopupMenu">
+            팝업 설정 메뉴 표시
+            <button class="settings-help-btn" type="button" onclick="showSettingsHelp('showPopupMenu')">?</button>
+          </label>
+          <input type="checkbox" class="settings-cb" id="set-showPopupMenu">
+        </div>
+        <div class="settings-row">
+          <label class="settings-row-label" for="set-showVehicleMenu">
+            차량·행 설정 메뉴 표시
+            <button class="settings-help-btn" type="button" onclick="showSettingsHelp('showVehicleMenu')">?</button>
+          </label>
+          <input type="checkbox" class="settings-cb" id="set-showVehicleMenu">
+        </div>
       </div>
 
       <!-- 팀 표시 -->
@@ -644,6 +658,7 @@ function tmplAppSettingsModal() {
     <div class="settings-btns-fixed">
       <button class="btn-primary" id="appSettingsSave">저장</button>
       <button class="btn-secondary" id="appSettingsCancel">취소</button>
+      <button class="btn-danger" id="cleanDataBtn" aria-label="데이터 정리" title="10일 이전 데이터 삭제">🗑️ 데이터 정리</button>
     </div>
   </div>
 </div>`;

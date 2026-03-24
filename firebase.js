@@ -17,12 +17,14 @@ window.APP = {
   /* 앱 설정 (Firebase에서 로드) */
   settings: {
     requireAdmin:    true,   /* 관리자 권한 필요 */
-    showBulletin:    true,   /* 게시판 표시 */
-    allowWrite:      true,   /* 게시글 작성 */
-    allowComment:    true,   /* 댓글 작성 */
-    allowEdit:       true,   /* 수정 */
-    allowDelete:     true,   /* 삭제 */
-    allowNotice:     true,   /* 공지 등록 */
+    showBulletin:    true,   /* 게시판 표시 (하위 권한 포함) */
+    allowWrite:      true,   /* 게시글 작성 — showBulletin 에서 자동 파생 */
+    allowComment:    true,   /* 댓글 작성 — showBulletin 에서 자동 파생 */
+    allowEdit:       true,   /* 수정 — showBulletin 에서 자동 파생 */
+    allowDelete:     true,   /* 삭제 — showBulletin 에서 자동 파생 */
+    allowNotice:     true,   /* 공지 등록 — showBulletin 에서 자동 파생 */
+    showPopupMenu:   true,   /* 팝업 설정 메뉴 표시 */
+    showVehicleMenu: true,   /* 차량·행 설정 메뉴 표시 */
     teamMode:        'ab',   /* 'ab' = A팀/B팀, 'fixed' = 22번TEAM */
     footerLine1:     '※ 보영운수 22번 주차도 | 노란색 = 당일 휴차',
     footerLine2:     '※ 원하는 날짜 선택 시 해당 날짜 마감 주차도를 불러옵니다.',
@@ -55,11 +57,14 @@ async function initFirebase() {
     APP.get      = dbGet;
 
     /* 모듈 초기화 순서:
-       1) UI (Firebase 불필요)
-       2) Admin (권한 상태 설정)
-       3) Parking (차량 목록 + 그리드)
-       4) Bulletin (게시판)
-       5) Popup (자동 팝업 체크) */
+       1) loadAppSettings (Firebase 설정 로드)
+       2) initUI           (팝업 이벤트)
+       3) initAdmin        (권한 상태 + 데이터정리 버튼)
+       4) loadBusListFromDB (차량 목록)
+       5) initDispatch     (배차 섹션 — busList 로드 후)
+       6) initParking      (차량 목록 + 그리드)
+       7) initBulletin     (게시판)
+       8) checkAndShowPopup (자동 팝업) */
     await loadAppSettings();
     initUI();
     initAdmin();
