@@ -492,9 +492,10 @@ function setupCardEvents(card, slotIdx) {
     } else {
       const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
       if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-      swapSlots(tapFirstSlot, slotIdx);
-      tapFirstSlot = null;
+      const srcSlot = tapFirstSlot;
+      tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
       clearDispatchChipHighlight();
+      swapSlots(srcSlot, slotIdx);
     }
   });
 
@@ -555,9 +556,10 @@ function setupCardEvents(card, slotIdx) {
       /* 두 번째 탭: 스왑 실행 */
       const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
       if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-      swapSlots(tapFirstSlot, slotIdx);
-      tapFirstSlot = null;
+      const srcSlot = tapFirstSlot;
+      tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
       clearDispatchChipHighlight();
+      swapSlots(srcSlot, slotIdx);
     }
   }, { passive: false });
 
@@ -583,9 +585,10 @@ function setupEmptyCardDrop(card, slotIdx) {
     }
     const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
     if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-    swapSlots(tapFirstSlot, slotIdx);
-    tapFirstSlot = null;
+    const srcSlot = tapFirstSlot;
+    tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
     clearDispatchChipHighlight();
+    swapSlots(srcSlot, slotIdx);
   });
 
   /* ── 모바일: 탭 = 탭-투-스왑 두 번째 대상 ── */
@@ -605,9 +608,10 @@ function setupEmptyCardDrop(card, slotIdx) {
     e.preventDefault();
     const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
     if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-    swapSlots(tapFirstSlot, slotIdx);
-    tapFirstSlot = null;
+    const srcSlot = tapFirstSlot;
+    tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
     clearDispatchChipHighlight();
+    swapSlots(srcSlot, slotIdx);
   }, { passive: false });
 }
 

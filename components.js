@@ -280,12 +280,12 @@ function tmplDispatch() {
       <div class="dispatch-loading-dots">
         <span></span><span></span><span></span>
       </div>
-      배차 정보 조회 중…
+      배차 정보 조회 중… 잠시만 기다려주세요.......
     </div>
 
     <!-- ── 빈 힌트 ── -->
     <div id="dispatchEmptyHint" class="dispatch-empty-hint">
-      ✚ 버튼 → 불러오기 를 눌러 오늘 · 내일 배차를 불러오세요
+      ✚ 버튼 → 불러오기 를 눌러 오늘 · 내일 배차 번호를 불러오세요
     </div>
 
     <!-- ── 결과 ── -->
