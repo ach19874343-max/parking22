@@ -369,7 +369,12 @@ body.dark-mode textarea {
 /* PWA 설치 배너 */
 .pwa-banner {
   position: fixed;
-  bottom: calc(var(--safe-b) + 90px);
+  bottom: calc(var(--safe-b) + 76px);
+  left: 12px;
+  right: 12px;
+  max-width: 616px;        /* app-wrapper 최대폭 맞춤 */
+  margin: 0 auto;
+  background: #1C1C1E;     /* 진한 배경으로 시인성 확보 */
   color: #fff;
   border-radius: 16px;
   padding: 12px 16px;
@@ -377,7 +382,8 @@ body.dark-mode textarea {
   align-items: center;
   gap: 12px;
   z-index: 300;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.55), 0 1px 6px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.10);
   animation: slideUp 0.3s ease;
 }
 .pwa-banner-icon {
@@ -389,21 +395,25 @@ body.dark-mode textarea {
   flex-shrink: 0;
 }
 .pwa-banner-icon img { width: 100%; height: 100%; object-fit: cover; }
-.pwa-banner-text { flex: 1; }
-.pwa-banner-text strong { display: block; font-size: 13px; font-weight: 700; }
-.pwa-banner-text span   { font-size: 11px; color: rgba(255,255,255,0.6); }
+.pwa-banner-text { flex: 1; min-width: 0; }
+.pwa-banner-text strong { display: block; font-size: 13px; font-weight: 700; color: #fff; }
+.pwa-banner-text span   { font-size: 11px; color: rgba(255,255,255,0.65); }
 .pwa-banner-btns { display: flex; gap: 6px; flex-shrink: 0; }
 .pwa-install-btn {
-  height: 30px; padding: 0 14px; border-radius: 15px;
-  border: none; background: #fff; color: #1C1C1E;
-  font-size: 12px; font-weight: 700; cursor: pointer;
+  height: 32px; padding: 0 16px; border-radius: 16px;
+  border: none; background: #3B82F6; color: #fff;
+  font-size: 13px; font-weight: 700; cursor: pointer;
   font-family: var(--font);
+  box-shadow: 0 2px 8px rgba(59,130,246,0.45);
 }
+.pwa-install-btn:active { opacity: 0.85; transform: scale(0.96); }
 .pwa-dismiss-btn {
-  height: 30px; width: 30px; border-radius: 50%;
-  border: none; background: rgba(255,255,255,0.15); color: #fff;
+  height: 32px; width: 32px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
   font-size: 14px; cursor: pointer;
 }
+.pwa-dismiss-btn:active { background: rgba(255,255,255,0.18); }
 /* iOS 안내 배너 */
 .pwa-ios-banner {
   position: fixed;
@@ -452,31 +462,35 @@ body.dark-mode textarea {
 }
 
 .date-nav-btn {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
+  background: #3B82F6;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   transition: background 0.15s, transform 0.1s;
   padding: 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(59,130,246,0.40);
 }
 .date-nav-btn svg {
-  width: 16px;
-  height: 16px;
-  stroke: var(--text-pri);
+  width: 18px;
+  height: 18px;
+  stroke: #fff;
   fill: none;
-  stroke-width: 2.5;
+  stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .date-nav-btn:active {
-  background: var(--bg);
+  background: #1D4ED8;
   transform: scale(0.9);
+}
+body.dark-mode .date-nav-btn {
+  background: #2563EB;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.50);
 }
 
 .date-center {
@@ -1159,22 +1173,47 @@ body.dark-mode textarea {
   z-index: 10;
 }
 
-/* 탭-투-스왑: 첫 번째 탭 선택 강조 */
+/* 탭-투-스왑: 첫 번째 탭 선택 강조 (빨간 — 선택/조회) */
 .slot-card.tap-selected {
+  outline: 2.5px solid #DC2626;
+  outline-offset: -2px;
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  transform: scale(1.06);
+  z-index: 10;
+  animation: tap-pulse-red 0.7s ease-in-out infinite alternate;
+}
+.slot-card.tap-selected::before {
+  background: #DC2626 !important;
+}
+@keyframes tap-pulse-red {
+  from { box-shadow: 0 0 0 0   rgba(220,38,38,0.4); }
+  to   { box-shadow: 0 0 0 6px rgba(220,38,38,0);   }
+}
+
+/* 탭-투-스왑: 두 번째 탭 이동 확인 (파란 — 이동 확인) */
+.slot-card.tap-confirm {
   outline: 2.5px solid var(--blue);
   outline-offset: -2px;
   background: var(--blue-light) !important;
   color: var(--blue) !important;
-  transform: scale(1.06);
-  z-index: 10;
-  animation: tap-pulse 0.7s ease-in-out infinite alternate;
+  transform: scale(1.08);
+  z-index: 11;
+  animation: tap-pulse-blue 0.4s ease-out forwards;
 }
-.slot-card.tap-selected::before {
+.slot-card.tap-confirm::before {
   background: var(--blue) !important;
 }
-@keyframes tap-pulse {
-  from { box-shadow: 0 0 0 0 rgba(59,130,246,0.35); }
-  to   { box-shadow: 0 0 0 6px rgba(59,130,246,0); }
+@keyframes tap-pulse-blue {
+  0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.55); }
+  100% { box-shadow: 0 0 0 10px rgba(59,130,246,0);   }
+}
+
+/* 다크모드 — 빨간 탭 선택 */
+body.dark-mode .slot-card.tap-selected {
+  background: #3B1515 !important;
+  color: #F87171 !important;
+  outline-color: #F87171;
 }
 
 /* 배차 칩 클릭으로 선택된 슬롯 (chip-to-swap 첫 번째 선택) */
@@ -1185,7 +1224,7 @@ body.dark-mode textarea {
   color: var(--blue) !important;
   transform: scale(1.04);
   z-index: 10;
-  animation: tap-pulse 0.7s ease-in-out infinite alternate;
+  animation: tap-pulse-blue 0.7s ease-in-out infinite alternate;
 }
 .slot-card.dispatch-slot-selected::before {
   background: var(--blue) !important;
@@ -1257,6 +1296,7 @@ body.dark-mode textarea {
   align-items: flex-end;
   gap: 8px;
   max-width: calc(100vw - 24px); /* 화면 넘침 방지 */
+  pointer-events: none;          /* 컨테이너 자체는 클릭 통과 — 자식이 개별 제어 */
 }
 /* 최대 너비 제한 맞추기 */
 @media (min-width: 641px) {
@@ -1295,6 +1335,7 @@ body.dark-mode textarea {
   position: relative;
   transition: box-shadow 0.2s, transform 0.2s;
   flex-shrink: 0;
+  pointer-events: auto;          /* 컨테이너 none 상속 차단 — 항상 클릭 가능 */
 }
 .fab-main:active { transform: scale(0.93); }
 .fab-container.fab-open .fab-main {
@@ -1351,25 +1392,25 @@ body.dark-mode textarea {
 
 /* 라벨 (버튼 위에 표시) */
 .fab-item-label {
-  background: rgba(0,0,0,0.72);
+  background: rgba(0,0,0,0.82);
   color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  padding: 3px 7px;
-  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 4px 9px;
+  border-radius: 7px;
   white-space: nowrap;
   backdrop-filter: blur(6px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.28);
   pointer-events: none;
   user-select: none;
-  max-width: 60px;
+  max-width: 68px;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .dark-mode .fab-item-label {
-  background: rgba(40,40,50,0.88);
+  background: rgba(20,20,30,0.92);
 }
 
 /* 서브 액션 버튼 (원형) */

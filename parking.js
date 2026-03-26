@@ -6,6 +6,8 @@
 /* ── 오늘 날짜 문자열 (YYYY-MM-DD) ──────────────────────── */
 function getTodayStr() {
   const t = new Date();
+  /* 00:00 ~ 01:59 는 전날로 취급 (날짜 전환 기준: 02:00) */
+  if (t.getHours() < 2) t.setDate(t.getDate() - 1);
   return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
 }
 
@@ -305,6 +307,22 @@ let isTouchDrag    = false;  // 모바일 드래그 진행 중 여부 (미사용
 
 /* ── 탭-투-스왑 전역 상태 ── */
 let tapFirstSlot   = null;   // 첫 번째 탭 슬롯 인덱스 (null 이면 미선택)
+let tapConfirmSlot = null;   // 두 번째 탭 슬롯 인덱스 (파란 확인 중)
+
+/* ── 탭 상태 완전 초기화 ── */
+function clearTapState() {
+  if (tapFirstSlot !== null) {
+    const c = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+    if (c) { c.classList.remove('tap-selected', 'dispatch-slot-selected'); }
+  }
+  if (tapConfirmSlot !== null) {
+    const c = document.querySelector(`.slot-card[data-slot="${tapConfirmSlot}"]`);
+    if (c) { c.classList.remove('tap-confirm'); }
+  }
+  tapFirstSlot   = null;
+  tapConfirmSlot = null;
+  clearDispatchChipHighlight();
+}
 
 /* ── 배차 칩 하이라이트 해제 ───────────────────────────────── */
 function clearDispatchChipHighlight() {
@@ -328,37 +346,32 @@ function highlightMatchingChips(num) {
 /* ── 배차 칩 클릭: 오늘·내일 같은 번호 칩 모두 빨간,
    주차 그리드 해당 슬롯 파란(tapFirstSlot 설정) → 다른 슬롯 탭으로 이동 */
 function highlightDispatchChip(chipEl, num) {
-  /* 기존 하이라이트 전부 초기화 */
-  clearDispatchChipHighlight();
-  /* 기존 dispatch 슬롯 선택 해제 */
+  /* 기존 탭 상태 전부 초기화 */
+  clearTapState();
   document.querySelectorAll('.slot-card.dispatch-slot-selected').forEach(c => {
     c.classList.remove('dispatch-slot-selected');
   });
-  document.querySelectorAll('.slot-card.tap-selected').forEach(c => {
-    c.classList.remove('tap-selected');
-  });
-  tapFirstSlot = null;
 
   if (!chipEl || !num) return;
-  if (!APP.isAdmin) return; /* 관리자만 슬롯 선택 허용 */
+  if (!APP.isAdmin) return;
 
   const last3 = String(num).slice(-3);
 
-  /* 오늘·내일 칩 전체에서 같은 번호 빨간 테두리 */
+  /* 오늘·내일 칩 빨간 테두리 */
   document.querySelectorAll('.dc-chip').forEach(chip => {
     if (chip.textContent.trim() === last3) {
       chip.classList.add('dc-chip--matched');
     }
   });
 
-  /* 주차 그리드에서 해당 번호 슬롯 파란 강조 + tapFirstSlot 설정 */
+  /* 주차 그리드에서 해당 번호 슬롯 → 빨간(tap-selected) + tapFirstSlot 설정 */
   const totalSlots = APP.rowCount * 3;
   for (let i = 0; i < totalSlots; i++) {
     const v = APP.parkingState.values[i];
     if (v && String(v).slice(-3) === last3) {
       const card = document.querySelector(`.slot-card[data-slot="${i}"]`);
       if (card && !card.classList.contains('empty')) {
-        card.classList.add('dispatch-slot-selected');
+        card.classList.add('tap-selected');   /* 빨간 — 칩 클릭도 1탭과 동일 */
         tapFirstSlot = i;
         card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         break;
@@ -366,7 +379,6 @@ function highlightDispatchChip(chipEl, num) {
     }
   }
 }
-
 /* ── Undo / Redo 스택 (날짜별, 최대 20단계) ── */
 const UNDO_LIMIT = 20;
 const undoStacks = {};   /* { 'YYYY-MM-DD': [state, ...] } */
@@ -464,12 +476,9 @@ function setupCardEvents(card, slotIdx) {
       mouseLong = true;
       toggleCardState(slotIdx);
       /* 첫 탭 선택 중이었으면 취소 */
-      if (tapFirstSlot !== null) {
-        const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
-        if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-        tapFirstSlot = null;
+      if (tapFirstSlot !== null || tapConfirmSlot !== null) {
+        clearTapState();
       }
-      clearDispatchChipHighlight();
     }, 500);
   });
 
@@ -477,26 +486,45 @@ function setupCardEvents(card, slotIdx) {
   card.addEventListener('mouseleave', () => clearTimeout(mouseTimer));
 
   card.addEventListener('click', () => {
-    if (mouseLong) return; /* 롱클릭은 이미 처리됨 */
+    if (mouseLong) return;
 
-    if (tapFirstSlot === null) {
-      tapFirstSlot = slotIdx;
-      card.classList.add('tap-selected');
-      /* 슬롯 탭 → 오늘·내일 칩 모두 빨간 */
-      highlightMatchingChips(APP.parkingState.values[slotIdx]);
-    } else if (tapFirstSlot === slotIdx) {
-      card.classList.remove('tap-selected');
-      card.classList.remove('dispatch-slot-selected');
-      tapFirstSlot = null;
-      clearDispatchChipHighlight();
-    } else {
-      const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
-      if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-      const srcSlot = tapFirstSlot;
-      tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
-      clearDispatchChipHighlight();
-      swapSlots(srcSlot, slotIdx);
+    /* ── 파란(확인) 상태일 때 ── */
+    if (tapConfirmSlot !== null) {
+      if (slotIdx === tapConfirmSlot) {
+        /* 같은 파란 슬롯 재탭 → 취소 */
+        clearTapState();
+      } else {
+        /* 다른 슬롯 탭 → 스왑 후 새 빨간 선택 시작 */
+        const src = tapConfirmSlot;
+        clearTapState();
+        swapSlots(src, slotIdx);
+      }
+      return;
     }
+
+    /* ── 빨간(선택) 상태일 때 ── */
+    if (tapFirstSlot !== null) {
+      if (slotIdx === tapFirstSlot) {
+        /* 같은 빨간 슬롯 재탭 → 파란(이동 확인)으로 전환 */
+        card.classList.remove('tap-selected', 'dispatch-slot-selected');
+        tapConfirmSlot = slotIdx;
+        tapFirstSlot   = null;
+        card.classList.add('tap-confirm');
+      } else {
+        /* 다른 슬롯 탭 → 기존 빨간 해제 + 새 슬롯 빨간 선택 */
+        const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+        if (prev) { prev.classList.remove('tap-selected', 'dispatch-slot-selected'); }
+        tapFirstSlot = slotIdx;
+        card.classList.add('tap-selected');
+        highlightMatchingChips(APP.parkingState.values[slotIdx]);
+      }
+      return;
+    }
+
+    /* ── 아무것도 선택 안 된 상태 → 첫 번째 탭(빨간) ── */
+    tapFirstSlot = slotIdx;
+    card.classList.add('tap-selected');
+    highlightMatchingChips(APP.parkingState.values[slotIdx]);
   });
 
   /* ── 모바일: 롱프레스 → 휴차토글 / 탭 → 탭-투-스왑 ── */
@@ -516,12 +544,9 @@ function setupCardEvents(card, slotIdx) {
       if (navigator.vibrate) navigator.vibrate(35);
 
       /* 첫 탭 선택 중이었으면 취소 */
-      if (tapFirstSlot !== null) {
-        const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
-        if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-        tapFirstSlot = null;
+      if (tapFirstSlot !== null || tapConfirmSlot !== null) {
+        clearTapState();
       }
-      clearDispatchChipHighlight();
     }, 480);
   }, { passive: true });
 
@@ -540,27 +565,41 @@ function setupCardEvents(card, slotIdx) {
 
     e.preventDefault(); /* 탭 처리 */
 
-    if (tapFirstSlot === null) {
-      /* 첫 번째 탭: 이 슬롯을 선택 상태로 표시 */
-      tapFirstSlot = slotIdx;
-      card.classList.add('tap-selected');
-      /* 슬롯 탭 → 오늘·내일 칩 모두 빨간 */
-      highlightMatchingChips(APP.parkingState.values[slotIdx]);
-    } else if (tapFirstSlot === slotIdx) {
-      /* 같은 슬롯 재탭: 선택 취소 */
-      card.classList.remove('tap-selected');
-      card.classList.remove('dispatch-slot-selected');
-      tapFirstSlot = null;
-      clearDispatchChipHighlight();
-    } else {
-      /* 두 번째 탭: 스왑 실행 */
-      const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
-      if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-      const srcSlot = tapFirstSlot;
-      tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
-      clearDispatchChipHighlight();
-      swapSlots(srcSlot, slotIdx);
+    if (tapConfirmSlot !== null) {
+      /* ── 파란 확인 중 ── */
+      if (slotIdx === tapConfirmSlot) {
+        clearTapState();
+      } else {
+        const src = tapConfirmSlot;
+        clearTapState();
+        swapSlots(src, slotIdx);
+      }
+      return;
     }
+
+    if (tapFirstSlot !== null) {
+      /* ── 빨간 선택 중 ── */
+      if (slotIdx === tapFirstSlot) {
+        /* 같은 빨간 슬롯 재탭 → 파란(이동 확인)으로 전환 */
+        card.classList.remove('tap-selected', 'dispatch-slot-selected');
+        tapConfirmSlot = slotIdx;
+        tapFirstSlot   = null;
+        card.classList.add('tap-confirm');
+      } else {
+        /* 다른 슬롯 탭 → 기존 빨간 해제 + 새 슬롯 빨간 선택 */
+        const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
+        if (prev) { prev.classList.remove('tap-selected', 'dispatch-slot-selected'); }
+        tapFirstSlot = slotIdx;
+        card.classList.add('tap-selected');
+        highlightMatchingChips(APP.parkingState.values[slotIdx]);
+      }
+      return;
+    }
+
+    /* 첫 번째 탭: 빨간 */
+    tapFirstSlot = slotIdx;
+    card.classList.add('tap-selected');
+    highlightMatchingChips(APP.parkingState.values[slotIdx]);
   }, { passive: false });
 
   card.addEventListener('touchcancel', () => {
@@ -575,20 +614,18 @@ function setupEmptyCardDrop(card, slotIdx) {
   /* ── PC: 클릭 = 탭-투-스왑 두 번째 대상 ── */
   card.addEventListener('click', () => {
     if (!APP.isAdmin) return;
-    if (tapFirstSlot === null) return;
-    if (tapFirstSlot === slotIdx) {
-      card.classList.remove('tap-selected');
-      card.classList.remove('dispatch-slot-selected');
-      tapFirstSlot = null;
-      clearDispatchChipHighlight();
+
+    if (tapConfirmSlot !== null) {
+      /* 파란 상태 → 빈 슬롯 탭: 스왑 */
+      const src = tapConfirmSlot;
+      clearTapState();
+      swapSlots(src, slotIdx);
       return;
     }
-    const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
-    if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-    const srcSlot = tapFirstSlot;
-    tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
-    clearDispatchChipHighlight();
-    swapSlots(srcSlot, slotIdx);
+
+    if (tapFirstSlot === null) return;
+    /* 빨간 상태 → 빈 슬롯 탭: 선택 취소 */
+    clearTapState();
   });
 
   /* ── 모바일: 탭 = 탭-투-스왑 두 번째 대상 ── */
@@ -597,21 +634,18 @@ function setupEmptyCardDrop(card, slotIdx) {
   card.addEventListener('touchmove',  () => { emptyTouchMoved = true;  }, { passive: true });
   card.addEventListener('touchend', e => {
     if (!APP.isAdmin || emptyTouchMoved) return;
-    if (tapFirstSlot === null) return;
-    if (tapFirstSlot === slotIdx) {
-      card.classList.remove('tap-selected');
-      card.classList.remove('dispatch-slot-selected');
-      tapFirstSlot = null;
-      clearDispatchChipHighlight();
+    e.preventDefault();
+
+    if (tapConfirmSlot !== null) {
+      const src = tapConfirmSlot;
+      clearTapState();
+      swapSlots(src, slotIdx);
       return;
     }
-    e.preventDefault();
-    const prev = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
-    if (prev) { prev.classList.remove('tap-selected'); prev.classList.remove('dispatch-slot-selected'); }
-    const srcSlot = tapFirstSlot;
-    tapFirstSlot = null;  /* renderCards() 호출 전에 먼저 null 설정 */
-    clearDispatchChipHighlight();
-    swapSlots(srcSlot, slotIdx);
+
+    if (tapFirstSlot === null) return;
+    /* 빨간 → 빈 슬롯: 선택 취소 */
+    clearTapState();
   }, { passive: false });
 }
 
@@ -683,15 +717,18 @@ function renderCards() {
     }
   }
 
-  /* renderCards 후 tapFirstSlot 시각 복원 */
+  /* renderCards 후 탭 상태 시각 복원 */
   if (tapFirstSlot !== null) {
     const sel = document.querySelector(`.slot-card[data-slot="${tapFirstSlot}"]`);
     if (sel && !sel.classList.contains('empty')) {
-      sel.classList.add('dispatch-slot-selected');
-      /* 오늘·내일 칩 빨간 복원 */
+      sel.classList.add('tap-selected');           /* 빨간 복원 */
       const num = APP.parkingState.values[tapFirstSlot];
       if (num) highlightMatchingChips(num);
     }
+  }
+  if (tapConfirmSlot !== null) {
+    const sel = document.querySelector(`.slot-card[data-slot="${tapConfirmSlot}"]`);
+    if (sel) sel.classList.add('tap-confirm');     /* 파란 복원 */
   }
 }
 
@@ -1118,6 +1155,7 @@ async function initParking() {
 
   /* ── 날짜 변경 공통 헬퍼 ── */
   function changeDate(s) {
+    clearTapState();          /* 날짜 이동 시 탭 선택 + 칩 하이라이트 초기화 */
     datePicker.value = s;
     loadData(s);
     document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);

@@ -41,14 +41,14 @@ function buildProxies(targetUrl) {
     return r.json();
   });
   return [
+    /* 3 codetabs */
+    () => go(`https://api.codetabs.com/v1/proxy?quest=${enc}`),
     /* 0 직접 */
     () => go(targetUrl),
     /* 1 allorigins /raw */
     () => go(`https://api.allorigins.win/raw?url=${enc}`),
     /* 2 thingproxy */
     () => go(`https://thingproxy.freeboard.io/fetch/${targetUrl}`),
-    /* 3 codetabs */
-    () => go(`https://api.codetabs.com/v1/proxy?quest=${enc}`),
     /* 4 corsproxy.io */
     () => go(`https://corsproxy.io/?url=${enc}`),
   ];

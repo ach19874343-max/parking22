@@ -3,83 +3,857 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>주차도 초간단 매뉴얼</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link href="https://cdn.jsdelivr.net/npm/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
+<title>관리자 사용 설명서 — 보영운수 22번 주차도</title>
 <style>
-:root{
-  --bg:#0F1115;
-  --card:#171A21;
-  --text:#EDEFF5;
-  --muted:#9AA3B2;
-  --accent:#4F8CFF;
-  --accent-soft:#1F2A44;
-  --border:rgba(255,255,255,0.06);
-}
-*{box-sizing:border-box}
-body{margin:0;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text)}
-.wrap{max-width:680px;margin:0 auto;padding:16px 14px 80px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.title{font-size:18px;font-weight:800}
-.close{background:#232734;border:1px solid var(--border);color:#fff;padding:8px 12px;border-radius:20px;font-size:13px;cursor:pointer}
-.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:12px;border:1px solid var(--border);box-shadow:0 6px 20px rgba(0,0,0,0.25)}
-.h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
-.icon{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);font-size:15px}
-h2{font-size:15px;margin:0;font-weight:800}
-ul{padding-left:0;margin:0}
-li{list-style:none;font-size:20px;margin-bottom:10px;color:var(--text)}
-li span{color:var(--muted)}
-.badge{display:inline-block;background:var(--accent-soft);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:10px;margin-left:4px}
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap');
+
+  :root {
+    --blue: #3B82F6;
+    --blue-d: #1D4ED8;
+    --red: #EF4444;
+    --yellow: #F59E0B;
+    --green: #10B981;
+    --gray: #6B7280;
+    --bg: #F3F4F6;
+    --card: #fff;
+    --border: #E5E7EB;
+    --text: #111827;
+    --sub: #6B7280;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── 표지 ── */
+  .cover {
+    background: linear-gradient(145deg, #1E3A8A 0%, #1D4ED8 50%, #3B82F6 100%);
+    padding: 40px 24px 36px;
+    color: #fff;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 70% 30%, rgba(255,255,255,0.08) 0%, transparent 60%);
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+  .cover p {
+    font-size: 13px;
+    opacity: 0.75;
+  }
+
+  /* ── 목차 ── */
+  .toc {
+    background: var(--card);
+    margin: 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .toc-title {
+    background: #F9FAFB;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--sub);
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--border);
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: #F9FAFB; }
+  .toc-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .toc-label { font-size: 14px; font-weight: 600; }
+
+  /* ── 섹션 ── */
+  .section {
+    margin: 0 16px 20px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-top: 4px;
+  }
+  .section-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 12px;
+  }
+  .card-title {
+    padding: 12px 16px 10px;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--sub);
+    border-bottom: 1px solid var(--border);
+    letter-spacing: 0.04em;
+    background: #FAFAFA;
+  }
+  .card-body {
+    padding: 16px;
+  }
+
+  /* ── 주차 그리드 모형 ── */
+  .grid-mock {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 8px 0;
+  }
+  .slot {
+    height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .slot.run   { background: #ECFDF5; border-color: #A7F3D0; color: #065F46; }
+  .slot.rest  { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+  .slot.empty { background: #F9FAFB; border-color: #E5E7EB; color: #D1D5DB; font-size: 18px; }
+  .slot.selected-red  { background: #FEF2F2; border-color: var(--red)  !important; color: #991B1B; box-shadow: 0 0 0 2px rgba(239,68,68,0.25); }
+  .slot.selected-blue { background: #EFF6FF; border-color: var(--blue) !important; color: #1D4ED8; box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
+  .slot.six-trip { background: #fff; border-color: #D1D5DB; color: #374151; }
+  .slot.five-trip { background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; }
+
+  /* ── 배차 칩 모형 ── */
+  .chips-row {
+    display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0;
+  }
+  .chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px; font-weight: 700;
+    border: 2px solid transparent;
+  }
+  .chip.normal { background: #F3F4F6; color: #374151; border-color: #E5E7EB; }
+  .chip.early  { background: #EFF6FF; color: #1D4ED8; border-color: #BFDBFE; }
+  .chip.absent { background: #FFFBEB; color: #92400E; border-color: #FDE68A; }
+  .chip.matched { background: #FEF2F2; color: #991B1B; border-color: var(--red); box-shadow: 0 0 0 2px rgba(239,68,68,0.2); }
+
+  /* ── 단계 표시 ── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: #fff;
+    font-size: 12px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-content { flex: 1; }
+  .step-label {
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .step-desc {
+    font-size: 12px; color: var(--sub); line-height: 1.5;
+  }
+
+  /* ── 강조 박스 ── */
+  .highlight-box {
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin: 8px 0;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .highlight-box.blue  { background: #EFF6FF; border-left: 4px solid var(--blue); }
+  .highlight-box.red   { background: #FEF2F2; border-left: 4px solid var(--red); }
+  .highlight-box.yellow{ background: #FFFBEB; border-left: 4px solid var(--yellow); }
+  .highlight-box.green { background: #ECFDF5; border-left: 4px solid var(--green); }
+  .highlight-box .icon { font-size: 18px; flex-shrink: 0; }
+  .highlight-box .text { font-size: 13px; line-height: 1.6; font-weight: 500; }
+  .highlight-box .text b { font-weight: 800; }
+
+  /* ── 색상 범례 ── */
+  .legend-list {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .legend-swatch {
+    width: 48px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+  }
+  .legend-text-wrap { flex: 1; }
+  .legend-name { font-size: 13px; font-weight: 700; }
+  .legend-desc { font-size: 11px; color: var(--sub); margin-top: 1px; }
+
+  /* ── 헤더 버튼 모형 ── */
+  .header-mock {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    margin: 8px 0;
+  }
+  .mock-btn {
+    background: var(--blue);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 16px; font-weight: 900;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.4);
+  }
+  .mock-date {
+    text-align: center;
+  }
+  .mock-date .main { font-size: 17px; font-weight: 900; }
+  .mock-date .sub  { font-size: 11px; color: var(--sub); }
+
+  /* ── 롱프레스 표시 ── */
+  .longpress-demo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 0;
+  }
+  .press-slot {
+    width: 60px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800;
+    position: relative;
+  }
+  .press-slot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 16px;
+    border: 3px solid;
+    opacity: 0;
+  }
+  .press-slot.pressing::after {
+    opacity: 1;
+    border-color: var(--yellow);
+    animation: pulse 1s ease infinite;
+  }
+  @keyframes pulse {
+    0%,100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.06); opacity: 1; }
+  }
+  .arrow-right {
+    font-size: 20px; color: var(--sub);
+  }
+
+  /* ── 이동 흐름도 ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin: 10px 0;
+  }
+  .flow-step {
+    display: flex; flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .flow-slot {
+    width: 52px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800;
+    border: 2.5px solid transparent;
+  }
+  .flow-label {
+    font-size: 10px; font-weight: 700;
+    color: var(--sub);
+    text-align: center;
+    line-height: 1.3;
+  }
+  .flow-arrow {
+    font-size: 18px; color: #9CA3AF;
+    margin-bottom: 18px;
+  }
+
+  /* ── 취소/다시 버튼 ── */
+  .undo-redo-row {
+    display: flex; gap: 10px; margin: 8px 0;
+  }
+  .undo-btn, .redo-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    font-size: 14px; font-weight: 800;
+  }
+  .undo-btn { background: #FEF2F2; color: var(--red); border: 1.5px solid #FECACA; }
+  .redo-btn { background: #EFF6FF; color: var(--blue); border: 1.5px solid #BFDBFE; }
+
+  /* ── 구분선 ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  /* ── 주의 사항 ── */
+  .warning {
+    background: #FFF7ED;
+    border: 1.5px solid #FED7AA;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #92400E;
+    margin: 8px 0;
+  }
+  .warning b { font-weight: 800; color: #C2410C; }
+
+  /* ── 배차 불러오기 ── */
+  .dispatch-mock {
+    background: #F9FAFB;
+    border-radius: 12px;
+    padding: 12px;
+    margin: 8px 0;
+  }
+  .dispatch-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  }
+  .dispatch-label {
+    font-size: 11px; font-weight: 800; color: var(--sub);
+    width: 32px; flex-shrink: 0;
+  }
+  .dispatch-chips {
+    display: flex; gap: 5px; flex-wrap: wrap;
+  }
+
+  /* ── 푸터 ── */
+  .footer {
+    background: var(--card);
+    margin: 0 16px 32px;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .footer p {
+    font-size: 12px;
+    color: var(--sub);
+    line-height: 1.7;
+  }
+  .footer .version {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--blue);
+    margin-top: 8px;
+  }
+
+  a { color: inherit; }
+  .spacer { height: 8px; }
 </style>
 </head>
 <body>
 
-<div class="wrap">
-
-<div class="header">
-<div class="title">📋 주차도 사용</div>
-<button class="close" onclick="window.close()">✕ 닫기</button>
+<!-- ===== 표지 ===== -->
+<div class="cover">
+  <div class="cover-badge">Admin Manual</div>
+  <h1>관리자 사용 설명서</h1>
+  <p>이 설명서는 관리자 전용입니다.<br>게스트 모드에서는 수정 기능이 비활성화됩니다.</p>
 </div>
 
-<div class="card">
-<div class="h"><div class="icon">📱</div><h2>기본 사용</h2></div>
-<ul>
-<li>날짜 이동 <span>< > / 날짜 / 오늘 / 해당 날짜 주차도 불러옴,</span></li>
-<li>주차 상태 <span>초록(운행) / 노랑(휴차) / 빈칸</span></li>
-<li>박차도만 보실분들은 로그인 하실 필요 없습니다.아래는 로그인후 권한</li>
-</ul>
+<!-- ===== 목차 ===== -->
+<div class="toc">
+  <div class="toc-title">📋 목차</div>
+  <a href="#s1" class="toc-item"><span class="toc-num">1</span><span class="toc-label">색상 의미 — 한눈에 보기</span></a>
+  <a href="#s2" class="toc-item"><span class="toc-num">2</span><span class="toc-label">위치 이동 (1탭 → 2탭 → 목적지)</span></a>
+  <a href="#s3" class="toc-item"><span class="toc-num">3</span><span class="toc-label">휴차 변경 (꾹 누르기)</span></a>
+  <a href="#s4" class="toc-item"><span class="toc-num">4</span><span class="toc-label">배차 불러오기 & 연동</span></a>
+  <a href="#s5" class="toc-item"><span class="toc-num">5</span><span class="toc-label">취소 / 다시 (실수 복구)</span></a>
+  <a href="#s6" class="toc-item"><span class="toc-num">6</span><span class="toc-label">헤더 날짜 이동 버튼</span></a>
 </div>
 
-<div class="card">
-<div class="h"><div class="icon">🔐</div><h2>관리자</h2></div>
-<ul>
-<li>로그인 <span>하단 +버튼</span></li>
-<li>주차 변경 <span>꾹 누르기(0.5초이상)-> 노란색 변경</span></li>
-<li>위치 이동 <span>번호선택(파란테두리) → 원하는 위치 탭 이동</span></li>
-<li>취소/다시 <span>↩취소 - 다시 ↪</span></li>
-<li>번호 표시 <span>오늘/내일 동일번호 → 빨간 테두리</span></li>
-</ul>
+<!-- ===== 1. 색상 의미 ===== -->
+<div id="s1" class="spacer"></div>
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div class="section-title">색상 의미</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔵 오늘·내일 데이터 칩 색상</div>
+    <div class="card-body">
+      <div class="legend-list">
+        <div class="legend-item">
+          <div class="chip normal" style="font-size:13px;">753</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">회색 칩</div>
+            <div class="legend-desc">6탕 운행 </div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="chip early" style="font-size:13px;">754</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">파란 칩</div>
+            <div class="legend-desc">5탕 운행 </div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="chip absent" style="font-size:13px;">755</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">노란 칩</div>
+            <div class="legend-desc">휴차 — 솔루션에 없는 번호</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="chip matched" style="font-size:13px;">750</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">빨간 테두리 칩</div>
+            <div class="legend-desc">주차 슬롯에서 선택한 번호와 일치</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="card">
-<div class="h"><div class="icon">🚌</div><h2>배차</h2></div>
-<ul>
-<li>로그인 후 <span>+ 메뉴</span></li>
-<li>불러오기 <span>오늘/내일 차량 번호 데이터 순서대로,</span></li>
-<li>색상구분 <span>하얀-6탕짜리,파랑-5탕짜리,노랑-휴차,솔루션 기준 순서대로 불러오고 휴차는 맨 뒤쪽 노란색,</span></li>
-</ul>
+<!-- ===== 2. 위치 이동 ===== -->
+<div id="s2" class="spacer"></div>
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div class="section-title">위치 이동</div>
+  </div>
+
+  <div class="highlight-box blue">
+    <span class="icon">💡</span>
+    <span class="text"><b>핵심 원칙:</b> 같은 슬롯을 두 번 탭해야 이동이 확정됩니다.<br>처음 탭은 "이 차를 옮길게요" 선택 → 두 번째 탭이 이동 확정입니다.</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📱 3단계 이동 방법</div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-label">이동할 차량 번호 탭 → <span style="color:var(--red);">빨간 테두리</span></div>
+            <div class="step-desc">선택된 슬롯에 빨간 테두리가 생깁니다.<br>배차 칩(오늘/내일)에서도 같은 번호가 빨간색으로 표시됩니다.</div>
+            <div style="margin-top:10px;">
+              <div class="grid-mock" style="grid-template-columns:repeat(3,1fr);max-width:200px;">
+                <div class="slot selected-red">750</div>
+                <div class="slot run">751</div>
+                <div class="slot run">752</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-label">같은 슬롯 한 번 더 탭 → <span style="color:var(--blue);">파란 테두리</span></div>
+            <div class="step-desc">동일한 칸을 한 번 더 누르면 파란색으로 바뀝니다.<br>"지금 이 차를 정말 이동할게요" 확정 신호입니다.</div>
+            <div style="margin-top:10px;">
+              <div class="grid-mock" style="grid-template-columns:repeat(3,1fr);max-width:200px;">
+                <div class="slot selected-blue">750</div>
+                <div class="slot run">751</div>
+                <div class="slot run">752</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <div class="step-label">원하는 <b>목적지 슬롯 탭</b> → 이동 완료</div>
+            <div class="step-desc">빈 슬롯 또는 다른 차량 슬롯을 탭하면 위치가 서로 바뀝니다.</div>
+            <div style="margin-top:10px;">
+              <div class="flow">
+                <div class="flow-step">
+                  <div class="flow-slot" style="background:#fff;border:2px solid #D1D5DB;color:#374151;">750</div>
+                  <div class="flow-label">출발</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                  <div class="flow-slot" style="background:#ECFDF5;border:2px solid #A7F3D0;color:#065F46;">768</div>
+                  <div class="flow-label">목적지</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                  <div class="flow-slot" style="background:#ECFDF5;border:2px solid #A7F3D0;color:#065F46;">750</div>
+                  <div class="flow-label" style="color:var(--green);">이동 완료</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider" style="margin:16px 0;"></div>
+
+      <div class="highlight-box yellow">
+        <span class="icon">⚠️</span>
+        <span class="text"><b>선택 취소 방법:</b> 빨간 테두리 상태에서 빈 공간이나 다른 곳을 탭하면 선택이 해제됩니다.<br>파란 테두리는 같은 슬롯을 다시 탭해도 취소됩니다.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔗 배차 칩과 연동 — 번호 확인</div>
+    <div class="card-body">
+      <div class="step-desc" style="margin-bottom:10px;">주차 슬롯을 탭하면 배차 현황(오늘/내일) 칩에서<br>같은 번호가 자동으로 <b style="color:var(--red);">빨간 테두리</b>로 강조됩니다.</div>
+      <div class="dispatch-mock">
+        <div class="dispatch-row">
+          <div class="dispatch-label">오늘</div>
+          <div class="dispatch-chips">
+            <div class="chip matched">750</div>
+            <div class="chip early">751</div>
+            <div class="chip normal">752</div>
+            <div class="chip absent">753</div>
+          </div>
+        </div>
+        <div class="dispatch-row" style="margin-bottom:0;">
+          <div class="dispatch-label">내일</div>
+          <div class="dispatch-chips">
+            <div class="chip normal">751</div>
+            <div class="chip matched">750</div>
+            <div class="chip normal">754</div>
+          </div>
+        </div>
+      </div>
+      <div class="step-desc" style="font-size:11px;color:var(--sub);">↑ 주차 그리드에서 <b>750</b> 슬롯을 탭하면, 오늘/내일 칩에서 750이 빨간색으로 강조됩니다.</div>
+    </div>
+  </div>
 </div>
 
-<div class="card">
-<div class="h"><div class="icon">⚙️</div><h2>기타</h2></div>
-<ul>
-<li>차량/행 수정 <span>1회 탭 차량번호 설정,2회 탭 행 추가삭제 설정,</span></li>
-<li>팝업 설정 <span>설정한 시간별 팝업 안내</span></li>
-<li>다크모드 <span>☀️/🌙</span></li>
-<li>홈화면 추가 <span>홈화면에 추가시 사용이 편리합니다,</span></li>
-</ul>
+<!-- ===== 3. 휴차 변경 ===== -->
+<div id="s3" class="spacer"></div>
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div class="section-title">휴차 변경</div>
+  </div>
+
+  <div class="highlight-box red">
+    <span class="icon">✋</span>
+    <span class="text"><b>꾹 누르기 (0.5초)로 휴차 ↔ 운행 전환</b><br>짧게 탭하면 선택(이동 모드)이 됩니다.<br>반드시 <b>0.5초 이상 꾹 눌러야</b> 노란색으로 변합니다.</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📳 휴차 토글 방법</div>
+    <div class="card-body">
+      <div class="longpress-demo">
+        <div>
+          <div class="press-slot run" style="width:60px;height:52px;border-radius:12px;font-size:15px;font-weight:800;background:#ECFDF5;border:2px solid #A7F3D0;color:#065F46;display:flex;align-items:center;justify-content:center;">750</div>
+          <div style="font-size:10px;color:var(--sub);text-align:center;margin-top:4px;font-weight:700;">운행중</div>
+        </div>
+        <div class="arrow-right">→<br><span style="font-size:10px;color:var(--sub);">꾹 0.5초</span></div>
+        <div>
+          <div class="press-slot" style="width:60px;height:52px;border-radius:12px;font-size:15px;font-weight:800;background:#FFFBEB;border:2px solid #FDE68A;color:#92400E;display:flex;align-items:center;justify-content:center;">750</div>
+          <div style="font-size:10px;color:var(--yellow);text-align:center;margin-top:4px;font-weight:700;">휴차</div>
+        </div>
+        <div class="arrow-right">→<br><span style="font-size:10px;color:var(--sub);">꾹 0.5초</span></div>
+        <div>
+          <div class="press-slot run" style="width:60px;height:52px;border-radius:12px;font-size:15px;font-weight:800;background:#ECFDF5;border:2px solid #A7F3D0;color:#065F46;display:flex;align-items:center;justify-content:center;">750</div>
+          <div style="font-size:10px;color:var(--sub);text-align:center;margin-top:4px;font-weight:700;">운행중</div>
+        </div>
+      </div>
+
+      <div class="highlight-box green" style="margin-top:8px;">
+        <span class="icon">📱</span>
+        <span class="text">모바일에서는 꾹 누르면 <b>진동 피드백</b>이 옵니다.<br>진동이 느껴지면 휴차가 정상적으로 적용된 것입니다.</span>
+      </div>
+
+      <div class="warning">
+        <b>주의:</b> 짧게 탭하면 이동 모드(빨간 테두리)가 됩니다.<br>
+        휴차로 바꾸려면 반드시 <b>꾹 길게 누르기 (약 0.5초)</b>를 사용하세요.<br>
+        이동 모드가 된 경우 → 같은 슬롯을 다시 탭해서 선택을 취소하세요.
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- ===== 4. 배차 불러오기 ===== -->
+<div id="s4" class="spacer"></div>
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div class="section-title">배차 불러오기</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📥 불러오기 방법</div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <div class="step-label">배차 현황 섹션의 <b>"불러오기" 버튼</b> 탭</div>
+            <div class="step-desc">오늘과 내일 두 날짜의 데이터를 동시에 가져옵니다.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <div class="step-label">솔루션 순서대로 칩이 표시됨</div>
+            <div class="step-desc">솔루션(배차 시스템) 기준 <b>startOrder 순서</b>대로 번호가 나열됩니다.<br>휴차 번호는 맨 오른쪽(뒤쪽)에 <span style="color:#92400E;font-weight:700;">노란색 칩</span>으로 표시됩니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dispatch-mock" style="margin-top:12px;">
+        <div class="dispatch-row">
+          <div class="dispatch-label">오늘</div>
+          <div class="dispatch-chips">
+            <div class="chip normal">750</div>
+            <div class="chip early">751</div>
+            <div class="chip normal">752</div>
+            <div class="chip normal">768</div>
+            <div class="chip absent">753</div>
+            <div class="chip absent">769</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--sub);margin-top:6px;padding-left:40px;">← 솔루션 순서 →&nbsp;&nbsp;&nbsp;&nbsp;← 휴차(노랑)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎨 칩 색상 구분</div>
+    <div class="card-body">
+      <div class="legend-list">
+        <div class="legend-item">
+          <div class="chip normal">750</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">회색 — 6탕 </div>
+            <div class="legend-desc">busRound 최댓값이 5 이상인 차량</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="chip early">751</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">파랑 — 5탕 </div>
+            <div class="legend-desc">busRound 최댓값이 4인 차량</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="chip absent">753</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">노랑 — 휴차</div>
+            <div class="legend-desc">솔루션에 없는 번호 (차량 목록에는 있음)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔗 칩 탭 → 그리드 연동</div>
+    <div class="card-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:var(--red);">!</div>
+          <div class="step-content">
+            <div class="step-label">배차 칩 탭 → 주차 그리드에서 같은 번호 자동 선택</div>
+            <div class="step-desc">칩을 탭하면 주차 그리드에서 해당 번호 슬롯이 <b style="color:var(--blue);">파란 테두리</b>로 강조됩니다.<br>바로 목적지 슬롯을 탭해서 이동할 수 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 5. 취소/다시 ===== -->
+<div id="s5" class="spacer"></div>
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div class="section-title">취소 / 다시 (실수 복구)</div>
+  </div>
+
+  <div class="highlight-box green">
+    <span class="icon">🛡️</span>
+    <span class="text"><b>최대 20단계까지 되돌리기 가능합니다.</b><br>잘못 이동하거나 실수로 휴차를 눌렀을 때 사용하세요.</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">↩ ↪ 버튼 위치 및 사용법</div>
+    <div class="card-body">
+      <div class="undo-redo-row">
+        <div class="undo-btn">↩ 취소</div>
+        <div class="redo-btn">↪ 다시</div>
+      </div>
+      <div class="step-desc" style="margin-top:8px;">헤더 상단 좌측에 있는 버튼입니다.</div>
+      <div class="divider" style="margin:12px 0;"></div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num" style="background:#EF4444;">↩</div>
+          <div class="step-content">
+            <div class="step-label">취소 (Undo)</div>
+            <div class="step-desc">직전 작업을 되돌립니다. 실수로 이동/휴차 변경 시 즉시 탭!</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num" style="background:#3B82F6;">↪</div>
+          <div class="step-content">
+            <div class="step-label">다시 (Redo)</div>
+            <div class="step-desc">취소한 작업을 다시 적용합니다.</div>
+          </div>
+        </div>
+      </div>
+      <div class="warning" style="margin-top:12px;">
+        <b>날짜별로 독립 관리됩니다.</b><br>
+        오늘 작업한 취소/다시는 오늘 날짜에서만 동작합니다.<br>
+        날짜를 바꾸면 해당 날짜의 기록으로 전환됩니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 6. 헤더 날짜 이동 ===== -->
+<div id="s6" class="spacer"></div>
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <div class="section-title">헤더 날짜 이동</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 날짜 이동 버튼</div>
+    <div class="card-body">
+      <div class="header-mock">
+        <div class="mock-btn">‹</div>
+        <div class="mock-date">
+          <div class="main">03 · 26 (수)</div>
+          <div class="sub">2026 · Wed</div>
+        </div>
+        <div class="mock-btn">›</div>
+      </div>
+      <div class="legend-list" style="margin-top:12px;">
+        <div class="legend-item">
+          <div class="mock-btn" style="width:38px;height:38px;font-size:16px;">‹</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">← 이전 날짜로 이동</div>
+            <div class="legend-desc">어제 주차도 확인 (파란색 원형 버튼)</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div class="mock-btn" style="width:38px;height:38px;font-size:16px;">›</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">→ 다음 날짜로 이동</div>
+            <div class="legend-desc">내일 주차도 미리 입력</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div style="background:#1C1C1E;color:#fff;padding:5px 12px;border-radius:16px;font-size:12px;font-weight:800;flex-shrink:0;">오늘</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">오늘 버튼</div>
+            <div class="legend-desc">어느 날짜에 있어도 오늘로 빠르게 돌아오기</div>
+          </div>
+        </div>
+        <div class="legend-item">
+          <div style="font-size:22px;width:38px;text-align:center;">📅</div>
+          <div class="legend-text-wrap">
+            <div class="legend-name">날짜 숫자 탭</div>
+            <div class="legend-desc">달력 팝업이 열려 원하는 날짜 직접 선택 가능</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="highlight-box blue" style="margin-top:12px;">
+        <span class="icon">🕑</span>
+        <span class="text"><b>날짜 전환 기준은 새벽 02:00입니다.</b><br>00:00~01:59 사이에는 여전히 전날로 표시됩니다.<br>02:00부터 날짜가 바뀝니다.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 푸터 ===== -->
+<div class="spacer"></div>
+<div class="footer">
+  <p>이 설명서는 관리자 전용입니다.<br>게스트 모드에서는 수정 기능이 비활성화됩니다.</p>
+  <div class="version">보영운수 22번 주차도 v3.1.0</div>
 </div>
 
 </body>

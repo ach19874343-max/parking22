@@ -125,23 +125,27 @@ function tmplDispatch() {
         color: var(--color-text-tertiary);
       }
 
-      /* ── 칩 컨테이너 ── */
+      /* ── 칩 컨테이너: 7칸 고정 너비, 왼쪽 정렬 ── */
       .dispatch-chips {
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
+        justify-content: flex-start;
       }
 
       /* ── 칩 (총6회차 - 기본, 테두리 강조) ── */
       .dc-chip {
+        flex: 0 0 calc((100% - 6 * 4px) / 7); /* 7칸 고정 너비 */
+        min-width: 0;
+        text-align: center;
         background: #FFFFFF;
         border: 1.5px solid #D1D5DB;
         border-radius: 6px;
-        padding: 3px 7px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #374151;
-        line-height: 1.5;
+        padding: 1px 2px;
+        font-size: 18px;
+        font-weight: 800;
+        color: #1F2937;
+        line-height: 1.2;
         letter-spacing: .01em;
         box-shadow: 0 1px 2px rgba(0,0,0,0.05);
       }
@@ -221,41 +225,80 @@ function tmplDispatch() {
         to { transform: rotate(360deg); }
       }
 
-      /* ── 로딩 ── */
+      /* ── 로딩 (전체화면 오버레이) ── */
       .dispatch-loading {
+        position: fixed;
+        inset: 0;
+        z-index: 9000;
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 7px;
-        padding: 12px;
-        font-size: 11px;
-        color: var(--color-text-tertiary);
-        background: var(--color-background-secondary);
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.60);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+      .dispatch-loading-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.20);
+        border-radius: 22px;
+        padding: 30px 40px 26px;
+      }
+      .dark-mode .dispatch-loading-inner {
+        background: rgba(28,28,30,0.88);
+        border-color: rgba(255,255,255,0.12);
+      }
+      .dispatch-spinner {
+        width: 46px; height: 46px;
+        border: 4px solid rgba(255,255,255,0.22);
+        border-top-color: #3B82F6;
+        border-radius: 50%;
+        animation: dc-spin .75s linear infinite;
+      }
+      .dispatch-loading-text {
+        font-size: 16px;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: .02em;
+        text-align: center;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.4);
       }
       .dispatch-loading-dots {
-        display: inline-flex; gap: 3px;
+        display: inline-flex; gap: 6px;
       }
       .dispatch-loading-dots span {
-        width: 5px; height: 5px;
+        width: 8px; height: 8px;
         border-radius: 50%;
-        background: var(--color-text-tertiary);
-        animation: dc-bounce 1s ease infinite;
+        background: #60A5FA;
+        animation: dc-bounce 1.1s ease infinite;
       }
-      .dispatch-loading-dots span:nth-child(2) { animation-delay: .15s; }
-      .dispatch-loading-dots span:nth-child(3) { animation-delay: .3s; }
+      .dispatch-loading-dots span:nth-child(2) { animation-delay: .18s; }
+      .dispatch-loading-dots span:nth-child(3) { animation-delay: .36s; }
       @keyframes dc-bounce {
-        0%,80%,100% { transform: scale(.6); opacity:.4; }
+        0%,80%,100% { transform: scale(.5); opacity:.3; }
         40%         { transform: scale(1);  opacity:1; }
       }
 
-      /* ── 빈 힌트 ── */
+      /* ── 빈 힌트 (크고 잘 보이게) ── */
       .dispatch-empty-hint {
-        padding: 12px;
-        font-size: 11px;
-        color: var(--color-text-tertiary);
-        font-style: italic;
+        padding: 14px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #1D4ED8;
         letter-spacing: .01em;
         text-align: center;
-        background: var(--color-background-secondary);
+        line-height: 1.6;
+        background: #EFF6FF;
+        border-bottom: 2px solid #BFDBFE;
+      }
+      .dark-mode .dispatch-empty-hint {
+        background: #1E3A5F;
+        border-bottom-color: #1D4ED8;
+        color: #93C5FD;
       }
       /* ── 주차 슬롯 탭 선택 시 매칭 칩 (빨간 테두리) ── */
       .dc-chip--matched {
@@ -275,17 +318,20 @@ function tmplDispatch() {
       }
     </style>
 
-    <!-- ── 로딩 ── -->
+    <!-- ── 로딩 (전체화면 오버레이) ── -->
     <div id="dispatchLoading" class="dispatch-loading" style="display:none">
-      <div class="dispatch-loading-dots">
-        <span></span><span></span><span></span>
+      <div class="dispatch-loading-inner">
+        <div class="dispatch-spinner"></div>
+        <div class="dispatch-loading-text">배차 순서 불러오는 중</div>
+        <div class="dispatch-loading-dots">
+          <span></span><span></span><span></span>
+        </div>
       </div>
-      배차 정보 조회 중… 잠시만 기다려주세요.......
     </div>
 
     <!-- ── 빈 힌트 ── -->
     <div id="dispatchEmptyHint" class="dispatch-empty-hint">
-      ✚ 버튼 → 불러오기 를 눌러 오늘 · 내일 배차 번호를 불러오세요
+      🚌 ✚ 버튼 → <strong>불러오기</strong>를 눌러<br>오늘 · 내일 배차 번호를 불러오세요
     </div>
 
     <!-- ── 결과 ── -->
