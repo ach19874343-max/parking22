@@ -342,18 +342,36 @@ function initDispatch() {
   APP.resetDispatch         = () => resetDispatchState(true);
   APP.loadDispatchForDate   = loadDispatchForDate;
 
+  /* 기존 FAB 불러오기 버튼 */
   const loadBtn = document.getElementById('dispatchLoadBtn');
   if (loadBtn) loadBtn.addEventListener('click', loadDispatchData);
 
-  /* 날짜 변경 → 해당 날짜 DB 데이터 로드 */
-  const datePicker = document.getElementById('datePicker');
-  if (datePicker) {
-    datePicker.addEventListener('change', () => {
-      loadDispatchForDate(datePicker.value);
+  /* ── 통합 버튼: 불러오기 → 자동주차 순서 실행 ── */
+  const autoBtn = document.getElementById('dispatchAutoBtn');
+  if (autoBtn) {
+    autoBtn.addEventListener('click', async () => {
+      if (autoBtn.disabled) return;
+      autoBtn.disabled = true;
+      autoBtn.classList.add('spinning');
+
+      try {
+        /* 1단계: 배차 불러오기 (내부적으로 loading UI 처리) */
+        await loadDispatchData();
+
+        /* 2단계: 불러오기 성공 시 자동주차 실행 */
+        if (dispatchState.loaded && APP.applyAutoParking) {
+          setTimeout(() => {
+            APP.applyAutoParking();
+          }, 250);
+        }
+      } finally {
+        autoBtn.disabled = false;
+        autoBtn.classList.remove('spinning');
+      }
     });
   }
 
-  /* 초기 날짜 데이터 로드 */
-  const initDate = datePicker?.value || getTodayStr();
+  /* ※ datePicker change 이벤트는 parking.js changeDate()가 APP.loadDispatchForDate를 호출하므로 여기서 등록하지 않음 */
+  const initDate = document.getElementById('datePicker')?.value || getTodayStr();
   loadDispatchForDate(initDate);
 }

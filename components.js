@@ -75,7 +75,7 @@ function tmplDispatch() {
       /* ── 오늘 행 (블루 배경) ── */
       .dispatch-row-today {
         background: linear-gradient(135deg, #EEF4FF 0%, #F8FAFF 100%);
-        padding: 10px 12px;
+        padding: 7px 10px;
         border-left: 3px solid #1D4ED8;
       }
       .dark-mode .dispatch-row-today {
@@ -83,9 +83,9 @@ function tmplDispatch() {
         border-left-color: #3B82F6;
       }
       .dispatch-row-today .dispatch-day-label {
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .05em;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: .04em;
         color: #1D4ED8;
       }
       .dark-mode .dispatch-row-today .dispatch-day-label {
@@ -95,7 +95,7 @@ function tmplDispatch() {
       /* ── 내일 행 (그레이 배경) ── */
       .dispatch-row-tomorrow {
         background: linear-gradient(135deg, #F3F4F6 0%, #F9FAFB 100%);
-        padding: 10px 12px;
+        padding: 7px 10px;
         border-top: 1px solid var(--color-border-tertiary);
         border-left: 3px solid #9CA3AF;
       }
@@ -104,9 +104,9 @@ function tmplDispatch() {
         border-left-color: #6B7280;
       }
       .dispatch-row-tomorrow .dispatch-day-label {
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .05em;
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: .04em;
         color: #6B7280;
       }
       .dark-mode .dispatch-row-tomorrow .dispatch-day-label {
@@ -117,33 +117,41 @@ function tmplDispatch() {
       .dispatch-row-inner {
         display: flex;
         align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
+        gap: 7px;
+        margin-bottom: 5px;
       }
       .dispatch-date-label {
-        font-size: 11px;
-        color: var(--color-text-tertiary);
+        font-size: 13px;
+        font-weight: 700;
+        color: #374151;
+        letter-spacing: .02em;
+      }
+      .dark-mode .dispatch-date-label {
+        color: #D1D5DB;
       }
 
-      /* ── 칩 컨테이너 ── */
+      /* ── 칩 컨테이너: 7개 고정 그리드 ── */
       .dispatch-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px;
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 3px;
+        width: 100%;
       }
 
-      /* ── 칩 (총6회차 - 기본, 테두리 강조) ── */
+      /* ── 칩 (총6회차 - 기본) ── */
       .dc-chip {
         background: #FFFFFF;
         border: 1.5px solid #D1D5DB;
-        border-radius: 6px;
-        padding: 3px 7px;
-        font-size: 16px;
-        font-weight: 600;
+        border-radius: 5px;
+        padding: 1px 0;
+        font-size: 15px;
+        font-weight: 700;
         color: #374151;
-        line-height: 1.5;
+        line-height: 1.45;
         letter-spacing: .01em;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        text-align: center;
+        min-width: 0;
       }
       .dark-mode .dc-chip {
         background: #4B5563;
@@ -155,7 +163,7 @@ function tmplDispatch() {
       .dc-chip--early {
         background: #bbdefb;
         border: 1.5px solid #1E40AF;
-        color: #374151;
+        color: #1a3a6e;
       }
       .dark-mode .dc-chip--early {
         background: #2563EB;
@@ -279,22 +287,65 @@ function tmplDispatch() {
         40%         { transform: scale(1);  opacity:1; }
       }
 
-      /* ── 빈 힌트 (크고 잘 보이게) ── */
+      /* ── 통합 실행 버튼 (불러오기 + 자동주차) ── */
       .dispatch-empty-hint {
-        padding: 14px 16px;
-        font-size: 14px;
-        font-weight: 700;
-        color: #1D4ED8;
-        letter-spacing: .01em;
-        text-align: center;
-        line-height: 1.6;
+        padding: 10px 12px;
         background: #EFF6FF;
         border-bottom: 2px solid #BFDBFE;
       }
       .dark-mode .dispatch-empty-hint {
         background: #1E3A5F;
         border-bottom-color: #1D4ED8;
-        color: #93C5FD;
+      }
+      .dispatch-auto-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #7C3AED 100%);
+        color: #fff;
+        cursor: pointer;
+        font-family: var(--font, -apple-system, sans-serif);
+        text-align: left;
+        box-shadow: 0 3px 10px rgba(37,99,235,0.40);
+        transition: opacity 0.12s, transform 0.1s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .dispatch-auto-btn:active {
+        opacity: 0.85;
+        transform: scale(0.98);
+      }
+      .dispatch-auto-btn svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        stroke: #fff;
+      }
+      .dispatch-auto-btn.spinning svg {
+        animation: dc-spin .7s linear infinite;
+      }
+      .dispatch-auto-btn-text {
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -.01em;
+      }
+      .dispatch-auto-btn-sub {
+        display: block;
+        font-size: 11px;
+        font-weight: 500;
+        opacity: 0.75;
+        margin-top: 2px;
+      }
+      .dispatch-auto-btn .dispatch-auto-btn-text,
+      .dispatch-auto-btn .dispatch-auto-btn-sub {
+        display: block;
+      }
+      .dispatch-auto-btn > div {
+        flex: 1;
       }
       /* ── 주차 슬롯 탭 선택 시 매칭 칩 (빨간 테두리) ── */
       .dc-chip--matched {
@@ -325,9 +376,19 @@ function tmplDispatch() {
       </div>
     </div>
 
-    <!-- ── 빈 힌트 ── -->
+    <!-- ── 통합 버튼 (불러오기 → 자동주차 순서 실행) ── -->
     <div id="dispatchEmptyHint" class="dispatch-empty-hint">
-    🚌   ✚ 버튼 → <strong>불러오기</strong>를 눌러 오늘·내일 배차번호를 불러온후<br> ✚ 버튼 →  <strong>자동주차</strong>를 클릭하세요
+      <button id="dispatchAutoBtn" class="dispatch-auto-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        <div>
+          <span class="dispatch-auto-btn-text">배차 불러오기 &amp; 자동주차</span>
+          <span class="dispatch-auto-btn-sub">탭하면 순서대로 자동 실행됩니다</span>
+        </div>
+      </button>
     </div>
 
     <!-- ── 결과 ── -->
