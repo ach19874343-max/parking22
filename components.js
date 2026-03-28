@@ -288,6 +288,17 @@ function tmplDispatch() {
         opacity: 0.75;
         transition: transform 0.08s, opacity 0.08s;
       }
+      /* 흔들림 피드백 (iOS 포함 전 기기) */
+      @keyframes dc-chip-shake {
+        0%   { transform: scale(1.08) rotate(-4deg); }
+        25%  { transform: scale(1.08) rotate(4deg); }
+        50%  { transform: scale(1.08) rotate(-3deg); }
+        75%  { transform: scale(1.08) rotate(3deg); }
+        100% { transform: scale(1) rotate(0deg); }
+      }
+      .dc-chip--shake {
+        animation: dc-chip-shake 0.35s ease;
+      }
       .dc-chip--matched {
         outline: 2px solid #EF4444 !important;
         outline-offset: 1px;

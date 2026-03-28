@@ -193,8 +193,11 @@ function bindChipClickEvents() {
         longFired = false;
         _chipLongTimer[num] = setTimeout(() => {
           longFired = true;
-          /* 진동 피드백 (지원 기기) */
+          /* 진동 피드백 — Android */
           if (navigator.vibrate) navigator.vibrate(30);
+          /* 시각 피드백 — iOS 포함 전 기기 (칩 흔들림) */
+          chip.classList.add('dc-chip--shake');
+          setTimeout(() => chip.classList.remove('dc-chip--shake'), 400);
           _toggleExcludeAbsent(num);
         }, LONG_PRESS_MS);
       };
