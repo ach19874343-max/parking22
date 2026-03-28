@@ -222,8 +222,8 @@ function bindChipClickEvents() {
       };
 
       /* 터치 이벤트 (모바일) */
-      chip.addEventListener('touchstart', e => { e.preventDefault(); startPress(); }, { passive: false });
-      chip.addEventListener('touchend',   e => { e.preventDefault(); endPress();   }, { passive: false });
+      chip.addEventListener('touchstart', e => { startPress(); }, { passive: true });
+      chip.addEventListener('touchend',   e => { e.preventDefault(); endPress(); }, { passive: false });
       chip.addEventListener('touchmove',  cancelPress, { passive: true });
 
       /* 마우스 이벤트 (PC) */

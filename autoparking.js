@@ -125,19 +125,25 @@ function getExitBlockingInfo(values,active,tmrRank){
    · 3R 사용 → 반드시 2R에도 휴차 있어야 함
    · 6R 사용 → 반드시 7R에도 휴차 있어야 함
    ══════════════════════════════════════════════════════════════ */
-function buildRestState(sorted, rowPlan, RC){
-  // rowPlan: [{r:rowIdx, slots:[col,...]}]  — 실제 칸 목록
+function buildRestState(sorted, rowPlan, RC, tmrRank){
   const values={}, active={};
   for(let i=0;i<RC*3;i++){values[i]='';active[i]=false;}
   let vi=0;
   for(const{r,slots}of rowPlan){
-    for(const col of slots){
-      if(vi>=sorted.length) break;
-      const si=r*3+col;
-      values[si]=sorted[vi++]; active[si]=true;
+    const rowVehicles=[];
+    for(let s=0;s<slots.length;s++){
+      if(vi+s>=sorted.length)break;
+      rowVehicles.push(sorted[vi+s]);
+    }
+    vi+=rowVehicles.length;
+    // 행 내에서 빠른 차(rank 낮음)를 1번칸(안쪽)에 → 출차 시 막힘 없음
+    rowVehicles.sort((a,b)=>(tmrRank[a]??9999)-(tmrRank[b]??9999));
+    for(let s=0;s<slots.length;s++){
+      if(s>=rowVehicles.length)break;
+      const si=r*3+slots[s];
+      values[si]=rowVehicles[s]; active[si]=true;
     }
   }
-  // 남은 휴차 강제 배치 (overflow)
   for(let si=0;si<RC*3&&vi<sorted.length;si++){
     if(!values[si]){values[si]=sorted[vi++];active[si]=true;}
   }
@@ -158,7 +164,8 @@ function generateRestCandidates(restVehicles, tmrRank, RC){
     for(let i=0;i<RC*3;i++){values[i]='';active[i]=false;}
     return [{values,active}];
   }
-  const sorted=[...restVehicles].sort((a,b)=>(tmrRank[a]??9999)-(tmrRank[b]??9999));
+  // 내림차순: 내일 휴차(9999)를 앞(2R), 내일 운행차(rank 낮음)를 뒤(7R)
+  const sorted=[...restVehicles].sort((a,b)=>(tmrRank[b]??9999)-(tmrRank[a]??9999));
   const cnt=sorted.length;
 
   // 인덱스: 0=2R(r0), 1=7R(r5), 2=3R(r1), 3=6R(r4)
@@ -176,7 +183,7 @@ function generateRestCandidates(restVehicles, tmrRank, RC){
   function enumerate(rowIdx, remaining, plan, usedRows, n2R, n7R){
     if(remaining===0 || rowIdx===numRows){
       if(remaining>0) return;
-      const state=buildRestState(sorted, plan, RC);
+      const state=buildRestState(sorted, plan, RC, tmrRank);
       const key=JSON.stringify(state.values);
       if(!candidates.has(key)) candidates.set(key,state);
       return;
