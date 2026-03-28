@@ -7,7 +7,7 @@
 :root {
   --font:        'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --header-h:    88px;
-  --nav-h:       60px;
+  --nav-h:       56px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
   /* Colors */
@@ -44,34 +44,8 @@
   --shadow-lg:   0 10px 30px rgba(0,0,0,0.14);
 }
 
-/* ── 다크모드 ─────────────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg:          #0F1117;
-    --surface:     #1C1E26;
-    --border:      rgba(255,255,255,0.08);
-    --text-pri:    #F1F3F9;
-    --text-sec:    #9CA3AF;
-    --text-hint:   #6B7280;
-    --run-bg:      #052E1C;
-    --run-txt:     #6EE7B7;
-    --run-border:  #065F46;
-    --rest-bg:     #2D2000;
-    --rest-txt:    #FDE68A;
-    --rest-border: #92400E;
-    --empty-bg:    #1C1E26;
-    --empty-border:#374151;
-    --blue:        #60A5FA;
-    --blue-light:  #1E3A5F;
-    --red:         #F87171;
-    --red-light:   #3B1515;
-    --label-bg:    #374151;
-    --label-txt:   #F9FAFB;
-    --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
-    --shadow-md:   0 4px 12px rgba(0,0,0,0.5);
-    --shadow-lg:   0 10px 30px rgba(0,0,0,0.6);
-  }
-}
+/* ── 다크모드: JS 토글(body.dark-mode) 방식 사용 ── */
+/* @media prefers-color-scheme:dark 변수는 body.dark-mode로 통합 관리 */
 
 /* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after {
@@ -143,10 +117,7 @@ input, textarea, select {
   font-family: var(--font);
 }
 
-/* 게스트 모드: 저장시간 표시, 취소/다시 숨김 */
-
-
-/* 관리자: 저장시간 숨김, 취소/다시 표시 */
+/* 저장시간 숨김, 수동/오토 버튼 표시 */
 body .last-saved-wrap {
   display: none !important;
 }
@@ -211,13 +182,13 @@ body.dark-mode .bottom-nav {
   border-top-color: rgba(255,255,255,0.06);
 }
 body.dark-mode .slot-card.run {
-  background: #1E2D1E;
-  border-color: rgba(255,255,255,0.06);
-  color: #F2F2F7;
+  background: #1E3A5F;
+  border-color: rgba(59,130,246,0.25);
+  color: #BFDBFE;
 }
 body.dark-mode .slot-card.rest {
-  background: #2D2000;
-  border-color: #4A3800;
+  background: #2D1B00;
+  border-color: rgba(245,158,11,0.3);
   color: #FDE68A;
 }
 body.dark-mode .slot-card.empty {
@@ -410,25 +381,6 @@ body.dark-mode textarea {
   font-size: 14px; cursor: pointer;
 }
 .pwa-dismiss-btn:active { background: rgba(255,255,255,0.18); }
-/* iOS 안내 배너 */
-.pwa-ios-banner {
-  position: fixed;
-  bottom: calc(var(--safe-b) + 90px);
-  left: 12px; right: 12px;
-  background: #1C1C1E;
-  color: #fff;
-  border-radius: 16px;
-  padding: 14px 16px;
-  z-index: 300;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-.pwa-ios-banner p { font-size: 13px; line-height: 1.6; }
-.pwa-ios-banner strong { color: #60A5FA; }
-.pwa-ios-close {
-  position: absolute; top: 10px; right: 12px;
-  background: none; border: none; color: rgba(255,255,255,0.5);
-  font-size: 18px; cursor: pointer;
-}
 @keyframes slideUp {
   from { transform: translateY(20px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
@@ -578,38 +530,55 @@ body.dark-mode .date-nav-btn {
 }
 
 .header-action-btn {
-  height: 38px;
-  padding: 0 11px;
-  border-radius: 19px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-sec);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   font-family: var(--font);
 }
-.header-action-btn .btn-arrow {
-  font-size: 16px;
-  line-height: 1;
-}
 .header-action-btn .btn-label {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--text-hint);
   line-height: 1;
 }
-.header-action-btn:hover  { background: var(--blue-light); color: var(--blue); }
-.header-action-btn:active { transform: scale(0.9); }
+/* 수동 버튼 — 활성 시 파란색 */
+#manualLoadBtn:not(:disabled) {
+  border-color: rgba(37,99,235,0.3);
+  color: #2563EB;
+  background: #EFF6FF;
+}
+#manualLoadBtn:not(:disabled):active { transform: scale(0.93); }
+/* 오토 버튼 — 활성 시 초록색 */
+#autoLoadBtn:not(:disabled) {
+  border-color: rgba(5,150,105,0.3);
+  color: #059669;
+  background: #ECFDF5;
+}
+#autoLoadBtn:not(:disabled):active { transform: scale(0.93); }
+/* 비활성 */
 .header-action-btn:disabled {
-  opacity: 0.28;
+  opacity: 0.3;
   cursor: default;
   pointer-events: none;
+}
+/* 다크모드 */
+body.dark-mode #manualLoadBtn:not(:disabled) {
+  background: rgba(37,99,235,0.15);
+  color: #60A5FA;
+  border-color: rgba(59,130,246,0.3);
+}
+body.dark-mode #autoLoadBtn:not(:disabled) {
+  background: rgba(5,150,105,0.15);
+  color: #34D399;
+  border-color: rgba(52,211,153,0.3);
 }
 
 .team-badge {
@@ -1020,6 +989,39 @@ body.dark-mode .date-nav-btn {
   position: relative;
 }
 
+/* ── 빈 날짜 안내 ── */
+.empty-grid-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: none;
+  z-index: 2;
+}
+.empty-grid-icon {
+  font-size: 36px;
+  opacity: 0.4;
+}
+.empty-grid-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-sec);
+  opacity: 0.7;
+}
+.empty-grid-desc {
+  font-size: 13px;
+  color: var(--text-hint);
+  text-align: center;
+  line-height: 1.6;
+}
+.empty-grid-desc b {
+  color: var(--blue);
+  font-weight: 700;
+}
+
 .parking-grid {
   height: 100%;
   display: flex;
@@ -1044,26 +1046,26 @@ body.dark-mode .date-nav-btn {
   justify-content: center;
   border-radius: 7px;
   font-size: 17px;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.5px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: none;
   color: #fff;
   transition: transform 0.15s;
 }
 
-.line-label[data-row="0"] { background: #6366F1; }
-.line-label[data-row="1"] { background: #3B82F6; }
-.line-label[data-row="2"] { background: #06B6D4; }
-.line-label[data-row="3"] { background: #10B981; }
-.line-label[data-row="4"] { background: #F59E0B; }
-.line-label[data-row="5"] { background: #EF4444; }
-.line-label[data-row="6"] { background: #8B5CF6; }
-.line-label[data-row="7"] { background: #EC4899; }
-.line-label[data-row="8"] { background: #14B8A6; }
-.line-label[data-row="9"] { background: #F97316; }
-.line-label[data-row="10"]{ background: #6366F1; }
-.line-label[data-row="11"]{ background: #3B82F6; }
-.line-label[data-row="12"]{ background: #06B6D4; }
+.line-label[data-row="0"] { background: #9CA3AF; }
+.line-label[data-row="1"] { background: #9CA3AF; }
+.line-label[data-row="2"] { background: #9CA3AF; }
+.line-label[data-row="3"] { background: #9CA3AF; }
+.line-label[data-row="4"] { background: #9CA3AF; }
+.line-label[data-row="5"] { background: #9CA3AF; }
+.line-label[data-row="6"] { background: #9CA3AF; }
+.line-label[data-row="7"] { background: #9CA3AF; }
+.line-label[data-row="8"] { background: #9CA3AF; }
+.line-label[data-row="9"] { background: #9CA3AF; }
+.line-label[data-row="10"]{ background: #9CA3AF; }
+.line-label[data-row="11"]{ background: #9CA3AF; }
+.line-label[data-row="12"]{ background: #9CA3AF; }
 
 /* 슬롯 래퍼 */
 .slots-wrap {
@@ -1096,25 +1098,25 @@ body.dark-mode .date-nav-btn {
 
 /* 상태별 스타일 */
 .slot-card.run {
-  background: #ffffff;
-  color: #1C1C1E;
-  border: 0.5px solid rgba(0,0,0,0.06);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.03);
+  background: #EFF6FF;
+  color: #1E3A5F;
+  border: 1px solid #BFDBFE;
+  box-shadow: 0 1px 4px rgba(37,99,235,0.08);
 }
 .slot-card.run::before {
   content: '';
   position: absolute;
   left: 0; top: 18%; height: 64%;
   width: 3px;
-  background: #34D399;
+  background: #3B82F6;
   border-radius: 0 2px 2px 0;
 }
 
 .slot-card.rest {
-  background: #FEF9C3;
-  color: #713F12;
-  border: 1px solid #EAB308;
-  box-shadow: 0 2px 8px rgba(234,179,8,0.25);
+  background: #FFFBEB;
+  color: #78350F;
+  border: 1px solid #FDE68A;
+  box-shadow: 0 1px 4px rgba(245,158,11,0.15);
   font-weight: 900;
 }
 .slot-card.rest::before {
@@ -1122,13 +1124,13 @@ body.dark-mode .date-nav-btn {
   position: absolute;
   left: 0; top: 18%; height: 64%;
   width: 3px;
-  background: #CA8A04;
+  background: #F59E0B;
   border-radius: 0 2px 2px 0;
 }
 
 .slot-card.empty {
-  background: rgba(0,0,0,0.025);
-  border: 1.5px dashed rgba(0,0,0,0.09);
+  background: rgba(0,0,0,0.05);
+  border: 1.5px dashed rgba(0,0,0,0.12);
   pointer-events: none;
   cursor: default;
 }
@@ -1277,166 +1279,126 @@ body.dark-mode .slot-card.tap-selected {
 }
 
 /* ── FAB 플로팅 액션 버튼 ────────────────────────────────── */
-.fab-container {
+/* ══════════════════════════════════════════════
+   하단 탭바 (Bottom Navigation)
+   Auto Park / Sync 배차 / 설정  3개
+   ══════════════════════════════════════════════ */
+.bottom-nav {
   position: fixed;
-  bottom: calc(var(--safe-b) + 20px);
-  right: 20px;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+  height: calc(56px + var(--safe-b));
+  padding-bottom: var(--safe-b);
+  background: rgba(255,255,255,0.94);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid rgba(0,0,0,0.08);
+  display: flex;
+  align-items: stretch;
   z-index: 300;
-  display: flex;
-  flex-direction: column-reverse; /* 메인버튼 아래, 아이템 위로 */
-  align-items: flex-end;
-  gap: 10px;
-  pointer-events: none; /* ★ 닫혔을 때 클릭 통과 */
+  box-shadow: 0 -1px 12px rgba(0,0,0,0.07);
 }
-/* 메인 버튼만 항상 클릭 가능 */
-.fab-container .fab-main {
-  pointer-events: auto;
-}
-/* 열렸을 때 전체 활성화 */
-.fab-container.fab-open {
-  pointer-events: auto;
+body.dark-mode .bottom-nav {
+  background: rgba(28,28,30,0.95);
+  border-top-color: rgba(255,255,255,0.07);
+  box-shadow: 0 -1px 12px rgba(0,0,0,0.35);
 }
 
-/* ── FAB 메인 버튼 ── */
-.fab-main {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  border: none;
-  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-  color: #fff;
-  box-shadow: 0 4px 16px rgba(29,78,216,0.38), 0 2px 6px rgba(0,0,0,0.18);
-  cursor: pointer;
+/* 각 탭 버튼 */
+.bnav-btn {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.18s;
-}
-.fab-main:active { transform: scale(0.92); }
-.fab-main svg {
-  width: 22px; height: 22px;
-  stroke: currentColor; fill: none;
-  stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
-  transition: opacity 0.15s, transform 0.22s;
-}
-.dark-mode .fab-main {
-  box-shadow: 0 4px 16px rgba(59,130,246,0.35), 0 2px 6px rgba(0,0,0,0.5);
-}
-/* 열렸을 때 메인버튼 45도 회전 */
-.fab-container.fab-open .fab-main {
-  transform: rotate(45deg);
-}
-
-/* + / X 아이콘 전환 */
-.fab-icon-plus { display: block; }
-.fab-icon-x    { display: none;  }
-.fab-container.fab-open .fab-icon-plus { display: none;  }
-.fab-container.fab-open .fab-icon-x   { display: block; }
-
-/* ── FAB 서브 아이템 (닫혔을 때 숨김, 열렸을 때 슬라이드업) ── */
-.fab-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  opacity: 0;
-  transform: scale(0.82) translateY(12px);
-  pointer-events: none;
-  transition: opacity 0.18s ease, transform 0.18s ease;
-}
-.fab-container.fab-open .fab-item {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  pointer-events: auto;
-}
-
-/* ── FAB 배경 오버레이 (열렸을 때 탭하면 닫힘) ── */
-.fab-backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 299;
-  background: rgba(0,0,0,0.18);
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 4px 4px;
+  color: #8E8E93;
+  transition: color 0.15s, transform 0.1s;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
 }
-.fab-backdrop.fab-open {
-  display: block;
+.bnav-btn:active {
+  transform: scale(0.92);
+  color: #1D4ED8;
 }
-
-.fab-item-label {
-  background: rgba(0,0,0,0.82);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  padding: 4px 9px;
-  border-radius: 7px;
-  white-space: nowrap;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.28);
-  pointer-events: none;
-  user-select: none;
-  max-width: 68px;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
+body.dark-mode .bnav-btn {
+  color: #636366;
 }
-.dark-mode .fab-item-label {
-  background: rgba(20,20,30,0.92);
+body.dark-mode .bnav-btn:active {
+  color: #60A5FA;
 }
 
-/* 서브 액션 버튼 (원형) */
-.fab-action-btn {
+/* Auto Park 버튼 — 중앙 강조 */
+.bnav-btn--autopark {
+  color: #1D4ED8;
+}
+.bnav-btn--autopark .bnav-icon {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  border-radius: 14px;
   width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: #fff;
-  color: #374151;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.18);
-  cursor: pointer;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 3px 10px rgba(29,78,216,0.35);
+  transition: box-shadow 0.15s, transform 0.1s;
 }
-.fab-action-btn:active { transform: scale(0.91); }
-.fab-action-btn svg {
-  width: 19px; height: 19px;
-  stroke: currentColor; fill: none;
-  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+.bnav-btn--autopark .bnav-icon svg {
+  stroke: #fff;
 }
-.dark-mode .fab-action-btn {
-  background: #1C1C1E;
-  color: #F2F2F7;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+.bnav-btn--autopark:active .bnav-icon {
+  transform: scale(0.93);
+  box-shadow: 0 1px 5px rgba(29,78,216,0.25);
 }
-
-/* 불러오기 버튼 — 파란색 강조 */
-.fab-action-btn--dispatch {
-  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
-  color: #fff;
+body.dark-mode .bnav-btn--autopark {
+  color: #60A5FA;
 }
-.fab-action-btn--dispatch.spinning svg {
-  animation: dc-spin .7s linear infinite;
-}
-@keyframes dc-spin { to { transform: rotate(360deg); } }
-
-/* 데이터정리 버튼 — 붉은색 강조 */
-.fab-action-btn--danger {
-  background: linear-gradient(135deg, #F87171 0%, #DC2626 100%);
-  color: #fff;
-}
-.dark-mode .fab-action-btn--danger {
-  background: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+body.dark-mode .bnav-btn--autopark .bnav-icon {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  box-shadow: 0 3px 10px rgba(59,130,246,0.35);
 }
 
-/* 게스트 전용 로그인 아이템 — 항상 표시 제거: 열렸을 때만 보임 */
-/* .fab-item--always 는 더 이상 항상 표시되지 않음 (일반 fab-item 동작) */
+/* spinning 상태 (불러오는 중) */
+.bnav-btn--autopark.spinning .bnav-icon svg,
+.bnav-btn.spinning .bnav-icon svg {
+  animation: bnav-spin 0.7s linear infinite;
+}
+@keyframes bnav-spin { to { transform: rotate(360deg); } }
+
+.bnav-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bnav-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.15s;
+}
+
+.bnav-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  font-family: var(--font);
+}
 
 /* 관리자 전용 — 게스트 숨김 */
-
 .admin-ui { display: flex; }
 
 /* ── Bulletin Section ─────────────────────────────────── */
@@ -2797,21 +2759,9 @@ body.dark-mode .settings-input:focus { border-color: #F2F2F7; }
     color: var(--text-sec);
     border-color: rgba(255,255,255,0.1);
   }
-  .slot-card.run::before  { background: #34D399; }
-  .slot-card.rest::before { background: #FBBF24; }
-  .line-label[data-row="0"] { background: #4F46E5; }
-  .line-label[data-row="1"] { background: #2563EB; }
-  .line-label[data-row="2"] { background: #0891B2; }
-  .line-label[data-row="3"] { background: #059669; }
-  .line-label[data-row="4"] { background: #D97706; }
-  .line-label[data-row="5"] { background: #DC2626; }
-  .line-label[data-row="6"] { background: #7C3AED; }
-  .line-label[data-row="7"] { background: #DB2777; }
-  .line-label[data-row="8"] { background: #0D9488; }
-  .line-label[data-row="9"] { background: #EA580C; }
-  .line-label[data-row="10"]{ background: #4F46E5; }
-  .line-label[data-row="11"]{ background: #2563EB; }
-  .line-label[data-row="12"]{ background: #0891B2; }
+  .slot-card.run::before  { background: #3B82F6; }
+  .slot-card.rest::before { background: #F59E0B; }
+  .line-label { background: #4B5563; }
   .bulletin-post { border-color: rgba(255,255,255,0.06); }
   .header-action-btn { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
 }
@@ -2947,7 +2897,6 @@ body.dark-mode .slot-card.rest .exit-rank-badge {
    모바일 iOS / Android 최적화
    ══════════════════════════════════════════════ */
 
-/* ── 터치 피드백: 모든 버튼·카드 ── */
 * {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -2957,24 +2906,26 @@ input, textarea, select {
   user-select: text;
 }
 
-/* ── iOS safe-area 대응 (노치·다이나믹 아일랜드·홈바) ── */
-/* 헤더: safe-area-inset-top 이 있을 때만 padding-top 에 추가
-   (기존 padding: 10px 14px 8px 유지하면서 top만 보정) */
-@supports (padding-top: env(safe-area-inset-top)) {
-  .app-header {
-    padding-top: calc(10px + env(safe-area-inset-top, 0px));
-    /* height 도 safe-area 만큼 늘어나야 내용이 밀리지 않음 */
-    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
-  }
+/* 헤더 GPU 레이어 고정 */
+.app-header {
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
-.fab-container {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-.parking-footer {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4px);
+/* 탭바: 센터링(translateX -50%) 유지하면서 GPU 가속 */
+.bottom-nav {
+  will-change: transform;
+  transform: translateX(-50%) translateZ(0);
+  -webkit-transform: translateX(-50%) translateZ(0);
 }
 
-/* ── 스크롤 성능 ── */
+/* 슬롯 카드 터치 반응 */
+.slot-card {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* 스크롤 성능 */
 .parking-main,
 .settings-scroll-body,
 #simPanel {
@@ -2982,33 +2933,15 @@ input, textarea, select {
   overscroll-behavior: contain;
 }
 
-/* ── 텍스트 가독성 (iOS 자동 폰트 크기 조정 방지) ── */
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+/* iOS safe-area */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app-header {
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  }
 }
 
-/* ── 입력 필드 iOS 스타일 초기화 ── */
-input[type="text"],
-input[type="date"],
-input[type="number"] {
-  -webkit-appearance: none;
-  appearance: none;
-  border-radius: 8px;
-}
-
-/* ── 버튼 active 피드백 (터치 반응) ── */
-.fab-main:active,
-.fab-action-btn:active {
-  transform: scale(0.94);
-  transition: transform 0.08s ease;
-}
-.slot-card:active:not(.empty) {
-  transform: scale(0.96);
-  transition: transform 0.08s ease;
-}
-
-/* ── PWA 모드 (홈 화면 앱) 상태바 공간 ── */
+/* PWA standalone 모드 */
 @media (display-mode: standalone) {
   @supports (padding-top: env(safe-area-inset-top)) {
     .app-header {
@@ -3018,11 +2951,28 @@ input[type="number"] {
   }
 }
 
-/* ── Android Chrome 주소창 숨길 때 높이 재계산 ── */
+/* Android Chrome 동적 높이 */
 @supports (height: 100dvh) {
-  .app-wrapper {
-    min-height: 100dvh;
-  }
+  .app-wrapper { min-height: 100dvh; }
+}
+
+/* 버튼 터치 피드백 */
+.bnav-btn:active {
+  transform: scale(0.94);
+  transition: transform 0.08s ease;
+}
+.slot-card:active:not(.empty) {
+  transform: scale(0.96);
+  transition: transform 0.08s ease;
+}
+
+/* 입력 필드 iOS 스타일 초기화 */
+input[type="text"],
+input[type="date"],
+input[type="number"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 8px;
 }
 
 /* ── 인앱브라우저 설치 안내 배너 ── */
@@ -3062,4 +3012,51 @@ input[type="number"] {
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   시뮬레이션 카드 하이라이트
+   ══════════════════════════════════════════════════════════════ */
+
+/* 출차 완료 / 입차 대기 — 회색 */
+.slot-card.sim-done,
+.slot-card.sim-waiting {
+  background: #9CA3AF !important;
+  color: rgba(255,255,255,0.5) !important;
+  opacity: 0.55;
+  transition: background 0.25s, opacity 0.25s;
+}
+
+/* 현재 출차 대상 — 녹색 */
+.slot-card.sim-target {
+  background: #059669 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px #34D399;
+  opacity: 1;
+  transition: background 0.2s;
+}
+
+/* 현재 입차 대상 — 보라 테두리 */
+.slot-card.sim-entry {
+  background: #6D28D9 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px #A78BFA;
+  opacity: 1;
+  transition: background 0.2s;
+}
+
+/* 막힘 원인 칸 — 빨간 */
+.slot-card.sim-blocked {
+  background: #DC2626 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px #F87171;
+  opacity: 1;
+  transition: background 0.2s;
+}
+
+/* 다크모드 동일 */
+body.dark-mode .slot-card.sim-done,
+body.dark-mode .slot-card.sim-waiting {
+  background: #4B5563 !important;
+  color: rgba(255,255,255,0.4) !important;
 }

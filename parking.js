@@ -255,6 +255,17 @@ function buildDefaultState() {
   return { values, active };
 }
 
+/* ── 빈 상태 생성 (저장 데이터 없는 날짜용) ── */
+function buildEmptyState() {
+  const values = {}, active = {};
+  const SLOTS = APP.rowCount * 3;
+  for (let i = 0; i < SLOTS; i++) {
+    values[i] = '';
+    active[i] = false;
+  }
+  return { values, active };
+}
+
 /* ── 슬롯에 없는 차량을 빈 슬롯(하단부터)에 채워넣기 ── */
 function syncMissingVehiclesToSlots(values, active) {
   /* 1. 현재 슬롯에 있는 차량 수집 */
@@ -378,59 +389,106 @@ function highlightDispatchChip(chipEl, num) {
     }
   }
 }
-/* ── Undo / Redo 스택 (날짜별, 최대 20단계) ── */
-const UNDO_LIMIT = 20;
-const undoStacks = {};   /* { 'YYYY-MM-DD': [state, ...] } */
-const redoStacks = {};   /* { 'YYYY-MM-DD': [state, ...] } */
+/* ── 수동/오토 그리드 메모리 캐시 (날짜별) ── */
+const manualGridCache = {};  /* { 'YYYY-MM-DD': {values, active} } */
+const autoGridCache   = {};  /* { 'YYYY-MM-DD': {values, active} } */
 
 function currentDate() {
   return document.getElementById('datePicker')?.value || '';
 }
 
-function syncHistoryBtns(date) {
-  const d    = date || currentDate();
-  const undo = document.getElementById('undoBtn');
-  const redo = document.getElementById('redoBtn');
-  if (undo) undo.disabled = !(undoStacks[d]?.length);
-  if (redo) redo.disabled = !(redoStacks[d]?.length);
+/* ── 수동/오토 버튼 활성화 상태 동기화 ── */
+function syncGridBtns(date) {
+  const d = date || currentDate();
+  const manBtn = document.getElementById('manualLoadBtn');
+  const autoBtn = document.getElementById('autoLoadBtn');
+  if (manBtn) manBtn.disabled = !manualGridCache[d];
+  if (autoBtn) autoBtn.disabled = !autoGridCache[d];
 }
 
-function pushUndo() {
+/* ── 수동 그리드 저장 (번호 이동 완료 시 호출) ── */
+function saveManualGrid() {
   const date = currentDate();
   if (!date) return;
-  if (!undoStacks[date]) undoStacks[date] = [];
-  if (!redoStacks[date]) redoStacks[date] = [];
-  undoStacks[date].push(JSON.stringify(APP.parkingState));
-  if (undoStacks[date].length > UNDO_LIMIT) undoStacks[date].shift();
-  /* 새 액션이 생기면 redo 스택 초기화 */
-  redoStacks[date] = [];
-  syncHistoryBtns(date);
+  manualGridCache[date] = {
+    values: { ...APP.parkingState.values },
+    active: { ...APP.parkingState.active },
+  };
+  syncGridBtns(date);
+  /* Firebase에도 manualGrid 필드 업데이트 */
+  APP.set(APP.ref(APP.db, 'parking/' + date + '/manualGrid'), {
+    values: APP.parkingState.values,
+    active: APP.parkingState.active,
+    savedAt: new Date().toISOString(),
+  }).catch(() => {});
 }
 
-function undoAction() {
-  const date = currentDate();
-  if (!date || !undoStacks[date]?.length) return;
-  if (!redoStacks[date]) redoStacks[date] = [];
-  /* 현재 상태를 redo 스택에 저장 */
-  redoStacks[date].push(JSON.stringify(APP.parkingState));
-  const prev = JSON.parse(undoStacks[date].pop());
-  APP.parkingState = prev;
-  renderCards();
-  saveData();
-  syncHistoryBtns(date);
+/* ── 오토 그리드 저장 (Auto Park 적용 시 호출) ── */
+function saveAutoGrid(date, values, active) {
+  const d = date || currentDate();
+  if (!d) return;
+  autoGridCache[d] = { values: { ...values }, active: { ...active } };
+  syncGridBtns(d);
 }
 
-function redoAction() {
-  const date = currentDate();
-  if (!date || !redoStacks[date]?.length) return;
-  if (!undoStacks[date]) undoStacks[date] = [];
-  /* 현재 상태를 undo 스택에 저장 */
-  undoStacks[date].push(JSON.stringify(APP.parkingState));
-  const next = JSON.parse(redoStacks[date].pop());
-  APP.parkingState = next;
-  renderCards();
-  saveData();
-  syncHistoryBtns(date);
+/* ── 확인 팝업 ── */
+function showConfirm(message, onConfirm) {
+  /* 기존 팝업 있으면 제거 */
+  document.getElementById('gridConfirmOverlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gridConfirmOverlay';
+  overlay.style.cssText = [
+    'position:fixed','inset:0','z-index:9000',
+    'background:rgba(0,0,0,0.5)',
+    'display:flex','align-items:center','justify-content:center',
+    'padding:20px',
+  ].join(';');
+
+  overlay.innerHTML = `
+    <div style="
+      background:var(--surface,#fff);
+      border-radius:18px;
+      padding:24px 20px 20px;
+      width:100%;max-width:300px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+      font-family:var(--font,-apple-system,sans-serif);
+    ">
+      <div style="font-size:15px;font-weight:700;color:var(--text-pri,#1A1F36);text-align:center;line-height:1.5;margin-bottom:20px;">
+        ${message}
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="gridConfirmCancel" style="
+          flex:1;height:44px;border-radius:12px;
+          border:1px solid var(--border,rgba(0,0,0,0.1));
+          background:var(--bg,#F2F2F7);
+          font-size:15px;font-weight:600;
+          color:var(--text-sec,#6B7280);cursor:pointer;
+          font-family:inherit;
+        ">취소</button>
+        <button id="gridConfirmOk" style="
+          flex:1;height:44px;border-radius:12px;
+          border:none;
+          background:linear-gradient(135deg,#2563EB,#1D4ED8);
+          font-size:15px;font-weight:700;
+          color:#fff;cursor:pointer;
+          font-family:inherit;
+        ">적용</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('gridConfirmOk').addEventListener('click', () => {
+    overlay.remove();
+    onConfirm();
+  });
+  document.getElementById('gridConfirmCancel').addEventListener('click', () => {
+    overlay.remove();
+  });
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.remove();
+  });
 }
 
 /* 드래그 고스트 요소 */
@@ -439,7 +497,6 @@ const ghost = document.getElementById('dragGhost');
 /* ── 슬롯 스왑 ──────────────────────────────────────────── */
 function swapSlots(srcIdx, dstIdx) {
   if (srcIdx === dstIdx) return;
-  pushUndo();
   const sv = APP.parkingState.values[srcIdx];
   const dv = APP.parkingState.values[dstIdx];
   const sa = APP.parkingState.active[srcIdx];
@@ -452,12 +509,12 @@ function swapSlots(srcIdx, dstIdx) {
 
   renderCards();
   saveData();
+  saveManualGrid();  /* 번호 이동 완료 → 수동 그리드 자동 저장 */
 }
 
 /* ── 슬롯 상태 토글 (운행 ↔ 휴차) ─────────────────────── */
 function toggleCardState(slotIdx) {
-  if (!APP.parkingState.values[slotIdx]) return; // 빈 슬롯 무시
-  pushUndo();
+  if (!APP.parkingState.values[slotIdx]) return;
   APP.parkingState.active[slotIdx] = !APP.parkingState.active[slotIdx];
   renderCards();
   saveData();
@@ -659,6 +716,14 @@ function updateExitRankBadges() {
 }
 
 function renderCards() {
+  /* 빈 그리드 안내 표시/숨김 */
+  const hint = document.getElementById('emptyGridHint');
+  if (hint && APP.parkingState) {
+    const RC = APP.rowCount || 6;
+    const hasAny = Object.values(APP.parkingState.values).some(v => v);
+    hint.style.display = hasAny ? 'none' : 'flex';
+  }
+
   for (let rowIdx = 0; rowIdx < APP.rowCount; rowIdx++) {
     const wrap = document.getElementById(`row-${rowIdx}`);
     if (!wrap) continue;
@@ -860,11 +925,11 @@ function saveData() {
   const date = document.getElementById('datePicker').value;
   if (!date) return;
   const now = new Date().toISOString();
-  APP.set(APP.ref(APP.db, 'parking/' + date), {
-    values: APP.parkingState.values,
-    active: APP.parkingState.active,
-    lastSaved: now
-  }).then(() => {
+  const base = 'parking/' + date;
+  /* 각 필드를 독립 경로로 저장 → manualGrid/autoGrid/excludedAbsent 등 절대 덮어쓰지 않음 */
+  APP.set(APP.ref(APP.db, base + '/values'),    APP.parkingState.values).catch(() => {});
+  APP.set(APP.ref(APP.db, base + '/active'),    APP.parkingState.active).catch(() => {});
+  APP.set(APP.ref(APP.db, base + '/lastSaved'), now).then(() => {
     if (!APP.savedDates) APP.savedDates = new Set();
     APP.savedDates.add(date);
     updateParkingOverlay(date);
@@ -896,32 +961,80 @@ async function loadData(date) {
   const data = snap.val();
 
   if (data && data.values) {
-    /* Firebase에 데이터 있음 → savedDates 기록 */
     if (!APP.savedDates) APP.savedDates = new Set();
     APP.savedDates.add(date);
     const values = data.values || {};
     const active = data.active || {};
-    /* 추가 행 슬롯 빈칸 보장 */
     const totalSlots = (APP.rowCount || 6) * 3;
     for (let i = 0; i < totalSlots; i++) {
       if (values[i] === undefined) values[i] = '';
       if (active[i] === undefined) active[i] = false;
     }
-    /* busList에 있지만 슬롯에 없는 차량 → 하단 빈 슬롯에 채우기 */
     syncMissingVehiclesToSlots(values, active);
+
+    /* 수동 그리드 캐시 로드 */
+    if (data.manualGrid?.values) {
+      manualGridCache[date] = {
+        values: data.manualGrid.values,
+        active: data.manualGrid.active || {},
+      };
+    } else {
+      delete manualGridCache[date];
+    }
+    /* 오토 그리드 캐시 로드 */
+    if (data.autoGrid?.values) {
+      autoGridCache[date] = {
+        values: data.autoGrid.values,
+        active: data.autoGrid.active || {},
+      };
+    } else {
+      delete autoGridCache[date];
+    }
+
+    /* 제외 목록 — data에 포함된 필드 바로 사용 (추가 쿼리 없음) */
+    if (!dispatchState.excludedAbsent) dispatchState.excludedAbsent = {};
+    if (data.excludedAbsent) {
+      const arr  = data.excludedAbsent;
+      const list = Array.isArray(arr) ? arr : Object.values(arr || {});
+      dispatchState.excludedAbsent[date] = new Set(list);
+    } else {
+      dispatchState.excludedAbsent[date] = new Set();
+    }
+    /* 원위치 맵 */
+    if (!APP.excludedSlotMap) APP.excludedSlotMap = {};
+    APP.excludedSlotMap[date] = data.excludedSlotMap || {};
+
+    /* 제외 차량 values에서 제거 — renderCards 전에 처리 (깜빡임 방지) */
+    const exSet = dispatchState.excludedAbsent[date];
+    if (exSet.size > 0) {
+      for (let i = 0; i < totalSlots; i++) {
+        if (exSet.has(values[i])) {
+          values[i] = '';
+          active[i] = false;
+        }
+      }
+    }
+
     APP.parkingState = { values, active };
   } else {
-    /* 저장된 데이터 없으면 기본 상태 */
-    APP.parkingState = buildDefaultState();
+    APP.parkingState = buildEmptyState();
+    delete manualGridCache[date];
+    delete autoGridCache[date];
+    if (!dispatchState.excludedAbsent) dispatchState.excludedAbsent = {};
+    dispatchState.excludedAbsent[date] = new Set();
   }
 
-  /* 날짜 이동 시 해당 날짜 Undo/Redo 버튼 상태 동기화 */
-  syncHistoryBtns(date);
-  /* 오버레이 상태 업데이트 */
+  syncGridBtns(date);
   updateParkingOverlay(date);
-  /* 날짜별 마지막 저장 시간 표시 */
   updateLastSavedUI(data?.lastSaved || null);
-  renderCards();
+  renderCards();  /* 딱 한 번 */
+
+  if (typeof dispatchState !== 'undefined' && dispatchState.loaded && dispatchState.tomorrowNums?.length) {
+    if (typeof updateExitRankBadges === 'function') updateExitRankBadges();
+  }
+  if (typeof dispatchState !== 'undefined' && dispatchState.loaded) {
+    if (typeof renderDispatchSection === 'function') renderDispatchSection();
+  }
 }
 
 /* ── 주차 오버레이 표시/숨김 제어 ──────────────────────── */
@@ -1113,9 +1226,9 @@ async function initParking() {
   /* 행 목록 로드 */
   await loadRowsFromDB();
 
-  /* 초기 상태 */
+  /* 초기 상태 — 빈 그리드 (loadData에서 실제 데이터 로드) */
   if (!APP.parkingState) {
-    APP.parkingState = buildDefaultState();
+    APP.parkingState = buildEmptyState();
   }
 
   const datePicker = document.getElementById('datePicker');
@@ -1269,18 +1382,52 @@ async function initParking() {
   await loadData(todayStr);
 
 
-  /* ── Undo / Redo 버튼 ── */
-  const undoBtn = document.getElementById('undoBtn');
-  if (undoBtn) {
-    undoBtn.addEventListener('click', () => {
-          undoAction();
+  /* ── 수동 / 오토 불러오기 버튼 ── */
+  const manualLoadBtn = document.getElementById('manualLoadBtn');
+  if (manualLoadBtn) {
+    manualLoadBtn.addEventListener('click', () => {
+      const date = currentDate();
+      if (!manualGridCache[date]) return;
+      showConfirm('수동으로 만든 주차 배치를\n현재 그리드에 적용할까요?', () => {
+        const g = manualGridCache[date];
+        const values = { ...g.values };
+        const active  = { ...g.active };
+        /* 제외 차량 제거 */
+        const exSet = dispatchState.excludedAbsent?.[date];
+        if (exSet && exSet.size > 0) {
+          const RC = APP.rowCount || 6;
+          for (let i = 0; i < RC * 3; i++) {
+            if (exSet.has(values[i])) { values[i] = ''; active[i] = false; }
+          }
+        }
+        APP.parkingState = { values, active };
+        renderCards();
+        saveData();
+      });
     });
   }
 
-  const redoBtn = document.getElementById('redoBtn');
-  if (redoBtn) {
-    redoBtn.addEventListener('click', () => {
-          redoAction();
+  const autoLoadBtn = document.getElementById('autoLoadBtn');
+  if (autoLoadBtn) {
+    autoLoadBtn.addEventListener('click', () => {
+      const date = currentDate();
+      if (!autoGridCache[date]) return;
+      showConfirm('Auto Park로 만든 주차 배치를\n현재 그리드에 적용할까요?', () => {
+        const g = autoGridCache[date];
+        const values = { ...g.values };
+        const active  = { ...g.active };
+        /* 제외 차량 제거 */
+        const exSet = dispatchState.excludedAbsent?.[date];
+        if (exSet && exSet.size > 0) {
+          const RC = APP.rowCount || 6;
+          for (let i = 0; i < RC * 3; i++) {
+            if (exSet.has(values[i])) { values[i] = ''; active[i] = false; }
+          }
+        }
+        APP.parkingState = { values, active };
+        renderCards();
+        saveData();
+      });
     });
   }
 

@@ -19,6 +19,7 @@ const dispatchState = {
   tomorrowMissing:[],
   todayStr:       '',
   tomorrowStr:    '',
+  excludedAbsent: {},   /* { 'YYYY-MM-DD': Set<num> } — 날짜별 정비소 제외 목록 */
 };
 
 /* ── 날짜 유틸 ─────────────────────────────────────────────── */
@@ -149,9 +150,8 @@ function getMissingNums(numsArr) {
 /* ── 칩 HTML 생성 ───────────────────────────────────────────── */
 function buildChipsHTML(numsArr, missing) {
   const parts = [];
-  /* ── 오늘 칩 표시 순서: 5탕(파란) → 6탕(흰) → 휴차(노란) ── */
-  const early  = numsArr.filter(n => n.isEarly);   /* 5탕 */
-  const normal = numsArr.filter(n => !n.isEarly);  /* 6탕 */
+  const early  = numsArr.filter(n => n.isEarly);
+  const normal = numsArr.filter(n => !n.isEarly);
 
   early.forEach(({ num }) => {
     parts.push(`<span class="dc-chip dc-chip--early" data-num="${num}" style="cursor:pointer">${num}</span>`);
@@ -159,19 +159,82 @@ function buildChipsHTML(numsArr, missing) {
   normal.forEach(({ num }) => {
     parts.push(`<span class="dc-chip" data-num="${num}" style="cursor:pointer">${num}</span>`);
   });
+
+  /* 휴차 칩 — 제외 여부에 따라 스타일 분기 */
+  const dateStr = document.getElementById('datePicker')?.value || '';
+  const excluded = dispatchState.excludedAbsent[dateStr] || new Set();
   missing.forEach(n => {
-    parts.push(`<span class="dc-chip dc-chip--absent" data-num="${n}" style="cursor:pointer">${n}</span>`);
+    if (excluded.has(n)) {
+      /* 제외 상태: 취소선 + 회색 */
+      parts.push(`<span class="dc-chip dc-chip--absent dc-chip--excluded" data-num="${n}" data-absent="1" style="cursor:pointer"><s>${n}</s></span>`);
+    } else {
+      parts.push(`<span class="dc-chip dc-chip--absent" data-num="${n}" data-absent="1" style="cursor:pointer">${n}</span>`);
+    }
   });
   return parts.join('');
 }
 
-/* ── 칩 클릭 이벤트 바인딩 (렌더링 후 호출) ─────────────────── */
+/* ── 칩 long press 감지 (0.8초) ────────────────────────────── */
+const LONG_PRESS_MS = 800;
+const _chipLongTimer = {};  /* { num: timerId } */
+
 function bindChipClickEvents() {
   document.querySelectorAll('.dc-chip').forEach(chip => {
+    const num = chip.dataset.num;
+    if (!num) return;
+
+    /* ── 휴차 칩(absent): long press → 제외/복귀, 짧은 탭 → 하이라이트 ── */
+    if (chip.dataset.absent === '1') {
+      let pressStarted = false;
+      let longFired = false;
+
+      const startPress = () => {
+        pressStarted = true;
+        longFired = false;
+        _chipLongTimer[num] = setTimeout(() => {
+          longFired = true;
+          /* 진동 피드백 (지원 기기) */
+          if (navigator.vibrate) navigator.vibrate(30);
+          _toggleExcludeAbsent(num);
+        }, LONG_PRESS_MS);
+      };
+
+      const endPress = () => {
+        if (!pressStarted) return;
+        pressStarted = false;
+        clearTimeout(_chipLongTimer[num]);
+        /* long press 아니었으면 → 짧은 탭: 기존 하이라이트 */
+        if (!longFired) {
+          if (chip.classList.contains('dc-chip--matched')) {
+            if (APP.clearDispatchChipHighlight) APP.clearDispatchChipHighlight();
+            document.querySelectorAll('.slot-card.dispatch-slot-selected')
+              .forEach(c => c.classList.remove('dispatch-slot-selected'));
+            if (APP.highlightDispatchChip) APP.highlightDispatchChip(null, null);
+          } else {
+            if (APP.highlightDispatchChip) APP.highlightDispatchChip(chip, num);
+          }
+        }
+      };
+
+      const cancelPress = () => {
+        pressStarted = false;
+        clearTimeout(_chipLongTimer[num]);
+      };
+
+      /* 터치 이벤트 (모바일) */
+      chip.addEventListener('touchstart', e => { e.preventDefault(); startPress(); }, { passive: false });
+      chip.addEventListener('touchend',   e => { e.preventDefault(); endPress();   }, { passive: false });
+      chip.addEventListener('touchmove',  cancelPress, { passive: true });
+
+      /* 마우스 이벤트 (PC) */
+      chip.addEventListener('mousedown', startPress);
+      chip.addEventListener('mouseup',   endPress);
+      chip.addEventListener('mouseleave',cancelPress);
+      return;
+    }
+
+    /* ── 운행 칩: 기존 클릭 하이라이트 그대로 ── */
     chip.addEventListener('click', () => {
-      const num = chip.dataset.num;
-      if (!num) return;
-      /* 이미 선택된 칩을 다시 클릭하면 해제 */
       if (chip.classList.contains('dc-chip--matched')) {
         if (APP.clearDispatchChipHighlight) APP.clearDispatchChipHighlight();
         document.querySelectorAll('.slot-card.dispatch-slot-selected')
@@ -182,6 +245,105 @@ function bindChipClickEvents() {
       if (APP.highlightDispatchChip) APP.highlightDispatchChip(chip, num);
     });
   });
+}
+
+/* ── 휴차 제외 토글 ─────────────────────────────────────────── */
+function _toggleExcludeAbsent(num) {
+  const dateStr = document.getElementById('datePicker')?.value || '';
+  if (!dateStr) return;
+  if (!dispatchState.excludedAbsent[dateStr]) {
+    dispatchState.excludedAbsent[dateStr] = new Set();
+  }
+  const exSet = dispatchState.excludedAbsent[dateStr];
+
+  if (exSet.has(num)) {
+    /* 제외 해제 → 그리드 복원 */
+    exSet.delete(num);
+    _restoreAbsentToGrid(num, dateStr);
+  } else {
+    /* 제외 → 그리드에서 제거 + 원위치 기억 */
+    exSet.add(num);
+    _removeAbsentFromGrid(num, dateStr);
+  }
+
+  /* Firebase 저장 */
+  _saveExcludedAbsent(dateStr);
+  /* 칩 재렌더링 */
+  renderDispatchSection();
+}
+
+/* ── 제외 시 그리드에서 해당 차 제거 + 원위치 Firebase 저장 ── */
+function _removeAbsentFromGrid(num, dateStr) {
+  if (!APP.parkingState) return;
+  const RC = APP.rowCount || 6;
+  let savedSlot = null;
+  for (let i = 0; i < RC * 3; i++) {
+    if (APP.parkingState.values[i] === num) {
+      savedSlot = i;
+      APP.parkingState.values[i] = '';
+      APP.parkingState.active[i] = false;
+      break;
+    }
+  }
+  /* 원위치 기억 — Firebase에 저장 */
+  if (savedSlot !== null) {
+    if (!APP.excludedSlotMap) APP.excludedSlotMap = {};
+    if (!APP.excludedSlotMap[dateStr]) APP.excludedSlotMap[dateStr] = {};
+    APP.excludedSlotMap[dateStr][num] = savedSlot;
+    APP.set(APP.ref(APP.db, `parking/${dateStr}/excludedSlotMap`),
+      APP.excludedSlotMap[dateStr]).catch(() => {});
+  }
+  if (typeof renderCards === 'function') renderCards();
+  if (typeof saveData   === 'function') saveData();
+}
+
+/* ── 복귀 시 원위치 또는 빈칸에 복원 ── */
+function _restoreAbsentToGrid(num, dateStr) {
+  if (!APP.parkingState) return;
+  const RC = APP.rowCount || 6;
+  /* 이미 그리드에 있으면 패스 */
+  for (let i = 0; i < RC * 3; i++) {
+    if (APP.parkingState.values[i] === num) return;
+  }
+  /* 원위치 확인 */
+  const savedSlot = APP.excludedSlotMap?.[dateStr]?.[num] ?? null;
+  let targetSlot = null;
+
+  if (savedSlot !== null && !APP.parkingState.values[savedSlot]) {
+    /* 원위치 비어있으면 원위치 복원 */
+    targetSlot = savedSlot;
+  } else {
+    /* 원위치 차 있거나 기억 없으면 첫 번째 빈칸 */
+    for (let i = 0; i < RC * 3; i++) {
+      if (!APP.parkingState.values[i]) { targetSlot = i; break; }
+    }
+  }
+  if (targetSlot !== null) {
+    APP.parkingState.values[targetSlot] = num;
+    APP.parkingState.active[targetSlot] = false; /* 휴차 상태 */
+  }
+  /* 원위치 기억 삭제 */
+  if (APP.excludedSlotMap?.[dateStr]) {
+    delete APP.excludedSlotMap[dateStr][num];
+    APP.set(APP.ref(APP.db, `parking/${dateStr}/excludedSlotMap`),
+      APP.excludedSlotMap[dateStr]).catch(() => {});
+  }
+  if (typeof renderCards === 'function') renderCards();
+  if (typeof saveData   === 'function') saveData();
+}
+
+/* ── 제외 목록 Firebase 저장 ── */
+function _saveExcludedAbsent(dateStr) {
+  const exSet = dispatchState.excludedAbsent[dateStr];
+  const arr   = exSet ? [...exSet] : [];
+  APP.set(APP.ref(APP.db, `parking/${dateStr}/excludedAbsent`), arr).catch(() => {});
+}
+
+/* ── 제외 목록 로드 후 칩 재렌더링 (parking.js loadData에서 호출) ── */
+function loadExcludedAbsent(dateStr) {
+  /* 실제 로드는 parking.js loadData에서 처리
+     여기서는 칩 상태만 갱신 */
+  if (dispatchState.loaded) renderDispatchSection();
 }
 
 /* ── Firebase: 날짜별 저장 ──────────────────────────────────── */

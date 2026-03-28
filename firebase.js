@@ -28,11 +28,11 @@ async function initFirebase() {
   try {
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js');
     const { getDatabase, ref: dbRef, set: dbSet, get: dbGet } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js');
-    const app = initializeApp(FIREBASE_CONFIG);
-    APP.db = getDatabase(app);
-    APP.ref = dbRef;
-    APP.set = dbSet;
-    APP.get = dbGet;
+    const app  = initializeApp(FIREBASE_CONFIG);
+    APP.db     = getDatabase(app);
+    APP.ref    = dbRef;
+    APP.set    = dbSet;
+    APP.get    = dbGet;
     await loadAppSettings();
     initAdmin();
     await loadBusListFromDB();
