@@ -1,5 +1,5 @@
 /* ============================================================
-   components.js — HTML 컴포넌트 템플릿 v1.0
+   components.js — HTML 컴포넌트 템플릿 v2.1
    각 섹션을 함수로 분리 → index.html 은 뼈대만 유지
    ============================================================ */
 'use strict';
@@ -8,46 +8,30 @@
 function tmplHeader() {
   return `
   <header class="app-header">
-    <button id="darkModeBtn" class="dark-mode-btn" aria-label="다크모드 전환" title="다크모드">
-      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
+    <input type="date" id="datePicker" autocomplete="off"
+           style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
     <div class="date-nav">
-      <div class="date-center">
-        <input type="date" id="datePicker" autocomplete="off"
-               style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
-        <button id="prevDayBtn" class="date-nav-btn" aria-label="이전날">
-          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      <div class="date-pill-wrap" id="datePillWrap">
+
+        <button id="prevDayBtn" class="date-nav-arrow" aria-label="이전날">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
         </button>
-        <button id="dateDisplayBtn" class="date-display-btn" aria-label="날짜 선택">
-          <span class="date-main-text"></span>
-          <span class="date-sub-text"></span>
-        </button>
-        <button id="nextDayBtn" class="date-nav-btn" aria-label="다음날">
-          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-      <button id="todayBtn" class="today-chip">오늘</button>
-    </div>
-    <div class="team-row">
-      <div class="header-actions">
-        <!-- 수동/오토 불러오기 버튼 -->
-        <button id="manualLoadBtn" class="header-action-btn admin-ui" aria-label="수동 배치 불러오기" title="수동 배치 불러오기" disabled>
-          <span class="btn-label">수동</span>
-        </button>
-        <button id="autoLoadBtn" class="header-action-btn admin-ui" aria-label="오토 배치 불러오기" title="오토 배치 불러오기" disabled>
-          <span class="btn-label">오토</span>
-        </button>
-        <!-- 게스트: 마지막 저장 시간 -->
-        <div id="lastSavedWrap" class="last-saved-wrap">
-          <span class="last-saved-dot"></span>
-          <span id="lastSavedText" class="last-saved-text">—</span>
+
+        <div class="date-display-pill">
+          <span id="dateMainText" class="date-pill-text"></span>
+          <span id="teamLabel" class="date-pill-team"></span>
         </div>
-      </div>
-      <span id="teamLabel" class="team-badge"></span>
-      <div class="legend">
-        <span class="legend-dot run"></span><span class="legend-text">운행</span>
-        <span class="legend-dot rest"></span><span class="legend-text">휴차</span>
+
+        <button id="nextDayBtn" class="date-nav-arrow" aria-label="다음날">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+
       </div>
     </div>
   </header>`;
@@ -71,10 +55,10 @@ function tmplDispatch() {
       /* ── 전체 카드 감싸기 ── */
       .dispatch-content {
         background: #fff;
-        border-radius: 12px;
+        border-radius: 16px;
         overflow: hidden;
-        border: 1px solid rgba(0,0,0,0.07);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.07);
       }
       .dark-mode .dispatch-content {
         background: #1C1E26;
@@ -147,48 +131,34 @@ function tmplDispatch() {
         width: 100%;
       }
 
-      /* ── 칩 기본 — 흰색 ── */
+      /* ── 칩 기본 ── */
       .dc-chip {
         background: #fff;
         border: 1px solid #E5E7EB;
         border-radius: 6px;
-        padding: 2px 0;
-        font-size: 13px;
+        padding: 3px 0;
+        font-size: clamp(10px, 3vw, 13px);
         font-weight: 700;
         color: #374151;
         line-height: 1.4;
         letter-spacing: .01em;
         text-align: center;
         min-width: 0;
-      }
-      .dark-mode .dc-chip {
-        background: #2C2F3A;
-        border-color: #374151;
-        color: #E5E7EB;
+        overflow: hidden;
       }
 
-      /* ── 총5회차 (파란색) ── */
+      /* ── 총5회차 (연한 파랑) ── */
       .dc-chip--early {
-        background: #DBEAFE;
-        border-color: #93C5FD;
-        color: #1E40AF;
-      }
-      .dark-mode .dc-chip--early {
-        background: rgba(37,99,235,0.35);
-        border-color: #3B82F6;
-        color: #93C5FD;
+        background: #EFF6FF;
+        border-color: #BFDBFE;
+        color: #2563EB;
       }
 
-      /* ── 휴차 (주황색) ── */
+      /* ── 휴차 (연한 노랑) ── */
       .dc-chip--absent {
-        background: #FEF3C7;
-        border-color: #FCD34D;
+        background: #FEFCE8;
+        border-color: #FEF08A;
         color: #92400E;
-      }
-      .dark-mode .dc-chip--absent {
-        background: rgba(245,158,11,0.25);
-        border-color: #F59E0B;
-        color: #FDE68A;
       }
 
       /* ── 불러오기 버튼 ── */
@@ -371,7 +341,7 @@ function tmplParkingGrid() {
     <div id="emptyGridHint" class="empty-grid-hint" style="display:none">
       <div class="empty-grid-icon">🅿️</div>
       <div class="empty-grid-title">주차 데이터 없음</div>
-      <div class="empty-grid-desc">하단 <b>Auto Park</b>를 탭하면<br>배차를 불러와 최적 배치를 자동으로 완성합니다</div>
+      <div class="empty-grid-desc">하단 <b>Auto Park</b>를 탭하면<br>차량번호를 불러와 최적 주차도를<br>자동으로 완성합니다.</div>
     </div>
     <div class="parking-grid" id="parkingGrid">
     </div>
@@ -406,43 +376,67 @@ function tmplBulletin() {
 
 function tmplBottomNav() {
   return `
-  <!-- 하단 탭바 -->
   <nav class="bottom-nav" id="bottomNav">
 
-    <!-- Auto Park (배차불러오기 + 자동주차 한방) -->
-    <button class="bnav-btn bnav-btn--autopark" id="dispatchAutoBtn" aria-label="Auto Park">
-      <span class="bnav-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>
-        </svg>
+    <!-- Auto Park — 파란 아이콘 -->
+    <button class="bnav-btn" id="dispatchAutoBtn" aria-label="Auto Park">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#0B7EF4">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>
+          </svg>
+        </span>
+        <span class="bnav-label">Auto Park</span>
       </span>
-      <span class="bnav-label">Auto Park</span>
     </button>
 
-    <!-- Sync 순서 (데이터 불러오기만) -->
-    <button class="bnav-btn" id="dispatchLoadBtn" aria-label="Sync 순서">
-      <span class="bnav-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"/>
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-        </svg>
+    <!-- 배차순서조회 — 초록 아이콘 -->
+    <button class="bnav-btn" id="dispatchLoadBtn" aria-label="배차순서조회">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#16A34A">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <line x1="9" y1="12" x2="15" y2="12"/>
+            <line x1="9" y1="16" x2="13" y2="16"/>
+          </svg>
+        </span>
+        <span class="bnav-label">배차순서조회</span>
       </span>
-      <span class="bnav-label">Sync 순서</span>
     </button>
 
-    <!-- 설정 -->
+    <!-- 오늘 — 주황 아이콘 -->
+    <button class="bnav-btn" id="todayBtn" aria-label="오늘">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#EA580C">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+            <circle cx="12" cy="16" r="2" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        <span class="bnav-label">오늘</span>
+      </span>
+    </button>
+
+    <!-- 설정 — 회색 아이콘 -->
     <button class="bnav-btn" id="appSettingsBtn" aria-label="설정">
-      <span class="bnav-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#6B7280">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </span>
+        <span class="bnav-label">설정</span>
       </span>
-      <span class="bnav-label">설정</span>
     </button>
 
   </nav>`;

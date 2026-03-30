@@ -1,42 +1,30 @@
 'use strict';
 /* ============================================================
-   app.js — 앱 초기화 (다크모드 버튼 · UA 감지 · PWA 배너)
+   app.js — 앱 초기화 (UA 감지 · PWA 배너)
    다크모드 즉시적용(깜빡임 방지) 코드는 index.html inline 유지
    ============================================================ */
-
-/* ── 다크모드 버튼 바인딩 ── */
-document.addEventListener('DOMContentLoaded', () => {
-  const btn = document.getElementById('darkModeBtn');
-  if (btn) {
-    btn.addEventListener('click', () => {
-      const isDark = document.body.classList.toggle('dark-mode');
-      localStorage.setItem('darkMode', isDark ? '1' : '0');
-      const tc = document.getElementById('themeColorMeta');
-      if (tc) tc.content = isDark ? '#1C1C1E' : '#ffffff';
-    });
-  }
-});
 
 /* ── UA 분석 ── */
 const _ua           = navigator.userAgent;
 const _isIOS        = /iphone|ipad|ipod/i.test(_ua);
 const _isAndroid    = /android/i.test(_ua);
+const _isKakao      = /KAKAOTALK|KAKAO/i.test(_ua);  /* 카카오톡 인앱 */
 const _isStandalone = window.navigator.standalone === true ||
                       window.matchMedia('(display-mode: standalone)').matches;
 
 const _isIOSInApp = _isIOS && !_isStandalone && (
-  /KAKAOTALK|Line\/|Instagram|FBAN|FBAV|Twitter|Snapchat|LinkedIn|Pinterest|Naver|DaumApps/i.test(_ua) ||
+  /Line\/|Instagram|FBAN|FBAV|Twitter|Snapchat|LinkedIn|Pinterest|Naver|DaumApps/i.test(_ua) ||
   (/AppleWebKit/i.test(_ua) && !/Safari/i.test(_ua)) ||
   /GSA\//i.test(_ua)
 );
-const _isAndroidInApp = _isAndroid && !_isStandalone && (
-  /KAKAOTALK|KAKAO|Line\/|Instagram|FBAN|FBAV|FB_IAB|Twitter|Snapchat|Naver/i.test(_ua) ||
+const _isAndroidInApp = _isAndroid && !_isStandalone && !_isKakao && (
+  /Line\/|Instagram|FBAN|FBAV|FB_IAB|Twitter|Snapchat|Naver/i.test(_ua) ||
   /\bwv\b/.test(_ua)
 );
-const _isIOSSafari = _isIOS && !_isStandalone && !_isIOSInApp &&
+const _isIOSSafari = _isIOS && !_isStandalone && !_isIOSInApp && !_isKakao &&
   /Safari/i.test(_ua) && !/Chrome|CriOS/i.test(_ua);
 
-/* ── Android 인앱브라우저: 상단 설치 안내 배너 ── */
+/* ── Android 인앱브라우저: 상단 설치 안내 배너 (카카오톡 제외) ── */
 if (_isAndroidInApp && !sessionStorage.getItem('inappDismissed')) {
   const bar = document.createElement('div');
   bar.className = 'inapp-install-banner';
@@ -94,8 +82,8 @@ function showAndroidBanner() {
   });
 }
 
-/* ── iOS 홈화면 추가 안내 (Safari / 인앱브라우저) ── */
-if ((_isIOSInApp || _isIOSSafari) && !_isStandalone && !sessionStorage.getItem('iosDismissed')) {
+/* ── iOS 홈화면 추가 안내 (Safari / 인앱브라우저, 카카오톡 제외) ── */
+if ((_isIOSInApp || _isIOSSafari) && !_isStandalone && !_isKakao && !sessionStorage.getItem('iosDismissed')) {
   setTimeout(() => {
     const dim = document.createElement('div');
     dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;';

@@ -5,207 +5,60 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>사용설명서 — 보영운수 22번 주차도</title>
 <style>
-:root {
-  --bg: #F2F2F7;
-  --card: #fff;
-  --text: #1C1C1E;
-  --sub: #6E6E73;
-  --hint: #AEAEB2;
-  --accent: #2563EB;
-  --border: rgba(0,0,0,0.08);
-  --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --bg:#1C1C1E; --card:#2C2C2E; --text:#F2F2F7;
-    --sub:#AEAEB2; --hint:#636366; --accent:#60A5FA;
-    --border:rgba(255,255,255,0.1);
-  }
-}
-*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-body{
-  background:var(--bg); color:var(--text);
-  font-family:-apple-system,'Pretendard',sans-serif;
-  padding-top:calc(var(--safe-t) + 52px);
-  padding-bottom:calc(var(--safe-b) + 32px);
-}
-
-/* 헤더 */
-.hdr{
-  position:fixed; top:0; left:0; right:0;
-  height:calc(var(--safe-t) + 52px);
-  padding-top:var(--safe-t);
-  background:rgba(242,242,247,0.92);
-  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
-  border-bottom:0.5px solid var(--border);
-  display:flex; align-items:flex-end;
-  padding-bottom:10px; padding-left:16px; padding-right:16px;
-  z-index:100;
-}
-@media(prefers-color-scheme:dark){.hdr{background:rgba(28,28,30,0.92);}}
-.hdr-back{
-  display:flex; align-items:center; gap:4px;
-  font-size:16px; color:var(--accent);
-  background:none; border:none; cursor:pointer; padding:4px 0;
-}
-.hdr-title{flex:1; text-align:center; font-size:16px; font-weight:700;}
-.hdr-space{width:52px;}
-
-/* 본문 */
-.content{max-width:600px; margin:0 auto; padding:16px 16px 0;}
-
-/* 히어로 */
-.hero{
-  background:linear-gradient(135deg,#1D4ED8,#4F46E5);
-  border-radius:18px; padding:22px 20px; margin-bottom:20px;
-  color:#fff; text-align:center;
-}
-.hero-icon{font-size:36px; margin-bottom:10px;}
-.hero-title{font-size:18px; font-weight:900; margin-bottom:6px; line-height:1.3;}
-.hero-desc{font-size:13px; opacity:.85; line-height:1.6;}
-
-/* 섹션 */
-.sec-title{
-  font-size:12px; font-weight:700; color:var(--hint);
-  letter-spacing:.06em; text-transform:uppercase;
-  margin:24px 0 8px 4px;
-}
-
-/* 카드 */
-.card{
-  background:var(--card); border-radius:14px;
-  border:0.5px solid var(--border); overflow:hidden;
-}
-.row{
-  display:flex; align-items:flex-start; gap:12px;
-  padding:13px 14px; border-bottom:0.5px solid var(--border);
-}
-.row:last-child{border-bottom:none;}
-.ico{
-  width:36px; height:36px; border-radius:9px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px; flex-shrink:0;
-}
-.ico-blue{background:#DBEAFE;}
-.ico-green{background:#DCFCE7;}
-.ico-yellow{background:#FEF9C3;}
-.ico-purple{background:#F3E8FF;}
-.ico-red{background:#FEE2E2;}
-.ico-gray{background:#F3F4F6;}
-.ico-orange{background:#FFF7ED;}
-@media(prefers-color-scheme:dark){
-  .ico-blue{background:rgba(37,99,235,.2);}
-  .ico-green{background:rgba(34,197,94,.15);}
-  .ico-yellow{background:rgba(234,179,8,.15);}
-  .ico-purple{background:rgba(124,58,237,.18);}
-  .ico-red{background:rgba(239,68,68,.18);}
-  .ico-gray{background:rgba(255,255,255,.07);}
-  .ico-orange{background:rgba(249,115,22,.15);}
-}
-.rtxt{}
-.rtitle{font-size:15px; font-weight:700; margin-bottom:3px;}
-.rdesc{font-size:13px; color:var(--sub); line-height:1.55;}
-.rdesc b{font-weight:700; color:var(--text);}
-
-/* 칩 예시 */
-.chip-row{display:flex; flex-wrap:wrap; gap:6px; padding:12px 14px;}
-.chip{
-  display:inline-flex; align-items:center; gap:5px;
-  padding:5px 11px; border-radius:20px;
-  font-size:12px; font-weight:700;
-}
-.chip-blue{background:#DBEAFE; color:#1D4ED8;}
-.chip-gray{background:#F3F4F6; color:#374151; border:1px solid #E5E7EB;}
-.chip-yellow{background:#FEF9C3; color:#713F12;}
-@media(prefers-color-scheme:dark){
-  .chip-blue{background:rgba(37,99,235,.25); color:#93C5FD;}
-  .chip-gray{background:rgba(255,255,255,.1); color:#D1D5DB; border-color:#4B5563;}
-  .chip-yellow{background:rgba(234,179,8,.2); color:#FDE68A;}
-}
-
-/* 하단 메뉴 시각화 */
-.nav-demo{
-  background:var(--card); border-radius:14px;
-  border:0.5px solid var(--border); overflow:hidden;
-  padding:14px 10px;
-  display:flex; justify-content:space-around;
-}
-.nb{display:flex; flex-direction:column; align-items:center; gap:5px; flex:1;}
-.nb-ico{
-  width:44px; height:32px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center; font-size:18px;
-}
-.nb-ico.act{background:linear-gradient(135deg,#2563EB,#1D4ED8);}
-.nb-ico.norm{background:#F3F4F6;}
-@media(prefers-color-scheme:dark){
-  .nb-ico.act{background:linear-gradient(135deg,#3B82F6,#2563EB);}
-  .nb-ico.norm{background:rgba(255,255,255,.07);}
-}
-.nb-lbl{font-size:11px; font-weight:700; color:var(--sub);}
-.nb-lbl.act{color:var(--accent);}
-.nb-desc{font-size:12px; color:var(--sub); text-align:center; margin-top:2px; line-height:1.4;}
-
-/* 슬롯 예시 */
-.slot-demo{
-  display:flex; gap:5px; padding:12px 14px;
-}
-.slot{
-  flex:1; height:40px; border-radius:8px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:14px; font-weight:800;
-}
-.slot-run{background:#EFF6FF; color:#1E3A5F; border:1px solid #BFDBFE;}
-.slot-rest{background:#FFFBEB; color:#78350F; border:1px solid #FDE68A;}
-.slot-emp{background:rgba(0,0,0,.05); border:1.5px dashed rgba(0,0,0,.12);}
-@media(prefers-color-scheme:dark){
-  .slot-run{background:#1E3A5F; color:#BFDBFE; border-color:rgba(59,130,246,.3);}
-  .slot-rest{background:#2D1B00; color:#FDE68A; border-color:rgba(245,158,11,.3);}
-  .slot-emp{background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.1);}
-}
-.slot-label{
-  font-size:12px; font-weight:700; color:var(--sub);
-  width:26px; flex-shrink:0; text-align:right;
-  display:flex; align-items:center; justify-content:flex-end;
-}
-
-/* 팁 박스 */
-.tip{
-  background:#FFFBEB; border:1px solid rgba(234,179,8,.3);
-  border-radius:12px; padding:13px 14px; margin-top:8px;
-  font-size:13px; color:#78350F; line-height:1.6;
-}
-@media(prefers-color-scheme:dark){
-  .tip{background:rgba(234,179,8,.08); color:#FDE68A; border-color:rgba(234,179,8,.2);}
-}
-
-/* 탭 조작 */
-.tap-flow{
-  display:flex; align-items:center; gap:6px;
-  padding:12px 14px; flex-wrap:wrap; gap:8px;
-}
-.tap-step{display:flex; flex-direction:column; align-items:center; gap:3px;}
-.tap-box{
-  width:44px; height:44px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:13px; font-weight:800;
-}
-.tap-1{background:#EFF6FF; color:#1E3A5F; border:1px solid #BFDBFE;}
-.tap-2{background:#FEE2E2; color:#DC2626; border:2px solid #DC2626;}
-.tap-3{background:#EFF6FF; color:#1E3A5F; border:2.5px solid #2563EB;}
-.tap-lbl{font-size:10px; color:var(--hint); font-weight:600;}
-.tap-arrow{font-size:18px; color:var(--hint);}
-
-.footer-note{text-align:center; color:var(--hint); font-size:11px; margin-top:28px;}
+  :root{--bg:#F3F4F6;--card:#fff;--text:#111827;--sub:#6B7280;--accent:#1A73E8;--border:#E5E7EB;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)}
+  @media(prefers-color-scheme:dark){:root{--bg:#1C1C1E;--card:#2C2C2E;--text:#F2F2F7;--sub:#8E8E93;--border:#3A3A3C}}
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,'Pretendard',sans-serif;padding-top:calc(var(--safe-t) + 56px);padding-bottom:calc(var(--safe-b) + 32px)}
+  .hdr{position:fixed;top:0;left:0;right:0;height:calc(var(--safe-t)+56px);padding-top:var(--safe-t);background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:flex-end;padding-bottom:10px;padding-left:16px;padding-right:16px;z-index:100}
+  @media(prefers-color-scheme:dark){.hdr{background:rgba(28,28,30,0.92)}}
+  .hdr-back{display:flex;align-items:center;gap:4px;font-size:16px;font-weight:700;color:var(--accent);background:none;border:none;cursor:pointer;padding:0}
+  .hdr-title{flex:1;text-align:center;font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+  .hdr-space{width:48px}
+  .content{padding:16px 14px;max-width:600px;margin:0 auto}
+  .intro{text-align:center;padding:20px 16px 24px}
+  .intro-icon{font-size:48px;margin-bottom:10px}
+  .intro-title{font-size:20px;font-weight:900;margin-bottom:6px;letter-spacing:-.4px}
+  .intro-desc{font-size:14px;color:var(--sub);line-height:1.7}
+  .section{margin-bottom:20px}
+  .section-title{font-size:13px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-left:2px}
+  .card{background:var(--card);border-radius:16px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden}
+  .card-imp{background:#FFF7ED;border-radius:16px;border:1px solid #FED7AA;box-shadow:0 1px 4px rgba(0,0,0,0.06);overflow:hidden}
+  @media(prefers-color-scheme:dark){.card-imp{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.3)}}
+  .item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .item:last-child{border-bottom:none}
+  .item-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .bg-blue{background:#EFF6FF} .bg-green{background:#ECFDF5} .bg-orange{background:#FFF7ED} .bg-red{background:#FEF2F2} .bg-gray{background:#F3F4F6} .bg-yellow{background:#FEFCE8}
+  .item-body{flex:1;min-width:0}
+  .item-title{font-size:15px;font-weight:800;margin-bottom:3px}
+  .item-desc{font-size:13px;color:var(--sub);line-height:1.65}
+  .item-desc strong{color:var(--text);font-weight:700}
+  .hl{color:#EA580C;font-weight:800}
+  .tap-demo{display:flex;align-items:center;gap:8px;padding:12px 16px;flex-wrap:wrap}
+  .tap-box{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800}
+  .tap-run{background:#fff;color:#111827;border:1px solid #E5E7EB}
+  .tap-sel{background:#FEE2E2;color:#DC2626;border:2px solid #EF4444}
+  .tap-ok{background:#EFF6FF;color:#1D4ED8;border:2px solid #3B82F6}
+  .tap-arrow{font-size:18px;color:var(--sub)}
+  .tap-label{font-size:11px;color:var(--sub);text-align:center;margin-top:3px}
+  .tap-step{display:flex;flex-direction:column;align-items:center}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;padding:4px 16px 14px}
+  .chip{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;display:inline-block}
+  .c-blue{background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE}
+  .c-white{background:#F9FAFB;color:#374151;border:1px solid #E5E7EB}
+  .c-yellow{background:#FEFCE8;color:#92400E;border:1px solid #FEF08A}
+  .c-gray{background:#F3F4F6;color:#9CA3AF;border:1px solid #E5E7EB;text-decoration:line-through}
+  .badge-demo{position:relative;display:inline-flex;width:48px;height:48px;background:#fff;color:#111827;border:1px solid #E5E7EB;border-radius:10px;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin:8px 8px 4px 16px}
+  .badge-num{position:absolute;bottom:3px;right:4px;font-size:10px;font-weight:900;color:rgba(0,0,0,0.45);background:rgba(0,0,0,0.1);border-radius:4px;padding:0 3px;line-height:14px}
+  .tip{background:#FEFCE8;border:1px solid #FDE68A;border-radius:12px;padding:12px 14px;font-size:13px;color:#78350F;line-height:1.65;margin-top:8px}
+  @media(prefers-color-scheme:dark){.tip{background:rgba(245,158,11,.1);color:#FCD34D;border-color:rgba(245,158,11,.3)}}
+  .foot{text-align:center;color:var(--sub);font-size:12px;margin-top:24px;line-height:1.8}
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <button class="hdr-back" onclick="goBack()">
-    <svg width="9" height="16" viewBox="0 0 9 16" fill="none">
-      <path d="M8 1L1 8L8 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <svg width="9" height="16" viewBox="0 0 9 16" fill="none"><path d="M8 1L1 8L8 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     뒤로
   </button>
   <div class="hdr-title">사용설명서</div>
@@ -214,231 +67,165 @@ body{
 
 <div class="content">
 
-  <!-- 소개 -->
-  <div class="hero">
-    <div class="hero-icon">🅿️</div>
-    <div class="hero-title">최신배차 데이터를 불러와 최적 주차도를<br>자동으로 계산해주는 앱입니다</div>
-    <div class="hero-desc">오늘 입차 순서와 내일 출차 순서를 분석해서<br>막힘 없는 최적의 주차도를 알려줍니다</div>
+  <div class="intro">
+    <div class="intro-icon">🅿️</div>
+    <div class="intro-title">보영운수 22번 주차도</div>
+    <div class="intro-desc">배차 데이터를 불러와 최적 주차도를<br>자동으로 계산해주는 앱입니다</div>
   </div>
 
-  <!-- 주차 그리드 -->
-  <div class="sec-title">주차 그리드</div>
-  <div class="card">
-    <div class="row">
-      <div class="ico ico-blue">📋</div>
-      <div class="rtxt">
-        <div class="rtitle">2R ~ 7R 행 구조</div>
-        <div class="rdesc">주차장은 <b>6개 행(2R~7R)</b>, 각 행마다 <b>1·2·3번 칸</b>으로 구성됩니다.<br>숫자가 클수록 입구 쪽 칸입니다.</div>
+  <!-- 핵심 1: Auto Park -->
+  <div class="section">
+    <div class="section-title">★ 핵심 기능 1 — Auto Park</div>
+    <div class="card-imp">
+      <div class="item">
+        <div class="item-icon bg-blue">🅿️</div>
+        <div class="item-body">
+          <div class="item-title">Auto Park — 자동 주차 완성</div>
+          <div class="item-desc">
+            하단 메뉴 <strong>Auto Park</strong> 탭 한 번으로<br>
+            배차 데이터를 불러오고<br>
+            입차·출차 막힘 없는 최적 배치를 자동 완성합니다.<br><br>
+            결과 확인 후 <strong>적용하기</strong>를 탭하면 그리드에 반영됩니다.
+          </div>
+        </div>
       </div>
     </div>
-    <div class="slot-demo">
-      <div class="slot-label">3R</div>
-      <div class="slot slot-run">751</div>
-      <div class="slot slot-run">752</div>
-      <div class="slot slot-run">753</div>
-    </div>
-    <div class="row" style="border-top:0.5px solid var(--border);">
-      <div class="ico ico-blue">🔵</div>
-      <div class="rtxt">
-        <div class="rtitle">파란 칸 — 운행 차량</div>
-        <div class="rdesc">오늘 운행 중인 차량입니다.</div>
+    <div class="tip">💡 주차 데이터 없는 날짜에서 Auto Park를 탭하면 바로 시작됩니다.</div>
+  </div>
+
+  <!-- 핵심 2: 차고지 없음 -->
+  <div class="section">
+    <div class="section-title">★ 핵심 기능 2 — 차고지에 차량 없을 때</div>
+    <div class="card-imp">
+      <div class="item">
+        <div class="item-icon bg-yellow">🚗</div>
+        <div class="item-body">
+          <div class="item-title">휴차 칩 꾹 눌러 제외 <span class="hl">★ 중요</span></div>
+          <div class="item-desc">
+            정비등으로 차고지에 없는 차량은<br>
+            <strong>오늘 입차 순서</strong>의 노란 휴차 칩을<br>
+            <strong>0.8초 꾹 누르면</strong> 회색 취소선으로 바뀝니다.<br><br>
+            ✅ 주차 그리드에서 사라짐<br>
+            ✅ Auto Park 계산에서 제외됨<br>
+            ✅ 저장되어 다음 방문에도 유지됨<br><br>
+            다시 꾹 누르면 <strong>원래 위치로 복귀</strong>합니다.
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-yellow">🟡</div>
-      <div class="rtxt">
-        <div class="rtitle">노란 칸 — 오늘 휴차</div>
-        <div class="rdesc">오늘 운행하지 않는 차량(결근·휴무)입니다.</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-gray">⬜</div>
-      <div class="rtxt">
-        <div class="rtitle">빈 칸</div>
-        <div class="rdesc">현재 아무 차도 없는 자리입니다.</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-purple">🔢</div>
-      <div class="rtxt">
-        <div class="rtitle">카드 우하단 작은 숫자</div>
-        <div class="rdesc">내일 출차 순서 번호입니다. <b>숫자 1이 제일 먼저 나가는 차</b>입니다.</div>
+      <div class="chip-row">
+        <span class="chip c-yellow">🟡 751 — 휴차 (정상)</span>
+        <span class="chip c-gray">~~751~~ — 차고지 없음</span>
       </div>
     </div>
   </div>
 
-  <!-- 하단 메뉴 3개 -->
-  <div class="sec-title">하단 메뉴</div>
-  <div class="nav-demo">
-    <div class="nb">
-      <div class="nb-ico act">🅿️</div>
-      <div class="nb-lbl act">Auto Park</div>
-    </div>
-    <div class="nb">
-      <div class="nb-ico norm">🔄</div>
-      <div class="nb-lbl">Sync 순서</div>
-    </div>
-    <div class="nb">
-      <div class="nb-ico norm">⚙️</div>
-      <div class="nb-lbl">설정</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:8px;">
-    <div class="row">
-      <div class="ico ico-blue">🅿️</div>
-      <div class="rtxt">
-        <div class="rtitle">Auto Park</div>
-        <div class="rdesc"><b>배차 불러오기 + 자동 주차</b>를 한 번에 실행합니다.<br>탭 한 번으로 오늘/내일 배차를 받아오고, 막힘 없는 최적 자리를 자동으로 잡아줍니다.</div>
+  <!-- 배차순서 조회 -->
+  <div class="section">
+    <div class="section-title">배차순서 조회</div>
+    <div class="card">
+      <div class="item">
+        <div class="item-icon bg-green">📋</div>
+        <div class="item-body">
+          <div class="item-title">하단 메뉴 → 배차순서조회</div>
+          <div class="item-desc">오늘 입차 순서와 내일 출차 순서만 불러옵니다.<br>Auto Park 없이 순서만 확인할 때 사용합니다.</div>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-green">🔄</div>
-      <div class="rtxt">
-        <div class="rtitle">Sync 순서</div>
-        <div class="rdesc">배차 데이터만 새로 불러옵니다.<br>오늘 입차 순서와 내일 출차 순서 칩이 업데이트됩니다. 순서는 바꾸지 않습니다.</div>
+      <div class="item">
+        <div class="item-icon bg-blue">🎨</div>
+        <div class="item-body">
+          <div class="item-title">칩 색상 의미</div>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-gray">⚙️</div>
-      <div class="rtxt">
-        <div class="rtitle">설정</div>
-        <div class="rdesc">비밀번호 입력 후 진입합니다.<br>차량 번호 추가·삭제, 행 구성 변경, 하단 안내문 수정이 가능합니다.</div>
+      <div class="chip-row">
+        <span class="chip c-blue">파란칩 — 5탕 새벽 출발</span>
+        <span class="chip c-white">흰칩 — 6탕</span>
+        <span class="chip c-yellow">노란칩 — 휴차</span>
       </div>
     </div>
   </div>
-  <div class="tip">💡 처음 사용할 때는 <b>Auto Park</b>를 탭하면 자동으로 다 됩니다.</div>
 
-  <!-- 오늘/내일 칩 -->
-  <div class="sec-title">오늘 입차 · 내일 출차 순서</div>
-  <div class="card">
-    <div class="row">
-      <div class="ico ico-blue">📅</div>
-      <div class="rtxt">
-        <div class="rtitle">칩 목록이 보인다면</div>
-        <div class="rdesc">배차 데이터가 불러와진 상태입니다.<br>순서대로 나열되어 있습니다.</div>
+  <!-- 주차 그리드 이동 -->
+  <div class="section">
+    <div class="section-title">주차 그리드 — 차량 위치 바꾸기</div>
+    <div class="card">
+      <div class="item">
+        <div class="item-icon bg-red">👆</div>
+        <div class="item-body">
+          <div class="item-title">탭으로 차량 이동</div>
+          <div class="item-desc">
+            <strong>1단계</strong> — 옮길 차량 탭 → 빨간색 선택됨<br>
+            <strong>2단계</strong> — 이동할 칸 탭 → 파란색 대기<br>
+            <strong>3단계</strong> — 같은 칸 다시 탭 → 이동 완료
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="chip-row">
-      <span class="chip chip-blue">🔵 769 — 조기출근</span>
-      <span class="chip chip-gray">⚪ 756 — 일반</span>
-      <span class="chip chip-yellow">🟡 714 — 휴차</span>
+      <div class="tap-demo">
+        <div class="tap-step"><div class="tap-box tap-run">769</div><div class="tap-label">탭</div></div>
+        <div class="tap-arrow">→</div>
+        <div class="tap-step"><div class="tap-box tap-sel">769</div><div class="tap-label">선택됨</div></div>
+        <div class="tap-arrow">→</div>
+        <div class="tap-step"><div class="tap-box tap-ok">769</div><div class="tap-label">확인 탭</div></div>
+      </div>
+      <div class="item" style="border-top:1px solid var(--border)">
+        <div class="item-icon bg-orange">🔢</div>
+        <div class="item-body">
+          <div class="item-title">출차 순위 번호</div>
+          <div class="item-desc">카드 우하단 작은 숫자 = 내일 출차 순서. 숫자 1이 제일 먼저 출차.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:4px 16px 14px">
+        <div class="badge-demo">769<span class="badge-num">3</span></div>
+        <span style="font-size:13px;color:var(--sub)">← 내일 3번째 출차</span>
+      </div>
     </div>
   </div>
 
   <!-- 날짜 이동 -->
-  <div class="sec-title">날짜 이동</div>
-  <div class="card">
-    <div class="row">
-      <div class="ico ico-blue">◀</div>
-      <div class="rtxt">
-        <div class="rtitle">◀ ▶ 버튼</div>
-        <div class="rdesc">전날·다음날로 이동합니다.</div>
+  <div class="section">
+    <div class="section-title">날짜 이동</div>
+    <div class="card">
+      <div class="item">
+        <div class="item-icon bg-blue">◀▶</div>
+        <div class="item-body">
+          <div class="item-title">상단 화살표 버튼</div>
+          <div class="item-desc">헤더의 ◀ ▶를 탭하면 전날·다음날로 이동합니다.</div>
+        </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-green">📆</div>
-      <div class="rtxt">
-        <div class="rtitle">날짜 탭</div>
-        <div class="rdesc">날짜를 직접 탭하면 달력이 열려 원하는 날짜를 선택할 수 있습니다.</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-purple">오늘</div>
-      <div class="rtxt">
-        <div class="rtitle">오늘 버튼</div>
-        <div class="rdesc">어디에 있든 바로 오늘 날짜로 돌아옵니다.</div>
+      <div class="item">
+        <div class="item-icon bg-orange">📅</div>
+        <div class="item-body">
+          <div class="item-title">하단 메뉴 → 오늘</div>
+          <div class="item-desc">어느 날짜에 있든 오늘 날짜로 바로 돌아옵니다.</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 수동 이동 -->
-  <div class="sec-title">차량 위치 직접 바꾸기</div>
-  <div class="card">
-    <div class="row">
-      <div class="ico ico-orange">👆</div>
-      <div class="rtxt">
-        <div class="rtitle">탭 두 번으로 이동</div>
-        <div class="rdesc">옮기고 싶은 차를 <b>1번 탭</b> → 빨간색으로 선택됩니다.<br>이동할 빈 칸을 <b>2번 탭</b> → 파란 테두리로 확인 대기.<br>같은 칸을 다시 탭하면 실제로 이동됩니다.</div>
-      </div>
-    </div>
-    <div class="tap-flow">
-      <div class="tap-step">
-        <div class="tap-box tap-1">769</div>
-        <div class="tap-lbl">① 탭</div>
-      </div>
-      <div class="tap-arrow">→</div>
-      <div class="tap-step">
-        <div class="tap-box tap-2">769</div>
-        <div class="tap-lbl">선택됨</div>
-      </div>
-      <div class="tap-arrow">→</div>
-      <div class="tap-step">
-        <div class="tap-box tap-3">769</div>
-        <div class="tap-lbl">② 탭 확인</div>
-      </div>
-    </div>
-    <div class="row" style="border-top:0.5px solid var(--border);">
-      <div class="ico ico-blue">↩</div>
-      <div class="rtxt">
-        <div class="rtitle">취소 / 다시 버튼</div>
-        <div class="rdesc">잘못 바꿨을 때 헤더의 <b>↩ 취소</b>를 탭하면 직전 상태로 돌아갑니다.</div>
+  <!-- 설정 -->
+  <div class="section">
+    <div class="section-title">설정</div>
+    <div class="card">
+      <div class="item">
+        <div class="item-icon bg-gray">⚙️</div>
+        <div class="item-body">
+          <div class="item-title">하단 메뉴 → 설정</div>
+          <div class="item-desc">차량 번호 추가·삭제, 행 추가·삭제, A/B팀 설정, 배차 API 주소, 하단 안내문 수정.</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Auto Park 결과 -->
-  <div class="sec-title">Auto Park 결과 화면</div>
-  <div class="card">
-    <div class="row">
-      <div class="ico ico-green">✅</div>
-      <div class="rtxt">
-        <div class="rtitle">완벽 — 입차·출차 막힘 0건</div>
-        <div class="rdesc">오늘 입차도, 내일 출차도 아무 문제 없는 주차도입니다.</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-yellow">🟡</div>
-      <div class="rtxt">
-        <div class="rtitle">입차 OK (출차 주의)</div>
-        <div class="rdesc">오늘 입차는 문제없지만 내일 출차 시 일부 순서 조정이 필요할 수 있습니다.</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-red">🔴</div>
-      <div class="rtxt">
-        <div class="rtitle">입차 막힘 있음</div>
-        <div class="rdesc">오늘 입차 시 통로가 막히는 상황이 발생합니다. 자동주차를 다시 탐색 중입니다.</div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="ico ico-blue">✓ 적용</div>
-      <div class="rtxt">
-        <div class="rtitle">적용하기 버튼</div>
-        <div class="rdesc">결과 화면에서 <b>적용하기</b>를 탭하면 주차 그리드에 즉시 반영됩니다.</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="tip">💡 탐색 중 너무 오래 걸린다면 <b>닫기</b> 버튼으로 중단하고, 지금까지 찾은 최선의 주차도로 직접 조정할 수 있습니다.</div>
-
-  <div class="footer-note" style="margin-top:24px;">보영운수 22번 주차도 관리시스템</div>
+  <div class="foot">보영운수 22번 주차도 관리시스템<br>© 2026 ChangHai An</div>
 
 </div>
 
 <script>
 function goBack(){
-  if(window.history.length<=1||window.navigator.standalone){
-    window.location.href='./index.html';
-  } else {
-    window.history.back();
-  }
+  if(window.history.length<=1||window.navigator.standalone){window.location.href='./index.html';}
+  else{window.history.back();}
 }
-window.addEventListener('pageshow',function(){
-  window.history.pushState({page:'manual'},'','');
-});
-window.addEventListener('popstate',function(){
-  window.location.href='./index.html';
-});
+window.addEventListener('pageshow',function(){window.history.pushState({page:'manual'},'','');});
+window.addEventListener('popstate',function(){window.location.href='./index.html';});
 </script>
 </body>
 </html>

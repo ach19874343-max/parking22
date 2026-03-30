@@ -5,17 +5,30 @@
 
 /* ── 팀 계산 ── */
 function getTeamByDate(dateStr) {
-  if (APP.settings?.teamMode === 'fixed') {
-    const lbl = document.getElementById('teamLabel');
-    if (lbl) lbl.setAttribute('data-team', '22');
-    return '🚌 22번 TEAM';
-  }
   const base = new Date('2026-03-14');
-  const diff = Math.floor((new Date(dateStr) - base) / 86400000);
-  const isB  = diff % 2 === 0;
-  const lbl  = document.getElementById('teamLabel');
-  if (lbl) lbl.setAttribute('data-team', isB ? 'B' : 'A');
-  return isB ? '🔴 B TEAM' : '🔵 A TEAM';
+  let teamKey, teamText;
+
+  if (APP.settings?.teamMode === 'fixed') {
+    teamKey  = '22';
+    teamText = '22번 TEAM';
+  } else {
+    const diff = Math.floor((new Date(dateStr) - base) / 86400000);
+    const isB  = diff % 2 === 0;
+    teamKey  = isB ? 'B' : 'A';
+    teamText = isB ? '🔴 B TEAM' : '🔵 A TEAM';
+  }
+
+  /* pill 색상 */
+  const pillWrap = document.getElementById('datePillWrap') ||
+                   document.querySelector('.date-pill-wrap');
+  if (pillWrap) pillWrap.dataset.team = teamKey;
+
+  /* 팀 텍스트 — 날짜 바로 옆에 표시 */
+  const teamEl = document.getElementById('teamLabel') ||
+                 document.querySelector('.date-pill-team');
+  if (teamEl) teamEl.textContent = teamText;
+
+  return teamText;
 }
 
 /* ── footer 이모지 ── */

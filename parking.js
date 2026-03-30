@@ -13,20 +13,23 @@ function getTodayStr() {
 
 /* ── 날짜 문자열로 요일 표시 업데이트 ───────────────────── */
 function updateDayLabel(dateStr) {
-  const DAYS    = ["일","월","화","수","목","금","토"];
-  const DAYS_EN = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const d     = new Date(dateStr + "T00:00:00");
-  const mm    = String(d.getMonth() + 1).padStart(2, '0');
-  const dd    = String(d.getDate()).padStart(2, '0');
-  const day   = DAYS[d.getDay()];
-  const dayEn = DAYS_EN[d.getDay()];
-  const btn   = document.getElementById("dateDisplayBtn");
-  if (!btn) return;
-  const mainEl = btn.querySelector('.date-main-text');
-  const subEl  = btn.querySelector('.date-sub-text');
-  if (mainEl) mainEl.textContent = mm + ' · ' + dd + ' (' + day + ')';
-  if (subEl)  subEl.textContent  = d.getFullYear() + ' · ' + dayEn;
-  if (!mainEl) btn.textContent = mm + '.' + dd + ' (' + day + ')';
+  const DAYS = ["일","월","화","수","목","금","토"];
+  const d    = new Date(dateStr + "T00:00:00");
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  const day  = DAYS[d.getDay()];
+  const mainEl = document.getElementById('dateMainText') ||
+                 document.querySelector('.date-pill-text');
+  if (!mainEl) return;
+  const w = window.innerWidth;
+  if (w <= 320) {
+    mainEl.textContent = mm + '.' + dd + ' (' + day + ')';
+  } else if (w <= 380) {
+    mainEl.textContent = yyyy + '.' + mm + '.' + dd + ' (' + day + ')';
+  } else {
+    mainEl.textContent = yyyy + '년 ' + mm + '월 ' + dd + '일 (' + day + ')';
+  }
 }
 
 /* ── Firebase 에서 차량 목록 로드 ───────────────────────── */
@@ -1233,52 +1236,16 @@ async function initParking() {
 
   const datePicker = document.getElementById('datePicker');
   /* 날짜 표시 버튼 클릭 → datePicker 열기 */
-  const dateDisplayBtn = document.getElementById('dateDisplayBtn');
-  /* iOS Safari 대응: dateDisplayBtn 위에 투명 date input 덮어씌우기 */
-  if (dateDisplayBtn) {
-    /* 투명 오버레이 input 생성 */
-    const iosDateOverlay = document.createElement('input');
-    iosDateOverlay.type = 'date';
-    iosDateOverlay.style.cssText = [
-      'position:absolute',
-      'inset:0',
-      'width:100%',
-      'height:100%',
-      'opacity:0',
-      'cursor:pointer',
-      'z-index:5',
-      'border:none',
-      'background:transparent',
-      '-webkit-appearance:none',
-    ].join(';');
-    iosDateOverlay.value = datePicker.value;
-    dateDisplayBtn.style.position = 'relative';
-    dateDisplayBtn.appendChild(iosDateOverlay);
-
-    /* 오버레이 input 변경 → 실제 datePicker와 동기화 */
-    iosDateOverlay.addEventListener('change', (e) => {
-      const val = e.target.value;
-      if (!val) return;
-      datePicker.value = val;
-      datePicker.dispatchEvent(new Event('change'));
-    });
-
-    /* 기존 click 핸들러도 유지 (Android/PC) */
-    dateDisplayBtn.addEventListener('click', (e) => {
-      if (e.target === iosDateOverlay) return;
-      try { datePicker.showPicker?.(); } catch(e2) {}
-    });
-  }
   const prevDayBtn = document.getElementById('prevDayBtn');
   const nextDayBtn = document.getElementById('nextDayBtn');
   const todayBtn   = document.getElementById('todayBtn');
 
   /* ── 날짜 변경 공통 헬퍼 ── */
   function changeDate(s) {
-    clearTapState();          /* 날짜 이동 시 탭 선택 + 칩 하이라이트 초기화 */
+    clearTapState();
     datePicker.value = s;
     loadData(s);
-    document.getElementById('teamLabel').textContent = APP.getTeamByDate(s);
+    if (APP.getTeamByDate) APP.getTeamByDate(s); /* 팀 표시 + pill 색상 모두 처리 */
     updateDayLabel(s);
     if (APP.loadDispatchForDate) APP.loadDispatchForDate(s);
   }
@@ -1376,10 +1343,18 @@ async function initParking() {
   /* ── 초기 데이터 로드 ── */
   const todayStr = getTodayStr();
   datePicker.value = todayStr;
-  document.getElementById('teamLabel').textContent = APP.getTeamByDate(todayStr);
-    updateDayLabel(todayStr);
+  if (APP.getTeamByDate) APP.getTeamByDate(todayStr); /* 팀 표시 + pill 색상 */
+  updateDayLabel(todayStr);
   renderGrid();
   await loadData(todayStr);
+
+  /* ── 날짜선택 탭 버튼 → datePicker 열기 ── */
+  const datePickerBtn = document.getElementById('datePickerBtn');
+  if (datePickerBtn) {
+    datePickerBtn.addEventListener('click', () => {
+      datePicker.showPicker ? datePicker.showPicker() : datePicker.click();
+    });
+  }
 
 
   /* ── 수동 / 오토 불러오기 버튼 ── */
@@ -1432,4 +1407,12 @@ async function initParking() {
   }
 
   /* 백그라운드 자동 데이터 정리 제거 — 수동(데이터 정리 버튼)으로만 운영 */
+
+  /* 화면 크기 변경 시 날짜 포맷 갱신 (가로/세로 회전, 리사이즈) */
+  const _onResize = () => {
+    const cur = datePicker.value || getTodayStr();
+    updateDayLabel(cur);
+  };
+  window.addEventListener('resize', _onResize, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(_onResize, 200), { passive: true });
 }

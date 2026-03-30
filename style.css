@@ -6,12 +6,12 @@
 /* ── CSS Variables ─────────────────────────────────────── */
 :root {
   --font:        'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --header-h:    88px;
-  --nav-h:       56px;
+  --header-h:    64px;
+  --nav-h:       60px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
   /* Colors */
-  --bg:          #EEF0F7;
+  --bg:          #F3F4F6;
   --surface:     #FFFFFF;
   --border:      rgba(0,0,0,0.07);
   --text-pri:    #1A1F36;
@@ -19,12 +19,12 @@
   --text-hint:   #9CA3AF;
 
   /* Status */
-  --run-bg:      #ECFDF5;
-  --run-txt:     #065F46;
-  --run-border:  #6EE7B7;
-  --rest-bg:     #FEF08A;
-  --rest-txt:    #713F12;
-  --rest-border: #EAB308;
+  --run-bg:      #fff;
+  --run-txt:     #111827;
+  --run-border:  #E5E7EB;
+  --rest-bg:     #FEFCE8;
+  --rest-txt:    #111827;
+  --rest-border: #FEF08A;
   --empty-bg:    #F9FAFB;
   --empty-border:#D1D5DB;
 
@@ -117,46 +117,6 @@ input, textarea, select {
   font-family: var(--font);
 }
 
-/* 저장시간 숨김, 수동/오토 버튼 표시 */
-body .last-saved-wrap {
-  display: none !important;
-}
-body .header-action-btn {
-  display: flex !important;
-}
-
-/* ── 다크모드 토글 버튼 ── */
-.dark-mode-btn {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: background 0.15s, transform 0.1s;
-  padding: 0;
-}
-.dark-mode-btn svg {
-  width: 15px;
-  height: 15px;
-  stroke: var(--text-sec);
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-.dark-mode-btn:active { transform: scale(0.9); }
-
-/* 라이트모드: 달 숨기기 / 다크모드: 해 숨기기 */
-body:not(.dark-mode) .icon-moon { display: none; }
-body.dark-mode .icon-sun        { display: none; }
-
 /* ── 다크모드 전체 스타일 ── */
 body.dark-mode {
   --bg:       #1C1C1E;
@@ -194,10 +154,6 @@ body.dark-mode .slot-card.rest {
 body.dark-mode .slot-card.empty {
   background: rgba(255,255,255,0.03);
   border-color: rgba(255,255,255,0.08);
-}
-body.dark-mode .today-chip {
-  background: #F2F2F7;
-  color: #1C1C1E;
 }
 body.dark-mode .bulletin-post {
   background: #2C2C2E;
@@ -386,268 +342,123 @@ body.dark-mode textarea {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
+/* ══════════════════════════════════════════════
+   헤더 — Windows 11 / 카카오 하이브리드 스타일
+   ══════════════════════════════════════════════ */
 .app-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  height: var(--header-h);
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 0.5px solid rgba(0,0,0,0.07);
-  padding: 10px 14px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  box-shadow: 0 1px 10px rgba(0,0,0,0.06);
+  background: #fff;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 10px 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  transform: translateZ(0);
 }
 
 .date-nav {
   display: flex;
   align-items: center;
-  flex: 1;
-  position: relative;
 }
 
-.date-nav-btn {
+/* pill 전체: < 날짜 팀뱃지 > — 항상 파란색 */
+.date-pill-wrap {
+  flex: 1;
+  height: 48px;
+  border-radius: 24px;
+  background: #1A73E8;
+  display: flex;
+  align-items: center;
+  padding: 0 5px;
+  min-width: 0;
+  box-shadow: 0 2px 8px rgba(26,115,232,0.30);
+  overflow: hidden;
+}
+
+/* pill 안 화살표 */
+.date-nav-arrow {
   width: 38px;
   height: 38px;
+  min-width: 38px;
   border-radius: 50%;
-  background: #3B82F6;
+  background: rgba(255,255,255,0.20);
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: background 0.15s, transform 0.1s;
+  transition: background 0.12s, transform 0.1s;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.40);
+  cursor: pointer;
 }
-.date-nav-btn svg {
-  width: 18px;
-  height: 18px;
+.date-nav-arrow svg {
+  width: 20px;
+  height: 20px;
   stroke: #fff;
   fill: none;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.date-nav-btn:active {
-  background: #1D4ED8;
-  transform: scale(0.9);
-}
-body.dark-mode .date-nav-btn {
-  background: #2563EB;
-  box-shadow: 0 2px 8px rgba(37,99,235,0.50);
+.date-nav-arrow:active {
+  background: rgba(255,255,255,0.38);
+  transform: scale(0.92);
 }
 
-.date-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  pointer-events: none;
-}
-.date-center > * { pointer-events: auto; }
-
-#datePicker {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.date-display-btn {
-  height: 40px;
-  min-width: 140px;
-  border: none;
+/* 날짜+팀 div — 클릭은 pill-wrap이 처리 */
+.date-display-pill {
+  flex: 1;
+  height: 100%;
   background: transparent;
-  padding: 0 4px;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
-  cursor: pointer;
+  gap: 7px;
+  padding: 0 6px;
+  min-width: 0;
 }
-.date-display-btn .date-main-text {
-  font-size: 17px;
+
+/* 날짜 텍스트 */
+.date-pill-text {
+  font-size: clamp(13px, 3.8vw, 18px);
   font-weight: 900;
-  color: var(--text-pri);
-  letter-spacing: -0.6px;
-  line-height: 1.15;
-  font-family: var(--font);
-}
-.date-display-btn .date-sub-text {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--text-hint);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-family: var(--font);
-}
-.date-display-btn:focus { outline: none; }
-
-.today-chip {
-  height: 32px;
-  padding: 0 16px;
-  border-radius: 16px;
-  border: none;
   color: #fff;
-  background: #1C1C1E;
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--font);
-  flex-shrink: 0;
-  margin-left: auto;
-  letter-spacing: 0.02em;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  transition: opacity 0.12s, transform 0.1s;
-}
-.today-chip:active {
-  opacity: 0.75;
-  transform: scale(0.94);
-}
-
-/* Team + Legend Row */
-.team-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2px;
-  min-height: 28px;
-}
-
-.header-actions {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  z-index: 1;
-}
-
-.header-action-btn {
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-sec);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, transform 0.1s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  font-family: var(--font);
-}
-.header-action-btn .btn-label {
-  font-size: 12px;
-  font-weight: 700;
+  letter-spacing: -0.3px;
   line-height: 1;
-}
-/* 수동 버튼 — 활성 시 파란색 */
-#manualLoadBtn:not(:disabled) {
-  border-color: rgba(37,99,235,0.3);
-  color: #2563EB;
-  background: #EFF6FF;
-}
-#manualLoadBtn:not(:disabled):active { transform: scale(0.93); }
-/* 오토 버튼 — 활성 시 초록색 */
-#autoLoadBtn:not(:disabled) {
-  border-color: rgba(5,150,105,0.3);
-  color: #059669;
-  background: #ECFDF5;
-}
-#autoLoadBtn:not(:disabled):active { transform: scale(0.93); }
-/* 비활성 */
-.header-action-btn:disabled {
-  opacity: 0.3;
-  cursor: default;
-  pointer-events: none;
-}
-/* 다크모드 */
-body.dark-mode #manualLoadBtn:not(:disabled) {
-  background: rgba(37,99,235,0.15);
-  color: #60A5FA;
-  border-color: rgba(59,130,246,0.3);
-}
-body.dark-mode #autoLoadBtn:not(:disabled) {
-  background: rgba(5,150,105,0.15);
-  color: #34D399;
-  border-color: rgba(52,211,153,0.3);
-}
-
-.team-badge {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  padding: 4px 14px;
-  border-radius: 20px;
-  background: var(--team-bg, #EFF6FF);
-  color: var(--team-color, #1D4ED8);
-  border: 1.5px solid var(--team-border, #BFDBFE);
-  transition: background 0.3s, color 0.3s;
+  font-family: var(--font);
   white-space: nowrap;
-  pointer-events: none;
-  z-index: 0;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* A팀(파랑) / B팀(빨강) 동적 색상 */
-.team-badge[data-team="A"] {
-  --team-bg:     #EFF6FF;
-  --team-color:  #1D4ED8;
-  --team-border: #BFDBFE;
-}
-.team-badge[data-team="B"] {
-  --team-bg:     #FFF1F2;
-  --team-color:  #BE123C;
-  --team-border: #FECDD3;
-}
-.team-badge[data-team="22"] {
-  --team-bg:     #F0FDF4;
-  --team-color:  #15803D;
-  --team-border: #BBF7D0;
-}
-
-.legend {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  justify-content: flex-end;
-  flex-wrap: nowrap;
-  z-index: 1;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
+/* 팀 뱃지 — 날짜 바로 옆, 색상으로 팀 구분 */
+.date-pill-team {
   flex-shrink: 0;
-}
-
-.legend-dot.run  { background: #34D399; }
-.legend-dot.rest { background: #FBBF24; }
-
-.legend-text {
-  font-size: 11px;
-  color: var(--text-pri);
-  font-weight: 700;
+  font-size: clamp(11px, 2.8vw, 14px);
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font);
   white-space: nowrap;
+  line-height: 1.2;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.5);
 }
 
-/* 아주 작은 화면에서 legend 텍스트 숨기고 점만 표시 */
-@media (max-width: 340px) {
-  .legend-text { display: none; }
-  .legend { gap: 4px; }
+/* ── 팀 뱃지 색상만 구분 (pill은 항상 파랑) ── */
+.date-pill-wrap[data-team="A"] .date-pill-team {
+  background: rgba(255,255,255,0.22);
 }
+.date-pill-wrap[data-team="B"] .date-pill-team {
+  background: rgba(42,157,143,0.70);
+  border-color: rgba(255,255,255,0.4);
+}
+.date-pill-wrap[data-team="22"] .date-pill-team {
+  background: rgba(99,179,237,0.35);
+}
+
 /* ── 차량 수정 모드 완료 바 ──────────────────────────── */
 .row-edit-done-bar {
   position: absolute;
@@ -658,6 +469,8 @@ body.dark-mode #autoLoadBtn:not(:disabled) {
   height: 40px;
   background: #2D3748;
   display: flex;
+
+
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
@@ -984,9 +797,14 @@ body.dark-mode #autoLoadBtn:not(:disabled) {
    ─────────────────────────────────────────────────────── */
 .parking-main {
   height: calc((var(--app-vh, 100svh) - var(--header-h) - var(--nav-h) - var(--safe-b)) * 0.62);
-  padding: 5px 10px 3px;
+  padding: 8px 10px 6px;
   flex-shrink: 0;
   position: relative;
+  background: #fff;
+  border-radius: 16px;
+  margin: 6px 10px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border: 1px solid rgba(0,0,0,0.05);
 }
 
 /* ── 빈 날짜 안내 ── */
@@ -997,29 +815,33 @@ body.dark-mode #autoLoadBtn:not(:disabled) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
   pointer-events: none;
   z-index: 2;
 }
 .empty-grid-icon {
-  font-size: 36px;
-  opacity: 0.4;
+  font-size: 48px;
+  opacity: 0.85;
+  filter: saturate(1.2);
 }
 .empty-grid-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--text-sec);
-  opacity: 0.7;
+  font-size: 17px;
+  font-weight: 900;
+  color: #1A1A1A;
+  opacity: 0.85;
+  letter-spacing: -0.3px;
 }
 .empty-grid-desc {
-  font-size: 13px;
-  color: var(--text-hint);
+  font-size: 14px;
+  font-weight: 600;
+  color: #3A3A3A;
   text-align: center;
-  line-height: 1.6;
+  line-height: 1.7;
+  opacity: 0.8;
 }
 .empty-grid-desc b {
-  color: var(--blue);
-  font-weight: 700;
+  color: #0B7EF4;
+  font-weight: 800;
 }
 
 .parking-grid {
@@ -1045,27 +867,28 @@ body.dark-mode #autoLoadBtn:not(:disabled) {
   align-items: center;
   justify-content: center;
   border-radius: 7px;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   box-shadow: none;
   color: #fff;
   transition: transform 0.15s;
+  background: #D1D5DB;  /* 아주 연한 회색 */
 }
 
-.line-label[data-row="0"] { background: #9CA3AF; }
-.line-label[data-row="1"] { background: #9CA3AF; }
-.line-label[data-row="2"] { background: #9CA3AF; }
-.line-label[data-row="3"] { background: #9CA3AF; }
-.line-label[data-row="4"] { background: #9CA3AF; }
-.line-label[data-row="5"] { background: #9CA3AF; }
-.line-label[data-row="6"] { background: #9CA3AF; }
-.line-label[data-row="7"] { background: #9CA3AF; }
-.line-label[data-row="8"] { background: #9CA3AF; }
-.line-label[data-row="9"] { background: #9CA3AF; }
-.line-label[data-row="10"]{ background: #9CA3AF; }
-.line-label[data-row="11"]{ background: #9CA3AF; }
-.line-label[data-row="12"]{ background: #9CA3AF; }
+.line-label[data-row="0"] { background: #D1D5DB; }
+.line-label[data-row="1"] { background: #D1D5DB; }
+.line-label[data-row="2"] { background: #D1D5DB; }
+.line-label[data-row="3"] { background: #D1D5DB; }
+.line-label[data-row="4"] { background: #D1D5DB; }
+.line-label[data-row="5"] { background: #D1D5DB; }
+.line-label[data-row="6"] { background: #D1D5DB; }
+.line-label[data-row="7"] { background: #D1D5DB; }
+.line-label[data-row="8"] { background: #D1D5DB; }
+.line-label[data-row="9"] { background: #D1D5DB; }
+.line-label[data-row="10"]{ background: #D1D5DB; }
+.line-label[data-row="11"]{ background: #D1D5DB; }
+.line-label[data-row="12"]{ background: #D1D5DB; }
 
 /* 슬롯 래퍼 */
 .slots-wrap {
@@ -1098,25 +921,25 @@ body.dark-mode #autoLoadBtn:not(:disabled) {
 
 /* 상태별 스타일 */
 .slot-card.run {
-  background: #EFF6FF;
-  color: #1E3A5F;
-  border: 1px solid #BFDBFE;
-  box-shadow: 0 1px 4px rgba(37,99,235,0.08);
+  background: #fff;
+  color: #111827;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 .slot-card.run::before {
   content: '';
   position: absolute;
   left: 0; top: 18%; height: 64%;
   width: 3px;
-  background: #3B82F6;
+  background: #93C5FD;
   border-radius: 0 2px 2px 0;
 }
 
 .slot-card.rest {
-  background: #FFFBEB;
-  color: #78350F;
-  border: 1px solid #FDE68A;
-  box-shadow: 0 1px 4px rgba(245,158,11,0.15);
+  background: #FEFCE8;
+  color: #111827;
+  border: 1px solid #FEF08A;
+  box-shadow: 0 1px 3px rgba(234,179,8,0.10);
   font-weight: 900;
 }
 .slot-card.rest::before {
@@ -1124,13 +947,13 @@ body.dark-mode #autoLoadBtn:not(:disabled) {
   position: absolute;
   left: 0; top: 18%; height: 64%;
   width: 3px;
-  background: #F59E0B;
+  background: #FDE68A;
   border-radius: 0 2px 2px 0;
 }
 
 .slot-card.empty {
-  background: rgba(0,0,0,0.05);
-  border: 1.5px dashed rgba(0,0,0,0.12);
+  background: #F9FAFB;
+  border: 1.5px dashed #E5E7EB;
   pointer-events: none;
   cursor: default;
 }
@@ -1223,30 +1046,6 @@ body.dark-mode .slot-card.tap-selected {
   background: var(--blue) !important;
 }
 
-/* 휴차 카드에 세로 선 액센트 */
-.slot-card.rest::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 10%;
-  height: 80%;
-  width: 3px;
-  background: #FBBF24;
-  border-radius: 0 2px 2px 0;
-}
-
-/* 운행 카드 */
-.slot-card.run::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 10%;
-  height: 80%;
-  width: 3px;
-  background: #34D399;
-  border-radius: 0 2px 2px 0;
-}
-
 /* ── Drag Ghost ─────────────────────────────────────────── */
 .drag-ghost {
   position: fixed;
@@ -1287,119 +1086,94 @@ body.dark-mode .slot-card.tap-selected {
   position: fixed;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateZ(0);
   width: 100%;
   max-width: 640px;
-  height: calc(56px + var(--safe-b));
+  height: calc(60px + var(--safe-b));
   padding-bottom: var(--safe-b);
-  background: rgba(255,255,255,0.94);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 0.5px solid rgba(0,0,0,0.08);
+  background: #fff;
+  border-top: 1px solid #F0F0F0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   z-index: 300;
-  box-shadow: 0 -1px 12px rgba(0,0,0,0.07);
-}
-body.dark-mode .bottom-nav {
-  background: rgba(28,28,30,0.95);
-  border-top-color: rgba(255,255,255,0.07);
-  box-shadow: 0 -1px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
-/* 각 탭 버튼 */
 .bnav-btn {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 6px 4px 4px;
-  color: #8E8E93;
-  transition: color 0.15s, transform 0.1s;
+  padding: 0 2px;
   -webkit-tap-highlight-color: transparent;
-  position: relative;
+  height: 48px;
+  min-width: 0;
 }
-.bnav-btn:active {
-  transform: scale(0.92);
-  color: #1D4ED8;
-}
-body.dark-mode .bnav-btn {
-  color: #636366;
-}
-body.dark-mode .bnav-btn:active {
-  color: #60A5FA;
+.bnav-btn:active { opacity: 0.65; }
+
+.bnav-inner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px clamp(6px, 2vw, 12px);
+  border-radius: 20px;
+  transition: background 0.15s;
+  color: #000;
+  min-width: 0;
+  max-width: 100%;
 }
 
-/* Auto Park 버튼 — 중앙 강조 */
-.bnav-btn--autopark {
-  color: #1D4ED8;
+.bnav-btn.active .bnav-inner {
+  background: #EBF4FE;
 }
-.bnav-btn--autopark .bnav-icon {
-  background: linear-gradient(135deg, #2563EB, #1D4ED8);
-  border-radius: 14px;
-  width: 44px;
-  height: 32px;
+.bnav-btn.active .bnav-label {
+  color: #0B7EF4;
+}
+
+.bnav-icon {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 10px rgba(29,78,216,0.35);
-  transition: box-shadow 0.15s, transform 0.1s;
+  flex-shrink: 0;
 }
-.bnav-btn--autopark .bnav-icon svg {
-  stroke: #fff;
-}
-.bnav-btn--autopark:active .bnav-icon {
-  transform: scale(0.93);
-  box-shadow: 0 1px 5px rgba(29,78,216,0.25);
-}
-body.dark-mode .bnav-btn--autopark {
-  color: #60A5FA;
-}
-body.dark-mode .bnav-btn--autopark .bnav-icon {
-  background: linear-gradient(135deg, #3B82F6, #2563EB);
-  box-shadow: 0 3px 10px rgba(59,130,246,0.35);
+.bnav-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-/* spinning 상태 (불러오는 중) */
-.bnav-btn--autopark.spinning .bnav-icon svg,
+.bnav-label {
+  font-size: clamp(8px, 2.2vw, 12px);
+  font-weight: 700;
+  line-height: 1;
+  font-family: var(--font);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000;
+  max-width: 100%;
+}
+
 .bnav-btn.spinning .bnav-icon svg {
   animation: bnav-spin 0.7s linear infinite;
 }
 @keyframes bnav-spin { to { transform: rotate(360deg); } }
 
-.bnav-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.bnav-icon svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  transition: stroke 0.15s;
-}
-
-.bnav-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1;
-  font-family: var(--font);
-}
-
-/* 관리자 전용 — 게스트 숨김 */
 .admin-ui { display: flex; }
+
+
 
 /* ── Bulletin Section ─────────────────────────────────── */
 .bulletin-section {
@@ -1836,10 +1610,9 @@ body.dark-mode .bnav-btn--autopark .bnav-icon {
 }
 
 /* ── Footer Note ─────────────────────────────────────── */
-/* ── 하단 안내문 래퍼 ── */
 .parking-footer {
-  padding: 0 12px calc(var(--safe-b) + 80px);
-  background: var(--bg);
+  padding: 0 10px calc(var(--safe-b) + 76px);
+  background: var(--bg);  /* 앱 전체 배경과 동일 */
 }
 .footer-version-row {
   text-align: center;
@@ -1865,7 +1638,7 @@ body.dark-mode .bnav-btn--autopark .bnav-icon {
 }
 
 .footer-note {
-  padding: 12px 4px 4px;
+  padding: 6px 0 4px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1874,13 +1647,13 @@ body.dark-mode .bnav-btn--autopark .bnav-icon {
 /* 정보 카드 */
 .fn-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 10px 12px;
-  border: 0.5px solid rgba(0,0,0,0.06);
+  border-radius: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  gap: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
 .fn-row {
   display: flex;
@@ -2766,20 +2539,42 @@ body.dark-mode .settings-input:focus { border-color: #F2F2F7; }
   .header-action-btn { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
 }
 
-/* ── Desktop 대응 ─────────────────────────────────────────── */
+/* ══════════════════════════════════════════════
+   반응형 — 소형 폰 (360px 이하)
+   ══════════════════════════════════════════════ */
+@media (max-width: 360px) {
+  .date-pill-text { font-size: 11px; }
+  .date-pill-team { font-size: 9px; }
+  .date-nav-arrow { width: 32px; min-width: 32px; height: 32px; }
+  .date-nav-arrow svg { width: 15px; height: 15px; }
+  .date-pill-wrap { height: 40px; border-radius: 20px; }
+  .slot-card { border-radius: 8px; }
+  .line-label { width: 20px; font-size: 9px; border-radius: 5px; }
+  .parking-main { margin: 4px 6px 0; border-radius: 10px; padding: 4px 6px 3px; }
+  .dispatch-section { padding: 4px 6px 3px; }
+  .parking-footer { padding: 0 6px calc(var(--safe-b) + 72px); }
+  .bnav-label { font-size: 9px; }
+  .bnav-icon { width: 18px; min-width: 18px; height: 18px; }
+  .bnav-icon svg { width: 18px; height: 18px; }
+}
+
+/* ══════════════════════════════════════════════
+   PC / 태블릿 최적화 (641px+)
+   ══════════════════════════════════════════════ */
 @media (min-width: 641px) {
+  body { background: #E5E8EF; }
   .app-wrapper {
-    border-left:  1px solid var(--border);
-    border-right: 1px solid var(--border);
+    border-left:  1px solid rgba(0,0,0,0.10);
+    border-right: 1px solid rgba(0,0,0,0.10);
+    box-shadow: 0 0 40px rgba(0,0,0,0.12);
   }
-
-  .slot-card {
-    font-size: 25px;
-  }
-
-  .parking-main {
-    padding: 10px 16px 8px;
-  }
+  .slot-card { font-size: 25px; }
+  .parking-main { padding: 10px 16px 8px; margin: 8px 14px 0; border-radius: 18px; }
+  .date-pill-text { font-size: 17px; }
+  .bnav-inner { padding: 8px 16px; gap: 6px; }
+  .bnav-label { font-size: 13px; }
+  .dispatch-section { padding: 8px 14px 5px; }
+  .parking-footer { padding: 0 14px calc(var(--safe-b) + 76px); }
 }
 
 /* ══════════════════════════════════════════════
