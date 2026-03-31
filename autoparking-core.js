@@ -13,12 +13,6 @@ const slotIndex = (row,col) => row*3+col;
 const slotRow   = si => Math.floor(si/3);
 const slotCol   = si => si%3;
 
-function isTodayWeekend(){
-  const dp=document.getElementById('datePicker');
-  const d=dp?.value?new Date(dp.value+'T00:00:00'):new Date();
-  return d.getDay()===0||d.getDay()===6;
-}
-
 function getTodayEntryOrder(){
   const restSet=new Set(dispatchState.todayMissing||[]);
   /* 정비소 제외 차량도 입차 순서에서 제외 */
@@ -270,22 +264,4 @@ function generateRestCandidates(restVehicles, tmrRank, RC){
     if(d3!==0) return d3;
     return rowCount(b.values,4)-rowCount(a.values,4);
   });
-}
-
-/* ══════════════════════════════════════════════════════════════
-   § 7. 미리보기 텍스트
-   ══════════════════════════════════════════════════════════════ */
-function buildPreviewText(result){
-  const rows=APP.rowLabels||['2R','3R','4R','5R','6R','7R'];
-  const lines=rows.map((label,rowIdx)=>{
-    const cells=[0,1,2].map(col=>{
-      const si=rowIdx*3+col,v=result.values[si],tag=result.active[si]?'(휴)':'';
-      return v?`${v}${tag}`:'  ─  ';
-    });
-    return `${label.padEnd(3)}: ${cells.join(' | ')}`;
-  });
-  const es=result.exitScore??0,en=result.entryScore??0;
-  lines.push('');
-  lines.push(`출차막힘: ${es}건  입차막힘: ${en}건  `+(es===0&&en===0?'✅ 완벽!':en===0?'🟡 입차OK (출차주의)':'🔴 입차막힘 있음')+(result.elapsed?`  (${result.elapsed}ms)`:'')); 
-  return lines.join('\n');
 }

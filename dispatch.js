@@ -9,6 +9,7 @@
 
 /* ── 성공 프록시 캐시 키 ────────────────────────────────────── */
 const PROXY_CACHE_KEY = 'dispatchLastProxyIdx';
+const WORKER_URL      = 'https://jolly-voice-134c.ach4343.workers.dev/';
 
 /* ── 세션 상태 ──────────────────────────────────────────────── */
 const dispatchState = {
@@ -42,16 +43,10 @@ function buildProxies(targetUrl) {
     return r.json();
   });
   return [
-    /* 3 codetabs */
+    /* CodeTabs */
     () => go(`https://api.codetabs.com/v1/proxy?quest=${enc}`),
-    /* 0 직접 */
-    () => go(targetUrl),
-    /* 1 allorigins /raw */
-    () => go(`https://api.allorigins.win/raw?url=${enc}`),
-    /* 2 thingproxy */
-    () => go(`https://thingproxy.freeboard.io/fetch/${targetUrl}`),
-    /* 4 corsproxy.io */
-    () => go(`https://corsproxy.io/?url=${enc}`),
+    /* Cloudflare Worker */
+    () => go(`${WORKER_URL}?url=${enc}`),
   ];
 }
 
@@ -323,7 +318,7 @@ function _restoreAbsentToGrid(num, dateStr) {
   }
   if (targetSlot !== null) {
     APP.parkingState.values[targetSlot] = num;
-    APP.parkingState.active[targetSlot] = false; /* 휴차 상태 */
+    APP.parkingState.active[targetSlot] = true; /* 휴차 상태(rest) */
   }
   /* 원위치 기억 삭제 */
   if (APP.excludedSlotMap?.[dateStr]) {
@@ -340,13 +335,6 @@ function _saveExcludedAbsent(dateStr) {
   const exSet = dispatchState.excludedAbsent[dateStr];
   const arr   = exSet ? [...exSet] : [];
   APP.set(APP.ref(APP.db, `parking/${dateStr}/excludedAbsent`), arr).catch(() => {});
-}
-
-/* ── 제외 목록 로드 후 칩 재렌더링 (parking.js loadData에서 호출) ── */
-function loadExcludedAbsent(dateStr) {
-  /* 실제 로드는 parking.js loadData에서 처리
-     여기서는 칩 상태만 갱신 */
-  if (dispatchState.loaded) renderDispatchSection();
 }
 
 /* ── Firebase: 날짜별 저장 ──────────────────────────────────── */

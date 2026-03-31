@@ -60,19 +60,11 @@ function tmplDispatch() {
         border: 1px solid rgba(0,0,0,0.05);
         box-shadow: 0 1px 4px rgba(0,0,0,0.07);
       }
-      .dark-mode .dispatch-content {
-        background: #1C1E26;
-        border-color: rgba(255,255,255,0.08);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-      }
 
       /* ── 오늘 행 ── */
       .dispatch-row-today {
         background: #F8FAFF;
         padding: 5px 10px 4px;
-      }
-      .dark-mode .dispatch-row-today {
-        background: rgba(37,99,235,0.08);
       }
       .dispatch-row-today .dispatch-day-label {
         font-size: 11px;
@@ -81,9 +73,6 @@ function tmplDispatch() {
         color: #2563EB;
         text-transform: uppercase;
       }
-      .dark-mode .dispatch-row-today .dispatch-day-label {
-        color: #60A5FA;
-      }
 
       /* ── 내일 행 ── */
       .dispatch-row-tomorrow {
@@ -91,19 +80,12 @@ function tmplDispatch() {
         padding: 5px 10px 4px;
         border-top: 0.5px solid rgba(0,0,0,0.06);
       }
-      .dark-mode .dispatch-row-tomorrow {
-        background: rgba(255,255,255,0.04);
-        border-top-color: rgba(255,255,255,0.06);
-      }
       .dispatch-row-tomorrow .dispatch-day-label {
         font-size: 11px;
         font-weight: 800;
         letter-spacing: .04em;
         color: #9CA3AF;
         text-transform: uppercase;
-      }
-      .dark-mode .dispatch-row-tomorrow .dispatch-day-label {
-        color: #6B7280;
       }
 
       /* ── 행 내 레이아웃 ── */
@@ -118,9 +100,6 @@ function tmplDispatch() {
         font-weight: 600;
         color: #6B7280;
         letter-spacing: .01em;
-      }
-      .dark-mode .dispatch-date-label {
-        color: #9CA3AF;
       }
 
       /* ── 칩 컨테이너: 7개 고정 그리드 ── */
@@ -180,7 +159,6 @@ function tmplDispatch() {
         letter-spacing: .02em;
       }
       .dispatch-load-btn-sm:active { opacity: 0.8; transform: scale(.97); }
-      .dark-mode .dispatch-load-btn-sm { background: #3B82F6; }
       .dispatch-load-btn-sm svg {
         width: 11px; height: 11px;
         stroke: currentColor; stroke-width: 2.2;
@@ -208,10 +186,6 @@ function tmplDispatch() {
         background: rgba(255,255,255,0.12);
         border: 1px solid rgba(255,255,255,0.20);
         border-radius: 22px; padding: 30px 40px 26px;
-      }
-      .dark-mode .dispatch-loading-inner {
-        background: rgba(28,28,30,0.88);
-        border-color: rgba(255,255,255,0.12);
       }
       .dispatch-spinner {
         width: 46px; height: 46px;
@@ -246,11 +220,6 @@ function tmplDispatch() {
       .dc-chip--excluded s {
         text-decoration: line-through;
         text-decoration-color: #6B7280;
-      }
-      .dark-mode .dc-chip--excluded {
-        background: #374151 !important;
-        border-color: #4B5563 !important;
-        color: #6B7280 !important;
       }
       /* ── 휴차 칩 long press 시각 피드백 ── */
       .dc-chip--absent:active {
@@ -457,11 +426,11 @@ function tmplBottomNav() {
 }
 
 
-function tmplPopupSettingsModal() { return ''; }
+// (removed unused empty templates: popup settings/notification, vehicle panel)
 
-function tmplPopupNotification() { return ''; }
+// (removed unused empty templates: popup notification)
 
-function tmplVehiclePanel() { return ''; }
+// (removed unused empty templates: vehicle panel)
 
 
 /* ── 앱 설정 대시보드 ──────────────────────────────────────── */
@@ -556,7 +525,7 @@ function tmplAppSettingsModal() {
 }
 
 /* ── 관리자 로그인 모달 ─────────────────────────────────────── */
-function tmplAdminModal() { return ''; }
+// (removed unused empty templates: admin login modal)
 
 /* ── 드래그 고스트 ──────────────────────────────────────────── */
 function tmplDragGhost() {
@@ -588,10 +557,6 @@ function tmplDragGhost() {
   const body = document.body;
   const extras = document.createElement('div');
   extras.innerHTML =
-    tmplPopupSettingsModal() +
-    tmplPopupNotification() +
-    tmplVehiclePanel() +
-    tmplAdminModal() +
     tmplAppSettingsModal() +
     tmplDragGhost();
 

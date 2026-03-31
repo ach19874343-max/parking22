@@ -315,9 +315,7 @@ function syncMissingVehiclesToSlots(values, active) {
    드래그 & 드롭 전역 상태
    ───────────────────────────────────────────────────────── */
 let dragSrcSlot    = null;   // PC 드래그 소스 슬롯 인덱스
-let touchDragSlot  = null;   // 모바일 드래그 소스 슬롯 인덱스 (미사용 → 하위호환 유지)
 let touchTimer     = null;   // 롱프레스 타이머
-let isTouchDrag    = false;  // 모바일 드래그 진행 중 여부 (미사용 → 하위호환 유지)
 
 /* ── 탭-투-스왑 전역 상태 ── */
 let tapFirstSlot   = null;   // 첫 번째 탭 슬롯 인덱스 (null 이면 미선택)
