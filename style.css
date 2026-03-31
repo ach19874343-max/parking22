@@ -2845,3 +2845,8 @@ body.dark-mode .slot-card.sim-waiting {
   background: #4B5563 !important;
   color: rgba(255,255,255,0.4) !important;
 }
+
+/* ── 복사 토스트 ── */
+#copyToast {
+  transition: opacity 0.4s ease;
+}

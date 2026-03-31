@@ -393,7 +393,7 @@ function tmplBottomNav() {
     </button>
 
     <!-- 배차순서조회 — 초록 아이콘 -->
-    <button class="bnav-btn" id="dispatchLoadBtn" aria-label="배차순서조회">
+    <button class="bnav-btn" id="dispatchLoadBtn" aria-label="순서조회">
       <span class="bnav-inner">
         <span class="bnav-icon" style="color:#16A34A">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -404,7 +404,7 @@ function tmplBottomNav() {
             <line x1="9" y1="16" x2="13" y2="16"/>
           </svg>
         </span>
-        <span class="bnav-label">배차순서조회</span>
+        <span class="bnav-label">순서조회</span>
       </span>
     </button>
 
@@ -422,6 +422,20 @@ function tmplBottomNav() {
           </svg>
         </span>
         <span class="bnav-label">오늘</span>
+      </span>
+    </button>
+
+    <!-- 복사 — 보라 아이콘 -->
+    <button class="bnav-btn" id="copyGridBtn" aria-label="복사">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#7C3AED">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </span>
+        <span class="bnav-label">복사</span>
       </span>
     </button>
 

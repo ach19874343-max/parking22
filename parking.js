@@ -1415,4 +1415,69 @@ async function initParking() {
   };
   window.addEventListener('resize', _onResize, { passive: true });
   window.addEventListener('orientationchange', () => setTimeout(_onResize, 200), { passive: true });
+
+  /* ── 복사 버튼 ── */
+  const copyGridBtn = document.getElementById('copyGridBtn');
+  if (copyGridBtn) copyGridBtn.addEventListener('click', copyParkingGrid);
+}
+
+/* ── 주차 그리드 복사 ── */
+function copyParkingGrid() {
+  const dateStr = document.getElementById('datePicker')?.value || '';
+  const rows    = APP.rowLabels || ['2R','3R','4R','5R','6R','7R'];
+  const values  = APP.parkingState?.values || {};
+
+  // 날짜 헤더 (MM/DD)
+  let header = '';
+  if (dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    header = (d.getMonth()+1) + '/' + String(d.getDate()).padStart(2,'0');
+  }
+
+  // 각 행: 있는 차량만 - 로 연결
+  const lines = rows.map((label, ri) => {
+    const cars = [0,1,2]
+      .map(col => values[ri*3+col])
+      .filter(v => v);
+    return cars.length ? cars.join('-') : null;
+  }).filter(line => line !== null);
+
+  const text = (header ? header + '\n' : '') + lines.join('\n');
+
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      // 복사 완료 토스트
+      let toast = document.getElementById('copyToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'copyToast';
+        toast.style.cssText = [
+          'position:fixed','bottom:calc(80px + env(safe-area-inset-bottom))',
+          'left:50%','transform:translateX(-50%)',
+          'background:rgba(30,30,30,0.92)','color:#fff',
+          'padding:10px 20px','border-radius:20px',
+          'font-size:14px','font-weight:700',
+          'z-index:9999','pointer-events:none',
+          'backdrop-filter:blur(8px)',
+          'box-shadow:0 2px 12px rgba(0,0,0,0.3)',
+          'white-space:nowrap',
+        ].join(';');
+        document.body.appendChild(toast);
+      }
+      toast.textContent = '✅ 주차도 복사됨';
+      toast.style.opacity = '1';
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+    })
+    .catch(() => {
+      // clipboard API 실패 시 fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      alert('복사됨!');
+    });
 }

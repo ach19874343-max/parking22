@@ -487,6 +487,44 @@ async function loadDispatchData() {
   }
 
   renderDispatchSection();
+
+  /* ── 순서조회 완료 토스트 ── */
+  const todayCnt  = (dispatchState.todayNums  || []).filter(n => !(dispatchState.todayMissing  || []).includes(n.num ?? n)).length;
+  const tmrCnt    = (dispatchState.tomorrowNums || []).length;
+  showDispatchToast('✅ 오늘 입차  ' + todayCnt + '대\n✅ 내일 출차  ' + tmrCnt + '대');
+}
+
+/* ── 순서조회 완료 토스트 ──────────────────────────────────────── */
+function showDispatchToast(msg) {
+  let toast = document.getElementById('dispatchToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'dispatchToast';
+    toast.style.cssText = [
+      'position:fixed',
+      'bottom:calc(80px + env(safe-area-inset-bottom))',
+      'left:50%','transform:translateX(-50%)',
+      'background:rgba(17,24,39,0.95)',
+      'color:#fff',
+      'padding:12px 20px',
+      'border-radius:16px',
+      'font-size:14px','font-weight:700',
+      'line-height:1.7',
+      'z-index:9999','pointer-events:none',
+      'backdrop-filter:blur(8px)',
+      '-webkit-backdrop-filter:blur(8px)',
+      'box-shadow:0 4px 16px rgba(0,0,0,0.35)',
+      'border:1px solid rgba(255,255,255,0.10)',
+      'white-space:pre',
+      'text-align:center',
+      'transition:opacity 0.4s ease',
+    ].join(';');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
 }
 
 /* ── 상태 리셋 ──────────────────────────────────────────────── */
