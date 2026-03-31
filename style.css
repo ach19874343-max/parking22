@@ -10,8 +10,8 @@
   --nav-h:       64px;
   --safe-b:      env(safe-area-inset-bottom, 0px);
 
-  /* Colors */
-  --bg:          #F3F4F6;
+  /* Colors — 라이트 블루 테마 */
+  --bg:          #E8EEF7;
   --surface:     #FFFFFF;
   --border:      rgba(0,0,0,0.07);
   --text-pri:    #1A1F36;
@@ -19,14 +19,14 @@
   --text-hint:   #9CA3AF;
 
   /* Status */
-  --run-bg:      #fff;
+  --run-bg:      #FFFFFF;
   --run-txt:     #111827;
-  --run-border:  #E5E7EB;
+  --run-border:  #E2E8F0;
   --rest-bg:     #FEFCE8;
   --rest-txt:    #111827;
-  --rest-border: #FEF08A;
-  --empty-bg:    #F9FAFB;
-  --empty-border:#D1D5DB;
+  --rest-border: #FDE68A;
+  --empty-bg:    #F0F4FA;
+  --empty-border:#D1D9E6;
 
   /* Accent */
   --blue:        #2563EB;
@@ -35,13 +35,13 @@
   --red-light:   #FEF2F2;
 
   /* Label */
-  --label-bg:    #334155;
-  --label-txt:   #F1F5F9;
+  --label-bg:    #94A3B8;
+  --label-txt:   #FFFFFF;
 
   /* Shadows */
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md:   0 4px 12px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.06);
-  --shadow-lg:   0 10px 30px rgba(0,0,0,0.14);
+  --shadow-sm:   0 1px 4px rgba(100,130,180,0.10), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:   0 4px 16px rgba(100,130,180,0.14), 0 2px 6px rgba(0,0,0,0.06);
+  --shadow-lg:   0 10px 30px rgba(100,130,180,0.20);
 }
 
 /* ── 다크모드: JS 토글(body.dark-mode) 방식 사용 ── */
@@ -63,9 +63,11 @@ html {
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  background: linear-gradient(160deg, #D6E4F7 0%, #EEF3FB 40%, #E2EAF5 100%);
+  background-attachment: fixed;
   color: var(--text-pri);
   overscroll-behavior: none;
+  min-height: 100vh;
 }
 
 button {
@@ -349,10 +351,12 @@ body.dark-mode textarea {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: #fff;
-  border-bottom: 1px solid #E5E7EB;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255,255,255,0.6);
   padding: 10px 12px;
-  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 8px rgba(100,130,180,0.12);
   transform: translateZ(0);
 }
 
@@ -800,11 +804,13 @@ body.dark-mode textarea {
   padding: 8px 10px 6px;
   flex-shrink: 0;
   position: relative;
-  background: #fff;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
   margin: 6px 10px 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(100,130,180,0.14), 0 1px 4px rgba(0,0,0,0.05);
+  border: 1px solid rgba(255,255,255,0.75);
 }
 
 /* ── 빈 날짜 안내 ── */
@@ -861,34 +867,33 @@ body.dark-mode textarea {
 
 /* 2R~7R 라벨 — 행별 컬러 뱃지 */
 .line-label {
-  width: 26px;
+  width: 32px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 7px;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.3px;
-  box-shadow: none;
-  color: #fff;
+  color: #64748B;
   transition: transform 0.15s;
-  background: #D1D5DB;  /* 아주 연한 회색 */
+  background: #EEF2F8;
 }
 
-.line-label[data-row="0"] { background: #D1D5DB; }
-.line-label[data-row="1"] { background: #D1D5DB; }
-.line-label[data-row="2"] { background: #D1D5DB; }
-.line-label[data-row="3"] { background: #D1D5DB; }
-.line-label[data-row="4"] { background: #D1D5DB; }
-.line-label[data-row="5"] { background: #D1D5DB; }
-.line-label[data-row="6"] { background: #D1D5DB; }
-.line-label[data-row="7"] { background: #D1D5DB; }
-.line-label[data-row="8"] { background: #D1D5DB; }
-.line-label[data-row="9"] { background: #D1D5DB; }
-.line-label[data-row="10"]{ background: #D1D5DB; }
-.line-label[data-row="11"]{ background: #D1D5DB; }
-.line-label[data-row="12"]{ background: #D1D5DB; }
+.line-label[data-row="0"]  { }
+.line-label[data-row="1"]  { }
+.line-label[data-row="2"]  { }
+.line-label[data-row="3"]  { }
+.line-label[data-row="4"]  { }
+.line-label[data-row="5"]  { }
+.line-label[data-row="6"]  { }
+.line-label[data-row="7"]  { }
+.line-label[data-row="8"]  { }
+.line-label[data-row="9"]  { }
+.line-label[data-row="10"] { }
+.line-label[data-row="11"] { }
+.line-label[data-row="12"] { }
 
 /* 슬롯 래퍼 */
 .slots-wrap {
@@ -921,39 +926,39 @@ body.dark-mode textarea {
 
 /* 상태별 스타일 */
 .slot-card.run {
-  background: #fff;
-  color: #111827;
-  border: 1px solid #E5E7EB;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  background: #FFFFFF;
+  color: #1A1F36;
+  border: 1px solid #E2E8F4;
+  box-shadow: 0 2px 8px rgba(100,130,180,0.12), 0 1px 2px rgba(0,0,0,0.05);
 }
 .slot-card.run::before {
   content: '';
   position: absolute;
-  left: 0; top: 18%; height: 64%;
-  width: 3px;
-  background: #93C5FD;
-  border-radius: 0 2px 2px 0;
+  left: 0; top: 15%; height: 70%;
+  width: 3.5px;
+  background: linear-gradient(180deg,#C7E0FF,#A8CAFF);
+  border-radius: 0 3px 3px 0;
 }
 
 .slot-card.rest {
   background: #FEFCE8;
-  color: #111827;
+  color: #1A1F36;
   border: 1px solid #FEF08A;
-  box-shadow: 0 1px 3px rgba(234,179,8,0.10);
+  box-shadow: 0 2px 8px rgba(234,179,8,0.14), 0 1px 2px rgba(0,0,0,0.04);
   font-weight: 900;
 }
 .slot-card.rest::before {
   content: '';
   position: absolute;
-  left: 0; top: 18%; height: 64%;
-  width: 3px;
-  background: #FDE68A;
-  border-radius: 0 2px 2px 0;
+  left: 0; top: 15%; height: 70%;
+  width: 3.5px;
+  background: linear-gradient(180deg,#FEF3A0,#FDE87A);
+  border-radius: 0 3px 3px 0;
 }
 
 .slot-card.empty {
-  background: #F9FAFB;
-  border: 1.5px dashed #E5E7EB;
+  background: rgba(240,244,250,0.6);
+  border: 1.5px dashed #C8D5E8;
   pointer-events: none;
   cursor: default;
 }
@@ -1091,12 +1096,14 @@ body.dark-mode .slot-card.tap-selected {
   max-width: 640px;
   height: calc(64px + var(--safe-b));
   padding-bottom: var(--safe-b);
-  background: #fff;
-  border-top: 1px solid #E5E7EB;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(220,228,242,0.8);
   display: flex;
   align-items: stretch;
   z-index: 300;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 -2px 16px rgba(100,130,180,0.12);
 }
 
 /* 세로 배치: 아이콘 위 / 텍스트 아래 */
@@ -1635,14 +1642,16 @@ body.dark-mode .slot-card.tap-selected {
 
 /* 정보 카드 */
 .fn-card {
-  background: #fff;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 16px;
   padding: 12px 14px;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(255,255,255,0.7);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 8px rgba(100,130,180,0.10);
 }
 .fn-row {
   display: flex;
@@ -2523,7 +2532,7 @@ body.dark-mode .settings-input:focus { border-color: #F2F2F7; }
   }
   .slot-card.run::before  { background: #3B82F6; }
   .slot-card.rest::before { background: #F59E0B; }
-  .line-label { background: #4B5563; }
+  .line-label { background: #374151; color: #9CA3AF; }
   .bulletin-post { border-color: rgba(255,255,255,0.06); }
   .header-action-btn { border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); }
 }
@@ -2844,9 +2853,4 @@ body.dark-mode .slot-card.sim-done,
 body.dark-mode .slot-card.sim-waiting {
   background: #4B5563 !important;
   color: rgba(255,255,255,0.4) !important;
-}
-
-/* ── 복사 토스트 ── */
-#copyToast {
-  transition: opacity 0.4s ease;
 }
