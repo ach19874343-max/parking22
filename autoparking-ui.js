@@ -28,7 +28,7 @@ function applyAutoParking(){
     <div style="display:flex;flex-direction:column;align-items:center;gap:16px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);border-radius:22px;padding:30px 40px 26px;min-width:220px">
       <div style="width:46px;height:46px;border:4px solid rgba(255,255,255,0.22);border-top-color:#3B82F6;border-radius:50%;animation:dc-spin .75s linear infinite"></div>
       <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:.02em;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.4)">최적 배치 탐색 중</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.55);text-align:center;margin-top:-8px">입·출차 막힘 없는 배치를 계산합니다</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.55);text-align:center;margin-top:-8px">휴차 순열·다중 패스로 넓게 탐색합니다(수 분 걸릴 수 있음)</div>
       <div style="display:inline-flex;gap:6px">
         <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite;display:inline-block"></span>
         <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite .18s;display:inline-block"></span>

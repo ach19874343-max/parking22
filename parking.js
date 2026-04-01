@@ -32,6 +32,20 @@ function updateDayLabel(dateStr) {
   }
 }
 
+/**
+ * 복사 헤더용 저녁주차 A/B조.
+ * 고정 기준: 2026-04-01 = B조. 그날(UTC 자정 기준)로부터 하루마다 A↔B만 교대(연도 바뀌어도 끊지 않음).
+ */
+const EVENING_SHIFT_ZERO_UTC_DAY = Math.floor(Date.UTC(2026, 3, 1) / 86400000);
+
+function getEveningShiftTeamForDate(dateStr) {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return 'B';
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  const dayUtc = Math.floor(Date.UTC(y, mo - 1, d) / 86400000);
+  const delta = dayUtc - EVENING_SHIFT_ZERO_UTC_DAY;
+  return (delta & 1) === 0 ? 'B' : 'A';
+}
+
 /* ── Firebase 에서 차량 목록 로드 ───────────────────────── */
 async function loadBusListFromDB() {
   const DEFAULT = ['714','750','751','752','753','754','755','756','757',
@@ -1425,11 +1439,13 @@ function copyParkingGrid() {
   const rows    = APP.rowLabels || ['2R','3R','4R','5R','6R','7R'];
   const values  = APP.parkingState?.values || {};
 
-  // 날짜 헤더 (MM/DD)
+  // 헤더: A조 저녁주차 - M/DD
   let header = '';
   if (dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
-    header = (d.getMonth()+1) + '/' + String(d.getDate()).padStart(2,'0');
+    const md = (d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0');
+    const team = getEveningShiftTeamForDate(dateStr);
+    header = team + '조 저녁주차 - ' + md;
   }
 
   // 각 행: 있는 차량만 - 로 연결
