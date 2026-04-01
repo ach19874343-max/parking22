@@ -430,8 +430,12 @@ async function loadDispatchForDate(dateStr) {
   renderDispatchSection();
 }
 
-/* ── 버튼 클릭: API 호출 후 저장 ───────────────────────────── */
-async function loadDispatchData() {
+/* ── 버튼 클릭: API 호출 후 저장 ─────────────────────────────
+   - 순서조회 버튼 단독: showToast=true (기본)
+   - Auto Park 버튼 경유: showToast=false
+────────────────────────────────────────────────────────────── */
+async function loadDispatchData(opts = {}) {
+  const { showToast = true } = opts;
 
   const loadBtn   = document.getElementById('dispatchLoadBtn');
   const loading   = document.getElementById('dispatchLoading');
@@ -476,10 +480,12 @@ async function loadDispatchData() {
 
   renderDispatchSection();
 
-  /* ── 순서조회 완료 토스트 ── */
-  const todayCnt  = (dispatchState.todayNums  || []).filter(n => !(dispatchState.todayMissing  || []).includes(n.num ?? n)).length;
-  const tmrCnt    = (dispatchState.tomorrowNums || []).length;
-  showDispatchToast('✅ 오늘 입차  ' + todayCnt + '대\n✅ 내일 출차  ' + tmrCnt + '대');
+  if (showToast) {
+    /* ── 순서조회 완료 토스트 ── */
+    const todayCnt  = (dispatchState.todayNums  || []).filter(n => !(dispatchState.todayMissing  || []).includes(n.num ?? n)).length;
+    const tmrCnt    = (dispatchState.tomorrowNums || []).length;
+    showDispatchToast('✅ 오늘 입차  ' + todayCnt + '대\n✅ 내일 출차  ' + tmrCnt + '대');
+  }
 }
 
 /* ── 순서조회 완료 토스트 ──────────────────────────────────────── */
@@ -547,7 +553,7 @@ function initDispatch() {
 
       try {
         /* 1단계: 배차 불러오기 (내부적으로 loading UI 처리) */
-        await loadDispatchData();
+        await loadDispatchData({ showToast: false });
 
         /* 2단계: 불러오기 성공 시 자동주차 실행 */
         if (dispatchState.loaded && APP.applyAutoParking) {
