@@ -286,7 +286,7 @@ function forEachPermutedRestOrder(restVehicles,tmrRank,tomorrowMissing,visit){
  * 휴차 배치 후보: validRestRowCounts 로 (n2,n3,n6,n7) 전개 → rowPlansForDistribution 으로 칸 조합 → 순열.
  * tomorrowMissing: 오늘·내일 모두 휴차(내일 배차 없음) 번호 — 순열 시드에 반영. 내일 출차 순서는 tmrRank.
  */
-function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing){
+function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing,fastExitRankBanMax=3){
   if(!restVehicles.length){
     const values={},active={};
     for(let i=0;i<RC*3;i++){values[i]='';active[i]=false;}
@@ -295,6 +295,7 @@ function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing){
   const sorted=[...restVehicles].sort((a,b)=>(tmrRank[b]??9999)-(tmrRank[a]??9999));
   const cnt=restVehicles.length;
   const tmrMiss=(tomorrowMissing||[]).map(x=>(typeof x==='object'?x?.num:x));
+  const fastBanMax=fastExitRankBanMax??0;
 
   const candidates=new Map();
 
@@ -303,6 +304,16 @@ function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing){
       forEachPermutedRestOrder(restVehicles,tmrRank,tmrMiss,(perm)=>{
         const state=buildRestState(perm, plan, RC, tmrRank);
         if(!isValidRestActivePrefix(state.active, RC)) return;
+        // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R에 휴차 배치 금지
+        if(fastBanMax>0){
+          for(let r=0;r<=1;r++){
+            for(let col=0;col<3;col++){
+              const v=state.values[slotIndex(r,col)];
+              if(!v) continue;
+              if((tmrRank[v]??9999) < fastBanMax) return;
+            }
+          }
+        }
         const key=JSON.stringify(state.values);
         if(!candidates.has(key)) candidates.set(key,state);
       });
@@ -313,10 +324,24 @@ function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing){
   if(candidates.size===0){
     const fallback={values:{},active:{}};
     for(let i=0;i<RC*3;i++){fallback.values[i]='';fallback.active[i]=false;}
-    let vi=0;
-    for(let si=0;si<RC*3&&vi<sorted.length;si++){
-      fallback.values[si]=sorted[vi++];
-      fallback.active[si]=true;
+    // prefix 유지: 각 행은 col0부터 연속으로만 채움
+    // fast ban 유지: 2R~3R에는 tmrRank(내일순번) 0~2 차량을 넣지 않음
+    const rowFilled=Array(RC).fill(0); // 각 행의 현재 채워진 칸 개수(0~3)
+    for(let vi=0;vi<sorted.length;vi++){
+      const v=sorted[vi];
+      const rank=tmrRank[v]??9999;
+      let placed=false;
+      for(let si=0;si<RC*3;si++){
+        const row=Math.floor(si/3), col=si%3;
+        if(col!==rowFilled[row]) continue; // 접두사 다음 칸만 허용
+        if(row<=1 && fastBanMax>0 && rank < fastBanMax) continue; // 2R~3R 금지
+        fallback.values[si]=v;
+        fallback.active[si]=true;
+        rowFilled[row]++;
+        placed=true;
+        break;
+      }
+      if(!placed) break;
     }
     return [fallback];
   }

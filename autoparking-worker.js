@@ -65,24 +65,39 @@ function canCol0(row,w,RC){
   return !!(upHas||downHas);
 }
 
-// 내일 출차 순서: 3R 1번이 2R 1번보다 먼저 출차(tr[3R]<tr[2R]). 2R 차량이 오늘·내일 휴차(br)면 비적용
+// 내일 출차 사슬 제약:
+// 4R 1번(col0) < 3R 1번(col0) < 2R 1번(col0)
+// (2R 1번에 해당 차량이 오늘·내일 휴차(br)이면 비적용 — 기존 의미 유지)
 function r23Viol(w,tr,br,enf){
   if(!enf)return false;
-  const v2=w[0],v3=w[3];
-  if(!v2)return false;
-  if(br[v2])return false;
-  if(!v3)return true;
-  return (tr[v3]??9999)>=(tr[v2]??9999);
+  const v2=w[0], v3=w[3], v4=w[6];
+  if(!v2) return false;
+  if(br[v2]) return false;
+  if(!v3) return true;
+  if(!v4) return true;
+  const r2=tr[v2]??9999, r3=tr[v3]??9999, r4=tr[v4]??9999;
+  if(r3>=r2) return true; // 3R이 2R보다 먼저 나가야 함
+  if(r4>=r3) return true; // 4R이 3R보다 먼저 나가야 함
+  return false;
 }
 function r23SlotOk(row,col,num,w,tr,br,enf){
   if(!enf)return true;
+  // 2R col0를 채울 때: (v3 rank < v2 rank) 유지
   if(row===0&&col===0&&!br[num]){
     const v3=w[3];
     if(v3&&(tr[v3]??9999)>=(tr[num]??9999))return false;
   }
+  // 3R col0를 채울 때: (v4 rank < v3 rank) + (v3 rank < v2 rank)
   if(row===1&&col===0){
     const v2=w[0];
     if(v2&&!br[v2]&&(tr[num]??9999)>=(tr[v2]??9999))return false;
+    const v4=w[6];
+    if(v4&&(tr[v4]??9999)>=(tr[num]??9999))return false;
+  }
+  // 4R col0를 채울 때: (v4 rank < v3 rank)
+  if(row===2&&col===0){
+    const v3=w[3];
+    if(v3&&(tr[num]??9999)>=(tr[v3]??9999))return false;
   }
   return true;
 }
@@ -108,9 +123,11 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax){
     return(b.fallbackPrio?1:0)-(a.fallbackPrio?1:0);
   });
 }
-function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax){
+function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax){
   const mR=tr[num]??9999,rem=eo.length-idx-1,cur=cSlots(ar,w),opts=[];
   for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
+    // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R(0~1행)에 배치 금지
+    if(fastExitRankBanMax>0 && row<=1 && mR<fastExitRankBanMax) continue;
     if(!cer(row,w))continue;const col=fec(row,w);if(col<0)continue;
     if(col===2){const lost=sLost3(row,ar,w);if(cur-1-lost<rem)continue;}
     // ── 1번칸 인접행 규칙: 4R·5R·6R에서 col=0이면 위아래 1번칸 확인 ──
@@ -137,7 +154,7 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
   return opts;
 }
 self.onmessage=function(e){
-  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999}=e.data;
+  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3}=e.data;
   const br={};
   for(let i=0;i<bothRest.length;i++) br[bothRest[i]]=1;
   // RC 캡처한 cer 재정의 — 아래행 2·3번칸 비면 진입 가능 규칙 포함
@@ -169,7 +186,7 @@ self.onmessage=function(e){
   const gw={...bv};
   let gStreak=0;
   for(let i=0;i<eo.length;i++){
-    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax);if(!o.length)continue;
+    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax);if(!o.length)continue;
     const chosen=o[0];
     gw[chosen.row*3+chosen.col]=eo[i];
     gStreak=chosen.col===0?gStreak+1:0;
@@ -191,7 +208,7 @@ self.onmessage=function(e){
     }
     const curEs=cExit(work,tr,RC);
     if(gBestScore<1000&&curEs>=gBestScore)return;
-    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax);
+    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax);
     if(!opts.length){dfs(idx+1,0);return;}
     for(const{row,col}of opts){
       if(Date.now()-t0>maxMs) return;
@@ -257,6 +274,8 @@ function computeAutoParking(callback, onProgress){
   tomorrowList.forEach((num,i)=>{tmrRank[num]=i;});
   /** 내일 순번 0..(이값-1) = 상위 약 1/3 “빠른 출차” → 1단계에서 4R·5R·6R·1·2·3칸 우선 탐색 */
   const earlyExitRankMax=Math.max(1,Math.ceil(tomorrowList.length/3));
+  /** 내일 1~3(=tmrRank 0~2)은 2R~3R(0~1행)에 배치 금지 */
+  const fastExitRankBanMax=Math.min(3,tomorrowList.length);
 
   const todayRestSet=new Set(dispatchState.todayMissing||[]);
   /* 정비소 제외 차량은 휴차 배치에서도 제외 */
@@ -267,7 +286,37 @@ function computeAutoParking(callback, onProgress){
   const bothRestList=[...todayRestSet].filter(n=>tomorrowRestSet.has(n));
 
   // 모든 휴차 배치 후보 생성
-  const candidates=generateRestCandidates(restVehicles,tmrRank,APP.rowCount,dispatchState.tomorrowMissing);
+  const candidatesGenerated=generateRestCandidates(restVehicles,tmrRank,APP.rowCount,dispatchState.tomorrowMissing,fastExitRankBanMax);
+
+  // 휴차 후보 사전 점수 정렬:
+  // - 내일 출차(=tmrRank가 있는 차)들이 2R~3R에 몰리면 막힘/동선이 불리한 경향
+  // - 오늘 휴차가 많을수록(=내일 출차 압력이 클수록) 7R/6R 쪽 배치가 유리하도록 페널티를 키움
+  const weightByTodayRest=Math.max(1,Math.min(6,Math.floor(restVehicles.length/3)+1));
+  function restPrefScore(c){
+    const base=calcExitBlocking(c.values,tmrRank); // 0부터 작은 후보부터 탐색
+    let penalty=0;
+    for(let r=0;r<4;r++){ // 2R~5R(0~3행)만 페널티, 6R~7R(4~5행)은 상대적으로 선호
+      const rowMul=(r<=1)?3:1; // 2R/3R이 더 불리
+      for(let col=0;col<3;col++){
+        const v=c.values[slotIndex(r,col)];
+        if(!v) continue;
+        const rk=tmrRank[v];
+        if(rk===undefined) continue; // bothRest 등: 페널티 대상 아님
+        const rankTerm=Math.max(0,6-rk); // 빠를수록(작을수록) 페널티가 큼
+        penalty += weightByTodayRest*rowMul*rankTerm;
+      }
+    }
+    return base*10 + penalty;
+  }
+  const allCandidatesSorted=[...candidatesGenerated].sort((a,b)=>restPrefScore(a)-restPrefScore(b));
+  const PREFILTER_CAP=2500;
+  let candidates=allCandidatesSorted;
+  let candidatesPrefiltered=false;
+  if(allCandidatesSorted.length>PREFILTER_CAP){
+    candidates=allCandidatesSorted.slice(0,PREFILTER_CAP);
+    candidatesPrefiltered=true;
+    console.log(`[AutoParking v12] 휴차 후보 사전필터: ${PREFILTER_CAP}/${allCandidatesSorted.length}만 먼저 탐색`);
+  }
   /** 제약 ON 패스 / 제약 OFF 재탐색 각각 독립 예산(늦게 나와도 더 넓게 탐색) */
   const TOTAL_MS_PER_PASS=420000;
   const MAX_PERFECT_VARIANTS=5;
@@ -386,7 +435,8 @@ function computeAutoParking(callback, onProgress){
       enforce2r3r1:useExitOrderConstraint,
       bothRest:bothRestList,
       biasMiddleEarly,
-      earlyExitRankMax
+      earlyExitRankMax,
+      fastExitRankBanMax
     });
   }
 
@@ -396,6 +446,11 @@ function computeAutoParking(callback, onProgress){
     if(useExitOrderConstraint&&!hasAnyPerfect){
       console.log('[AutoParking v12] 출차순 제약(3R1 먼저)으로 막힘 0 불가 → 후보·폴백·순열 전부 처음부터 무제약 재탐색 (새 패스)');
       useExitOrderConstraint=false;
+      if(candidatesPrefiltered){
+        console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
+        candidates=allCandidatesSorted;
+        candidatesPrefiltered=false;
+      }
       candIdx=0;
       fallbackMode=false;
       globalBest=null;
@@ -412,6 +467,11 @@ function computeAutoParking(callback, onProgress){
       middleRowBiasPhase=false;
       biasMiddleEarly=false;
       useExitOrderConstraint=true;
+      if(candidatesPrefiltered){
+        console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
+        candidates=allCandidatesSorted;
+        candidatesPrefiltered=false;
+      }
       candIdx=0;
       fallbackMode=false;
       globalBest=null;
