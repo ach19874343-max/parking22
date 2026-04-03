@@ -168,6 +168,11 @@ self.onmessage=function(e){
   function score(es,en){return en*1000+es;}
   function isPerfect(es,en,w){
     if(es!==0||en!==0)return false;
+    // perfect은 "모든 입차 대상(eo)이 실제로 배치된 상태"에서만 인정
+    // (DFS에서 옵션이 없어 스킵되는 경우가 있어, 그때는 값이 일부만 채워져도 막힘 점수만 0이 될 수 있음)
+    const placed=new Set();
+    for(let i=0;i<RC*3;i++) if(w[i]) placed.add(String(w[i]));
+    for(const n of eo) if(!placed.has(String(n))) return false;
     if(enforce2r3r1&&r23Viol(w,tr,br,true))return false;
     return true;
   }
