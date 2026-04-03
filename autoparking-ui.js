@@ -11,7 +11,7 @@
    ============================================================ */
 'use strict';
 
-/* 결과 모달 3페이지 상태 */
+/* 결과 모달 다중 페이지(완벽해 최대 5, 입0·출1은 최대 3) */
 let _resultPages=[], _resultPageIdx=0;
 
 /* ══════════════════════════════════════════════════════════════
@@ -25,10 +25,15 @@ function applyAutoParking(){
   if(!overlay){overlay=document.createElement('div');overlay.id='apLoadingOverlay';document.body.appendChild(overlay);}
   overlay.style.cssText='position:fixed;inset:0;z-index:9100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
   overlay.innerHTML=`
-    <div style="display:flex;flex-direction:column;align-items:center;gap:16px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);border-radius:22px;padding:30px 40px 26px;min-width:220px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);border-radius:22px;padding:30px 40px 26px;min-width:260px;max-width:92vw">
       <div style="width:46px;height:46px;border:4px solid rgba(255,255,255,0.22);border-top-color:#3B82F6;border-radius:50%;animation:dc-spin .75s linear infinite"></div>
       <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:.02em;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.4)">최적 배치 탐색 중</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.55);text-align:center;margin-top:-8px">휴차 순열·다중 패스로 넓게 탐색합니다(수 분 걸릴 수 있음)</div>
+      <div id="apProgLine1" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.88);text-align:center;line-height:1.45;padding:0 4px">준비 중…</div>
+      <div id="apProgLine2" style="font-size:13px;font-weight:800;color:#6EE7B7;text-align:center">완벽해 0/5</div>
+      <div style="width:100%;max-width:260px;height:6px;background:rgba(255,255,255,0.12);border-radius:3px;overflow:hidden">
+        <div id="apProgBar" style="height:100%;width:0%;background:linear-gradient(90deg,#2563EB,#34D399);border-radius:3px;transition:width .22s ease"></div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.50);text-align:center;margin-top:-4px">휴차 순열·다중 패스(수 분 걸릴 수 있음)</div>
       <div style="display:inline-flex;gap:6px">
         <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite;display:inline-block"></span>
         <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite .18s;display:inline-block"></span>
@@ -46,15 +51,24 @@ function applyAutoParking(){
   _resultPages=[];
   _resultPageIdx=0;
 
+  function updateApProgress(p){
+    const l1=document.getElementById('apProgLine1');
+    const l2=document.getElementById('apProgLine2');
+    const bar=document.getElementById('apProgBar');
+    if(l1) l1.textContent=`${p.phase} · 후보 ${p.candDone}/${p.candTotal} (${p.pct}%)`;
+    if(l2) l2.textContent=`완벽해 ${p.perfectCount}/${p.perfectMax}`;
+    if(bar) bar.style.width=`${p.pct}%`;
+  }
+
   computeAutoParking(function(result, top3){
     overlay.style.display='none';
     if(cancelled) return;
     if(!result){alert('배치를 찾지 못했습니다.');return;}
-    // top3가 있으면 최대 3페이지, 없으면 1페이지
+    // 완벽해 대안 여러 개(최대 5) 또는 비완벽 시 여러 페이지면 스와이프, 아니면 1페이지
     _resultPages = (top3&&top3.length>1) ? top3 : [result];
     _resultPageIdx=0;
     showResultModal(_resultPages[0], 0);
-  });
+  }, updateApProgress);
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -62,7 +76,7 @@ function applyAutoParking(){
    ══════════════════════════════════════════════════════════════ */
 
 function showResultModal(result, pageIdx){
-  // 3페이지 관리
+  // 다중 페이지(‹ ›)
   if(pageIdx===undefined){
     _resultPages=[result];
     _resultPageIdx=0;

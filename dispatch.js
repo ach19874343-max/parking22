@@ -445,12 +445,17 @@ async function loadDispatchData(opts = {}) {
   if (loading)   loading.style.display   = '';
   if (emptyHint) emptyHint.style.display = 'none';
 
+  const progressEl = document.getElementById('dispatchLoadingProgress');
+  const setDispatchLoadProgress = (step, total, label) => {
+    if (progressEl) progressEl.textContent = `${step}/${total} · ${label}`;
+  };
+
   try {
     const { todayStr, tomorrowStr } = getDispatchDates();
-    const [todayItems, tomorrowItems] = await Promise.all([
-      fetchDispatchItems(todayStr),
-      fetchDispatchItems(tomorrowStr),
-    ]);
+    setDispatchLoadProgress(1, 2, '오늘 입차 순서');
+    const todayItems = await fetchDispatchItems(todayStr);
+    setDispatchLoadProgress(2, 2, '내일 출차 순서');
+    const tomorrowItems = await fetchDispatchItems(tomorrowStr);
 
     dispatchState.loaded          = true;
     dispatchState.todayStr        = todayStr;
@@ -472,12 +477,14 @@ async function loadDispatchData(opts = {}) {
 
   } catch (err) {
     console.error('배차 로드 실패:', err);
+    if (progressEl) progressEl.textContent = '';
     if (loading) loading.style.display = 'none';
     if (loadBtn) { loadBtn.disabled = false; loadBtn.classList.remove('spinning'); }
     alert('배차 데이터를 불러오지 못했습니다.\n' + err.message);
     return;
   }
 
+  if (progressEl) progressEl.textContent = '';
   renderDispatchSection();
 
   if (showToast) {

@@ -125,6 +125,7 @@ function violates2r3r1ExitOrder(values,tmrRank,bothDayRest){
    · 6R 사용 시 7R에 반드시 휴차, 6R 대수 ≤ 7R 대수
    · 행당 최대 3칸 → 각 (n2,n3,n6,n7)은 0~3, 합 = 휴차 대수
    · 한 행 안에서는 1번칸(안쪽)부터 연속으로만 배치 — 빈 휴 휴·휴 빈 휴·(단독)2·3번칸 등 불가
+   · 후보 생성 후 isValidRestActivePrefix 로 한 번 더 걸러 overflow 등으로 생긴 구멍 배치 제거
    순열: 오늘·내일 휴 / 오늘 휴·내일 출차 번호를 구분해 시드 순서 후 전 순열(상한)
    ══════════════════════════════════════════════════════════════ */
 function buildRestState(sorted, rowPlan, RC, tmrRank){
@@ -150,6 +151,24 @@ function buildRestState(sorted, rowPlan, RC, tmrRank){
     if(!values[si]){values[si]=sorted[vi++];active[si]=true;}
   }
   return {values,active};
+}
+
+/**
+ * 휴차(active)만 있는 행에서: 1번칸부터 안쪽으로만 연속이어야 함.
+ * 빈 휴 휴·휴 빈 휴·빈 빈 휴·빈 휴 빈 등 구멍 난 휴차 배치 제거용.
+ */
+function isValidRestActivePrefix(active, RC){
+  for(let r=0;r<RC;r++){
+    let k=0;
+    if(active[r*3+0]) k++;
+    if(active[r*3+1]) k++;
+    if(active[r*3+2]) k++;
+    if(k===0) continue;
+    if(!active[r*3+0]) return false;
+    if(k>=2&&!active[r*3+1]) return false;
+    if(k===3&&!active[r*3+2]) return false;
+  }
+  return true;
 }
 
 /** 구조(행·칸) 하나당 시도할 휴차 번호 순열 상한 — n!이 이보다 작으면 전부 생성 */
@@ -283,19 +302,21 @@ function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing){
     for(const plan of rowPlansForDistribution(n2,n3,n6,n7)){
       forEachPermutedRestOrder(restVehicles,tmrRank,tmrMiss,(perm)=>{
         const state=buildRestState(perm, plan, RC, tmrRank);
+        if(!isValidRestActivePrefix(state.active, RC)) return;
         const key=JSON.stringify(state.values);
         if(!candidates.has(key)) candidates.set(key,state);
       });
     }
   }
 
-  // overflow fallback
+  // overflow fallback — 슬롯 0번부터 순서대로만 채워 행별 휴차 접두사 보장
   if(candidates.size===0){
     const fallback={values:{},active:{}};
     for(let i=0;i<RC*3;i++){fallback.values[i]='';fallback.active[i]=false;}
     let vi=0;
     for(let si=0;si<RC*3&&vi<sorted.length;si++){
-      if(!fallback.values[si]){fallback.values[si]=sorted[vi++];fallback.active[si]=true;}
+      fallback.values[si]=sorted[vi++];
+      fallback.active[si]=true;
     }
     return [fallback];
   }

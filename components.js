@@ -198,6 +198,11 @@ function tmplDispatch() {
         letter-spacing: .02em; text-align: center;
         text-shadow: 0 1px 4px rgba(0,0,0,0.4);
       }
+      .dispatch-loading-progress {
+        font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.82);
+        text-align: center; letter-spacing: .02em;
+        min-height: 1.35em; line-height: 1.4;
+      }
       .dispatch-loading-dots { display: inline-flex; gap: 6px; }
       .dispatch-loading-dots span {
         width: 8px; height: 8px; border-radius: 50%;
@@ -256,6 +261,7 @@ function tmplDispatch() {
       <div class="dispatch-loading-inner">
         <div class="dispatch-spinner"></div>
         <div class="dispatch-loading-text">배차 순서 불러오는 중</div>
+        <div id="dispatchLoadingProgress" class="dispatch-loading-progress"></div>
         <div class="dispatch-loading-dots">
           <span></span><span></span><span></span>
         </div>
