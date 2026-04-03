@@ -123,18 +123,18 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax){
     return(b.fallbackPrio?1:0)-(a.fallbackPrio?1:0);
   });
 }
-function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax){
+function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,rej){
   const mR=tr[num]??9999,rem=eo.length-idx-1,cur=cSlots(ar,w),opts=[];
   for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
     // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R(0~1행)에 배치 금지
-    if(fastExitRankBanMax>0 && row<=1 && mR<fastExitRankBanMax) continue;
-    if(!cer(row,w))continue;const col=fec(row,w);if(col<0)continue;
-    if(col===2){const lost=sLost3(row,ar,w);if(cur-1-lost<rem)continue;}
+    if(fastExitRankBanMax>0 && row<=1 && mR<fastExitRankBanMax){ if(rej) rej.fastBan=(rej.fastBan||0)+1; continue; }
+    if(!cer(row,w)){ if(rej) rej.cer=(rej.cer||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec=(rej.fec||0)+1; continue; }
+    if(col===2){const lost=sLost3(row,ar,w);if(cur-1-lost<rem){ if(rej) rej.col2Lost=(rej.col2Lost||0)+1; continue; }}
     // ── 1번칸 인접행 규칙: 4R·5R·6R에서 col=0이면 위아래 1번칸 확인 ──
-    if(col===0&&!canCol0(row,w,RC)) continue;
+    if(col===0&&!canCol0(row,w,RC)){ if(rej) rej.canCol0=(rej.canCol0||0)+1; continue; }
     // ── 연속 1번칸 3대 금지 ──
-    if(col===0&&(col0streak||0)>=2) continue;
-    if(!r23SlotOk(row,col,num,w,tr,br,enf)) continue;
+    if(col===0&&(col0streak||0)>=2){ if(rej) rej.col0Streak=(rej.col0Streak||0)+1; continue; }
+    if(!r23SlotOk(row,col,num,w,tr,br,enf)){ if(rej) rej.r23Slot=(rej.r23Slot||0)+1; continue; }
     let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}
     opts.push({row,col,pen});
     // ── 폴백 모드: 아래 행 2·3번칸 비어있으면 3번칸 배치도 선택지에 추가 ──
@@ -146,9 +146,10 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
   }
   if(!opts.length){
     for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
-      if(!cer(row,w))continue;const col=fec(row,w);if(col<0)continue;if(!r23SlotOk(row,col,num,w,tr,br,enf))continue;
+      if(!cer(row,w)){ if(rej) rej.cer2=(rej.cer2||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec2=(rej.fec2||0)+1; continue; }if(!r23SlotOk(row,col,num,w,tr,br,enf)){ if(rej) rej.r23Slot2=(rej.r23Slot2||0)+1; continue; }
       let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}opts.push({row,col,pen});
     }
+    if(rej&&!opts.length) rej.noOpts=(rej.noOpts||0)+1;
   }
   sortOptsBias(opts,num,tr,biasMid,earlyMax);
   return opts;
@@ -165,6 +166,9 @@ self.onmessage=function(e){
     return false;
   }
   const t0=Date.now();
+  let nodes=0;
+  let timedOut=false;
+  const rej={};
   function score(es,en){return en*1000+es;}
   function isPerfect(es,en,w){
     if(es!==0||en!==0)return false;
@@ -191,7 +195,7 @@ self.onmessage=function(e){
   const gw={...bv};
   let gStreak=0;
   for(let i=0;i<eo.length;i++){
-    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax);if(!o.length)continue;
+    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,rej);if(!o.length)continue;
     const chosen=o[0];
     gw[chosen.row*3+chosen.col]=eo[i];
     gStreak=chosen.col===0?gStreak+1:0;
@@ -202,7 +206,8 @@ self.onmessage=function(e){
   // DFS
   const work={...bv};
   function dfs(idx,streak){
-    if(Date.now()-t0>maxMs) return;
+    nodes++;
+    if(Date.now()-t0>maxMs){ timedOut=true; return; }
     if(perfects.length>=5) return;
     if(idx===eo.length){
       if(enforce2r3r1&&r23Viol(work,tr,br,true)) return;
@@ -213,10 +218,10 @@ self.onmessage=function(e){
     }
     const curEs=cExit(work,tr,RC);
     if(gBestScore<1000&&curEs>=gBestScore)return;
-    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax);
+    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,rej);
     if(!opts.length){dfs(idx+1,0);return;}
     for(const{row,col}of opts){
-      if(Date.now()-t0>maxMs) return;
+      if(Date.now()-t0>maxMs){ timedOut=true; return; }
       if(perfects.length>=5) return;
       work[row*3+col]=eo[idx];
       dfs(idx+1,col===0?streak+1:0);
@@ -242,7 +247,7 @@ self.onmessage=function(e){
     }
   }
   if(gBest&&enforce2r3r1&&r23Viol(gBest.values,tr,br,true)) gBest=null;
-  self.postMessage({best:gBest,perfects,elapsed:Date.now()-t0});
+  self.postMessage({best:gBest,perfects,elapsed:Date.now()-t0,stats:{nodes,timedOut,perfectCount:perfects.length,rej}});
 };
 `;
 
@@ -293,6 +298,25 @@ function computeAutoParking(callback, onProgress){
   // 모든 휴차 배치 후보 생성
   const candidatesGenerated=generateRestCandidates(restVehicles,tmrRank,APP.rowCount,dispatchState.tomorrowMissing,fastExitRankBanMax);
 
+  // ── 디버그 계측: 휴차 분배(2R/3R/6R/7R 대수) 통계 ──
+  function restDist(c){
+    const a=c.active||{};
+    const rc=APP.rowCount||6;
+    const rowCnt=(r)=>[0,1,2].filter(col=>!!a[slotIndex(r,col)]).length;
+    return { n2:rowCnt(0), n3:rowCnt(1), n6:rowCnt(4), n7:rowCnt(rc-1) };
+  }
+  const distCounts=new Map();
+  let dist_target_303=0; // (2R=3,3R=0,6R=0,7R=3)
+  for(const c of candidatesGenerated){
+    const d=restDist(c);
+    const k=`${d.n2}-${d.n3}-${d.n6}-${d.n7}`;
+    distCounts.set(k,(distCounts.get(k)||0)+1);
+    if(d.n2===3&&d.n3===0&&d.n6===0&&d.n7===3) dist_target_303++;
+  }
+  const distTop=[...distCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  console.log('[AutoParking v12] 휴차 후보 분배 Top:', distTop.map(([k,v])=>`${k}=${v}`).join(' | '));
+  console.log(`[AutoParking v12] 휴차 후보 중 (2R=3,3R=0,6R=0,7R=3) 개수: ${dist_target_303}/${candidatesGenerated.length}`);
+
   // 휴차 후보 사전 점수 정렬:
   // - 내일 출차(=tmrRank가 있는 차)들이 2R~3R에 몰리면 막힘/동선이 불리한 경향
   // - 오늘 휴차가 많을수록(=내일 출차 압력이 클수록) 7R/6R 쪽 배치가 유리하도록 페널티를 키움
@@ -321,6 +345,10 @@ function computeAutoParking(callback, onProgress){
     candidates=allCandidatesSorted.slice(0,PREFILTER_CAP);
     candidatesPrefiltered=true;
     console.log(`[AutoParking v12] 휴차 후보 사전필터: ${PREFILTER_CAP}/${allCandidatesSorted.length}만 먼저 탐색`);
+  }
+  if(dist_target_303>0){
+    const inPref=candidates.filter(c=>{const d=restDist(c);return d.n2===3&&d.n3===0&&d.n6===0&&d.n7===3;}).length;
+    console.log(`[AutoParking v12] (2R=3,3R=0,6R=0,7R=3) 후보: 프리필터 내 ${inPref}/${candidates.length}`);
   }
   /** 제약 ON 패스 / 제약 OFF 재탐색 각각 독립 예산(늦게 나와도 더 넓게 탐색) */
   const TOTAL_MS_PER_PASS=420000;
@@ -381,6 +409,8 @@ function computeAutoParking(callback, onProgress){
 
     const cand=candidates[candIdx++];
     const{values:bv,active:ba}=cand;
+    const d=restDist(cand);
+    const isTarget303=(d.n2===3&&d.n3===0&&d.n6===0&&d.n7===3);
 
     // 가용 행: 휴차 배치 후 빈칸 있는 행
     const availRows=[];
@@ -397,7 +427,7 @@ function computeAutoParking(callback, onProgress){
 
     const worker=getWorker();
     worker.onmessage=function(e){
-      const{best,perfects,elapsed:wMs}=e.data;
+      const{best,perfects,elapsed:wMs,stats}=e.data;
       if(perfects&&perfects.length){
         for(const p of perfects){
           const k=JSON.stringify(p.values);
@@ -411,6 +441,11 @@ function computeAutoParking(callback, onProgress){
         globalBestScore=best.total;
         globalBest=best;
         console.log(`[AutoParking v12]${biasMiddleEarly?' [4~6R우선]':''}${useExitOrderConstraint?'':' [무제약]'}${fallbackMode?' [폴백]':''} 후보${candIdx}/${candidates.length} ${wMs}ms — 입차막힘:${best.entryScore} 출차막힘:${best.exitScore}${best.entryScore===0&&best.exitScore===0?' ✅완벽':best.entryScore===0?' 🟡입차OK':''}`);
+      }
+      if(isTarget303){
+        const s=stats||{};
+        const r=s.rej||{};
+        console.log(`[AutoParking v12] [휴차(2R3·7R3)] worker결과: ${wMs}ms nodes:${s.nodes??'?'} timeout:${!!s.timedOut} perfects:${s.perfectCount??0} best:${best?`입${best.entryScore}/출${best.exitScore}`:'(null)'} rej:${JSON.stringify(r)}`);
       }
       // top3 누적
       if(best){

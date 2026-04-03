@@ -89,7 +89,10 @@ async function fetchDispatchItems(dateStr) {
 
 /* ── 오늘 추출: startOrder별 busRound 최댓값 항목
        isEarly = 최대 busRound === 4 (총5회차 → isEarly=true)
-       busRound 0~5 인 경우 최대 5 → 일반 ─────────────────── */
+       busRound < 4 인 차량은 앞뒤 이웃 startOrder 기준으로 isEarly 보정:
+         앞=조기, 뒤=조기 → 조기
+         앞=조기, 뒤=일반 or 앞=일반 → 일반
+       ※ 칩 표시: startOrder 오름차순 (조기/일반 구분 없이 순서 유지) */
 function extractTodayNums(items) {
   const groups = {};
   for (const item of items) {
@@ -100,15 +103,35 @@ function extractTodayNums(items) {
   }
   const sortedOrders = Object.keys(groups).sort((a, b) => +a - +b);
   const seen   = new Set();
-  const result = [];
+  const raw    = [];
   for (const key of sortedOrders) {
     const g     = groups[key];
     const last3 = String(g.busNumber).slice(-3);
     if (seen.has(last3)) continue;
     seen.add(last3);
-    result.push({ num: last3, isEarly: g.busRound === 4 });
+    /* busRound===4 → 조기, busRound===5 → 일반, 그 외 → null(보정 필요) */
+    const knownEarly = g.busRound === 4 ? true : g.busRound === 5 ? false : null;
+    raw.push({ num: last3, isEarly: knownEarly, startOrder: +key });
   }
-  return result;
+
+  /* busRound < 4 차량(isEarly===null) 앞뒤 이웃 기반 보정 */
+  for (let i = 0; i < raw.length; i++) {
+    if (raw[i].isEarly !== null) continue;
+    /* 앞쪽에서 가장 가까운 확정 차량 */
+    let prevEarly = null;
+    for (let j = i - 1; j >= 0; j--) {
+      if (raw[j].isEarly !== null) { prevEarly = raw[j].isEarly; break; }
+    }
+    /* 뒤쪽에서 가장 가까운 확정 차량 */
+    let nextEarly = null;
+    for (let j = i + 1; j < raw.length; j++) {
+      if (raw[j].isEarly !== null) { nextEarly = raw[j].isEarly; break; }
+    }
+    /* 앞=조기, 뒤=조기 → 조기 / 나머지 → 일반 */
+    raw[i].isEarly = (prevEarly === true && nextEarly === true);
+  }
+
+  return raw;
 }
 
 /* ── 내일 추출: busNumber별 startTime 최댓값(제일 늦은 시간대) 항목 기준
@@ -145,14 +168,12 @@ function getMissingNums(numsArr) {
 /* ── 칩 HTML 생성 ───────────────────────────────────────────── */
 function buildChipsHTML(numsArr, missing) {
   const parts = [];
-  const early  = numsArr.filter(n => n.isEarly);
-  const normal = numsArr.filter(n => !n.isEarly);
-
-  early.forEach(({ num }) => {
-    parts.push(`<span class="dc-chip dc-chip--early" data-num="${num}" style="cursor:pointer">${num}</span>`);
-  });
-  normal.forEach(({ num }) => {
-    parts.push(`<span class="dc-chip" data-num="${num}" style="cursor:pointer">${num}</span>`);
+  const so = (n) => (typeof n.startOrder === 'number' ? n.startOrder : 9999);
+  const early = numsArr.filter((n) => n.isEarly).sort((a, b) => so(a) - so(b));
+  const normal = numsArr.filter((n) => !n.isEarly).sort((a, b) => so(a) - so(b));
+  const ordered = [...early, ...normal];
+  ordered.forEach(({ num, isEarly }) => {
+    parts.push(`<span class="dc-chip${isEarly ? ' dc-chip--early' : ''}" data-num="${num}" style="cursor:pointer">${num}</span>`);
   });
 
   /* 휴차 칩 — 제외 여부에 따라 스타일 분기 */

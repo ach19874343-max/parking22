@@ -19,9 +19,22 @@ function getTodayEntryOrder(){
   const dateStr=document.getElementById('datePicker')?.value||'';
   const exSet=dispatchState.excludedAbsent?.[dateStr]||new Set();
   const all=(dispatchState.todayNums||[]).filter(n=>!restSet.has(n.num??n)&&!exSet.has(n.num??n));
-  const early=all.filter(n=>n.isEarly);
-  const normal=all.filter(n=>!n.isEarly);
-  return [...early,...normal].map(n=>n.num??n);
+  const so=(n)=>(typeof n.startOrder==='number'?n.startOrder:9999);
+
+  /* startOrder 오름차순 정렬 */
+  const sorted=[...all].sort((a,b)=>so(a)-so(b));
+
+  /* 조기(isEarly===true) 중 가장 작은 startOrder → 원형 시작점 */
+  const earlyOrders=sorted.filter(n=>n.isEarly).map(n=>so(n));
+  if(!earlyOrders.length){
+    /* 조기 없으면 그냥 순서대로 */
+    return sorted.map(n=>n.num??n);
+  }
+  const earlyFirst=Math.min(...earlyOrders);
+  /* earlyFirst 인덱스부터 끝까지 + 처음부터 earlyFirst 앞까지 (원형) */
+  const pivot=sorted.findIndex(n=>so(n)===earlyFirst);
+  const ordered=[...sorted.slice(pivot),...sorted.slice(0,pivot)];
+  return ordered.map(n=>n.num??n);
 }
 
 /* ══════════════════════════════════════════════════════════════
