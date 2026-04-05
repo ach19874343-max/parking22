@@ -1439,28 +1439,39 @@ function copyParkingGrid() {
   const rows    = APP.rowLabels || ['2R','3R','4R','5R','6R','7R'];
   const values  = APP.parkingState?.values || {};
 
-  // 헤더: A조 저녁주차 - M/DD
-  let header = '';
+  // 날짜 포맷: MM.DD
+  let dateFmt = '';
   if (dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    const md = (d.getMonth() + 1) + '/' + String(d.getDate()).padStart(2, '0');
-    const team = getEveningShiftTeamForDate(dateStr);
-    header = team + '조 저녁주차 - ' + md;
+    const [,mo,dd] = dateStr.split('-');
+    dateFmt = mo + '.' + dd;
   }
 
-  // 각 행: 있는 차량만 - 로 연결
+  // 팀: A조 / B조
+  const team = dateStr ? getEveningShiftTeamForDate(dateStr) : '';
+  const teamFmt = team ? team + '조' : '';
+
+  // 헤더
+  const headerLine1 = '🅿️ 마감 주차';
+  const headerLine2 = dateFmt || teamFmt
+    ? '【' + [dateFmt, teamFmt].filter(Boolean).join('｜') + '】'
+    : '';
+
+  // 각 행: 있는 차량만 · 로 연결, ▶ 접두사
   const lines = rows.map((label, ri) => {
     const cars = [0,1,2]
       .map(col => values[ri*3+col])
       .filter(v => v);
-    return cars.length ? cars.join('-') : null;
+    return cars.length ? '▶ ' + cars.join(' · ') : null;
   }).filter(line => line !== null);
 
-  const text = (header ? header + '\n' : '') + lines.join('\n');
+  const parts = [headerLine1];
+  if (headerLine2) parts.push(headerLine2);
+  parts.push(''); // 헤더와 행 사이 빈 줄
+  parts.push(...lines);
+  const text = parts.join('\n');
 
   navigator.clipboard.writeText(text)
     .then(() => {
-      // 복사 완료 토스트
       let toast = document.getElementById('copyToast');
       if (!toast) {
         toast = document.createElement('div');
@@ -1484,7 +1495,6 @@ function copyParkingGrid() {
       toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
     })
     .catch(() => {
-      // clipboard API 실패 시 fallback
       const ta = document.createElement('textarea');
       ta.value = text;
       ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
