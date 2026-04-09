@@ -166,6 +166,54 @@ function renderGrid() {
       labelEl.className = 'line-label';
       labelEl.setAttribute('data-row', rowIdx);
       labelEl.textContent = label;
+
+      // 행 이동: 라벨을 꾹 누른 채 위/아래로 드래그
+      let pressStarted = false;
+      let longFired = false;
+      let pressStartY = 0;
+
+      const startPress = (y) => {
+        if (rowEditMode || vehicleEditMode) return;
+        pressStarted = true;
+        longFired = false;
+        pressStartY = y;
+        clearTimeout(rowDragTimer);
+        rowDragTimer = setTimeout(() => {
+          longFired = true;
+          startRowDrag(rowIdx, pressStartY);
+        }, 420);
+      };
+
+      const cancelPress = () => {
+        pressStarted = false;
+        clearTimeout(rowDragTimer);
+        rowDragTimer = null;
+      };
+
+      // PC
+      labelEl.addEventListener('mousedown', (e) => startPress(e.clientY));
+      labelEl.addEventListener('mouseleave', cancelPress);
+      labelEl.addEventListener('mouseup', () => {
+        if (!pressStarted) return;
+        // long press로 드래그가 시작되면 endDrag가 처리하므로 여기서는 타이머만 정리
+        cancelPress();
+      });
+
+      // Mobile
+      labelEl.addEventListener('touchstart', (e) => {
+        const t = e.touches?.[0];
+        if (!t) return;
+        startPress(t.clientY);
+      }, { passive: true });
+      labelEl.addEventListener('touchmove', (e) => {
+        const t = e.touches?.[0];
+        if (!t) return;
+        const dy = Math.abs(t.clientY - pressStartY);
+        if (dy > 9 && !longFired) cancelPress();
+      }, { passive: true });
+      labelEl.addEventListener('touchend', cancelPress, { passive: true });
+      labelEl.addEventListener('touchcancel', cancelPress, { passive: true });
+
       row.appendChild(labelEl);
     }
 
@@ -331,6 +379,126 @@ function syncMissingVehiclesToSlots(values, active) {
 let dragSrcSlot    = null;   // PC 드래그 소스 슬롯 인덱스
 let touchTimer     = null;   // 롱프레스 타이머
 
+/* ── 행(3칸) 재정렬 드래그 상태 ── */
+let rowDragTimer = null;
+let rowDragging = false;
+let rowDragRowIdx = null;
+let rowDragStartY = 0;
+let rowDragMoved = false;
+
+function moveRowBlock(fromRow, toRow) {
+  if (fromRow === toRow) return;
+  const RC = APP.rowCount || 0;
+  if (fromRow < 0 || toRow < 0 || fromRow >= RC || toRow >= RC) return;
+  if (!APP.parkingState?.values || !APP.parkingState?.active) return;
+
+  // 탭-투-스왑 상태는 인덱스 기반이라 행 이동 시 의미가 깨짐 → 초기화
+  clearTapState();
+
+  const total = RC * 3;
+  const vals = Array.from({ length: total }, (_, i) => APP.parkingState.values[i] || '');
+  const acts = Array.from({ length: total }, (_, i) => !!APP.parkingState.active[i]);
+
+  const from = fromRow * 3;
+  const to = toRow * 3;
+
+  const cutV = vals.splice(from, 3);
+  const cutA = acts.splice(from, 3);
+  vals.splice(to, 0, ...cutV);
+  acts.splice(to, 0, ...cutA);
+
+  for (let i = 0; i < total; i++) {
+    APP.parkingState.values[i] = vals[i];
+    APP.parkingState.active[i] = acts[i];
+  }
+}
+
+function _rowIndexFromClientY(y) {
+  const rows = Array.from(document.querySelectorAll('#parkingGrid .p-row'))
+    .filter(r => !r.classList.contains('row-add-row'));
+  if (!rows.length) return null;
+  for (let i = 0; i < rows.length; i++) {
+    const rect = rows[i].getBoundingClientRect();
+    if (y >= rect.top && y <= rect.bottom) return i;
+  }
+  const first = rows[0].getBoundingClientRect();
+  const last = rows[rows.length - 1].getBoundingClientRect();
+  if (y < first.top) return 0;
+  if (y > last.bottom) return rows.length - 1;
+  return null;
+}
+
+function startRowDrag(rowIdx, y) {
+  if (rowEditMode || vehicleEditMode) return;
+  rowDragging = true;
+  rowDragRowIdx = rowIdx;
+  rowDragStartY = y;
+  rowDragMoved = false;
+
+  clearTapState();
+
+  const label = document.querySelector(`.line-label[data-row="${rowIdx}"]`);
+  const rowEl = document.querySelectorAll('#parkingGrid .p-row')[rowIdx];
+  if (label) label.classList.add('row-dragging');
+  if (rowEl) rowEl.classList.add('row-dragging');
+  if (navigator.vibrate) navigator.vibrate(20);
+
+  const onMove = (clientY, e) => {
+    if (!rowDragging) return;
+    const dy = Math.abs(clientY - rowDragStartY);
+    if (dy > 6) rowDragMoved = true;
+
+    const target = _rowIndexFromClientY(clientY);
+    if (target === null || target === rowDragRowIdx) return;
+
+    moveRowBlock(rowDragRowIdx, target);
+    rowDragRowIdx = target;
+    renderCards();
+
+    if (e && e.cancelable) e.preventDefault();
+  };
+
+  const cleanup = () => {
+    document.querySelectorAll('.line-label.row-dragging')
+      .forEach(el => el.classList.remove('row-dragging'));
+    document.querySelectorAll('#parkingGrid .p-row.row-dragging')
+      .forEach(el => el.classList.remove('row-dragging'));
+  };
+
+  const endDrag = () => {
+    if (!rowDragging) return;
+    rowDragging = false;
+    clearTimeout(rowDragTimer);
+    rowDragTimer = null;
+    cleanup();
+
+    document.removeEventListener('mousemove', _onMouseMove, true);
+    document.removeEventListener('mouseup', _onMouseUp, true);
+    document.removeEventListener('touchmove', _onTouchMove, true);
+    document.removeEventListener('touchend', _onTouchEnd, true);
+    document.removeEventListener('touchcancel', _onTouchEnd, true);
+
+    if (rowDragMoved) {
+      saveData();
+    }
+  };
+
+  const _onMouseMove = (e) => onMove(e.clientY, e);
+  const _onMouseUp = () => endDrag();
+  const _onTouchMove = (e) => {
+    const t = e.touches?.[0];
+    if (!t) return;
+    onMove(t.clientY, e);
+  };
+  const _onTouchEnd = () => endDrag();
+
+  document.addEventListener('mousemove', _onMouseMove, true);
+  document.addEventListener('mouseup', _onMouseUp, true);
+  document.addEventListener('touchmove', _onTouchMove, { passive: false, capture: true });
+  document.addEventListener('touchend', _onTouchEnd, true);
+  document.addEventListener('touchcancel', _onTouchEnd, true);
+}
+
 /* ── 탭-투-스왑 전역 상태 ── */
 let tapFirstSlot   = null;   // 첫 번째 탭 슬롯 인덱스 (null 이면 미선택)
 let tapConfirmSlot = null;   // 두 번째 탭 슬롯 인덱스 (파란 확인 중)
@@ -404,47 +572,6 @@ function highlightDispatchChip(chipEl, num) {
     }
   }
 }
-/* ── 수동/오토 그리드 메모리 캐시 (날짜별) ── */
-const manualGridCache = {};  /* { 'YYYY-MM-DD': {values, active} } */
-const autoGridCache   = {};  /* { 'YYYY-MM-DD': {values, active} } */
-
-function currentDate() {
-  return document.getElementById('datePicker')?.value || '';
-}
-
-/* ── 수동/오토 버튼 활성화 상태 동기화 ── */
-function syncGridBtns(date) {
-  const d = date || currentDate();
-  const manBtn = document.getElementById('manualLoadBtn');
-  const autoBtn = document.getElementById('autoLoadBtn');
-  if (manBtn) manBtn.disabled = !manualGridCache[d];
-  if (autoBtn) autoBtn.disabled = !autoGridCache[d];
-}
-
-/* ── 수동 그리드 저장 (번호 이동 완료 시 호출) ── */
-function saveManualGrid() {
-  const date = currentDate();
-  if (!date) return;
-  manualGridCache[date] = {
-    values: { ...APP.parkingState.values },
-    active: { ...APP.parkingState.active },
-  };
-  syncGridBtns(date);
-  /* Firebase에도 manualGrid 필드 업데이트 */
-  APP.set(APP.ref(APP.db, 'parking/' + date + '/manualGrid'), {
-    values: APP.parkingState.values,
-    active: APP.parkingState.active,
-    savedAt: new Date().toISOString(),
-  }).catch(() => {});
-}
-
-/* ── 오토 그리드 저장 (Auto Park 적용 시 호출) ── */
-function saveAutoGrid(date, values, active) {
-  const d = date || currentDate();
-  if (!d) return;
-  autoGridCache[d] = { values: { ...values }, active: { ...active } };
-  syncGridBtns(d);
-}
 
 /* ── 확인 팝업 ── */
 function showConfirm(message, onConfirm) {
@@ -453,42 +580,14 @@ function showConfirm(message, onConfirm) {
 
   const overlay = document.createElement('div');
   overlay.id = 'gridConfirmOverlay';
-  overlay.style.cssText = [
-    'position:fixed','inset:0','z-index:9000',
-    'background:rgba(0,0,0,0.5)',
-    'display:flex','align-items:center','justify-content:center',
-    'padding:20px',
-  ].join(';');
+  overlay.className = 'ap-confirm-overlay';
 
   overlay.innerHTML = `
-    <div style="
-      background:var(--surface,#fff);
-      border-radius:18px;
-      padding:24px 20px 20px;
-      width:100%;max-width:300px;
-      box-shadow:0 20px 60px rgba(0,0,0,0.3);
-      font-family:var(--font,-apple-system,sans-serif);
-    ">
-      <div style="font-size:15px;font-weight:700;color:var(--text-pri,#1A1F36);text-align:center;line-height:1.5;margin-bottom:20px;">
-        ${message}
-      </div>
-      <div style="display:flex;gap:8px;">
-        <button id="gridConfirmCancel" style="
-          flex:1;height:44px;border-radius:12px;
-          border:1px solid var(--border,rgba(0,0,0,0.1));
-          background:var(--bg,#F2F2F7);
-          font-size:15px;font-weight:600;
-          color:var(--text-sec,#6B7280);cursor:pointer;
-          font-family:inherit;
-        ">취소</button>
-        <button id="gridConfirmOk" style="
-          flex:1;height:44px;border-radius:12px;
-          border:none;
-          background:linear-gradient(135deg,#2563EB,#1D4ED8);
-          font-size:15px;font-weight:700;
-          color:#fff;cursor:pointer;
-          font-family:inherit;
-        ">적용</button>
+    <div class="ap-confirm-card">
+      <div class="ap-confirm-msg">${message}</div>
+      <div class="ap-confirm-btns">
+        <button id="gridConfirmCancel" class="ap-confirm-btn cancel">취소</button>
+        <button id="gridConfirmOk" class="ap-confirm-btn ok">적용</button>
       </div>
     </div>`;
 
@@ -524,7 +623,6 @@ function swapSlots(srcIdx, dstIdx) {
 
   renderCards();
   saveData();
-  saveManualGrid();  /* 번호 이동 완료 → 수동 그리드 자동 저장 */
 }
 
 /* ── 슬롯 상태 토글 (운행 ↔ 휴차) ─────────────────────── */
@@ -739,6 +837,34 @@ function renderCards() {
     hint.style.display = hasAny ? 'none' : 'flex';
   }
 
+  // ── 출차 막힘(표시용): 같은 행에서 "뒤칸 차량"만 표시 ──
+  // - 배차(내일 출차 순서) 로드된 경우에만 계산
+  // - 휴차(active)도 포함
+  // - 단, 내일도 휴차(tomorrowMissing)인 차량은 내일 출차 순서 영향 없음 → 막힘 표시/판정에서 제외
+  const blockedExitSet = new Set();
+  if (typeof dispatchState !== 'undefined' && dispatchState.loaded) {
+    const tmrRank = APP.parkingState?._tmrRank || {};
+    const tmrMissing = new Set(dispatchState.tomorrowMissing || []);
+    const vmap = APP.parkingState?.values || {};
+    const RC = APP.rowCount || 6;
+    for (let r = 0; r < RC; r++) {
+      for (let c = 1; c < 3; c++) {
+        const si = r * 3 + c;
+        const v = vmap[si];
+        if (!v) continue;
+        if (tmrMissing.has(v)) continue; // 내일도 휴차면 표시 안 함
+        const myR = (tmrRank[v] ?? 9999);
+        for (let lc = 0; lc < c; lc++) {
+          const lv = vmap[r * 3 + lc];
+          if (!lv) continue;
+          if (tmrMissing.has(lv)) continue; // 내일도 휴차면 막는 개념 없음
+          const lR = (tmrRank[lv] ?? 9999);
+          if (lR > myR) { blockedExitSet.add(si); break; }
+        }
+      }
+    }
+  }
+
   for (let rowIdx = 0; rowIdx < APP.rowCount; rowIdx++) {
     const wrap = document.getElementById(`row-${rowIdx}`);
     if (!wrap) continue;
@@ -795,7 +921,8 @@ function renderCards() {
           card.className = 'slot-card empty';
           setupEmptyCardDrop(card, slotIdx);
         } else {
-          card.className = `slot-card ${isRest ? 'rest' : 'run'}`;
+          const isBlockedExit = blockedExitSet.has(slotIdx);
+          card.className = `slot-card ${isRest ? 'rest' : 'run'}${isBlockedExit ? ' blocked-exit' : ''}`;
           card.textContent = vehicle;
           const _r = APP.parkingState && APP.parkingState._tmrRank;
           if (_r && _r[vehicle] !== undefined) {
@@ -941,32 +1068,14 @@ function saveData() {
   if (!date) return;
   const now = new Date().toISOString();
   const base = 'parking/' + date;
-  /* 각 필드를 독립 경로로 저장 → manualGrid/autoGrid/excludedAbsent 등 절대 덮어쓰지 않음 */
+  /* 각 필드를 독립 경로로 저장 */
   APP.set(APP.ref(APP.db, base + '/values'),    APP.parkingState.values).catch(() => {});
   APP.set(APP.ref(APP.db, base + '/active'),    APP.parkingState.active).catch(() => {});
   APP.set(APP.ref(APP.db, base + '/lastSaved'), now).then(() => {
     if (!APP.savedDates) APP.savedDates = new Set();
     APP.savedDates.add(date);
     updateParkingOverlay(date);
-    updateLastSavedUI(now);
   }).catch(() => {});
-}
-
-/* ── 마지막 저장 시간 UI 업데이트 ── */
-function updateLastSavedUI(isoStr) {
-  const el = document.getElementById('lastSavedText');
-  if (!el) return;
-  if (!isoStr) { el.textContent = '갱신 기록 없음'; return; }
-  const d    = new Date(isoStr);
-  const now  = new Date();
-  const hm   = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-  const isToday = d.toDateString() === now.toDateString();
-  const isYesterday = new Date(now - 86400000).toDateString() === d.toDateString();
-  let label;
-  if (isToday)          label = hm + ' 갱신';
-  else if (isYesterday) label = '어제 ' + hm;
-  else                  label = (d.getMonth()+1) + '/' + d.getDate() + ' ' + hm;
-  el.textContent = label;
 }
 
 /* ── Firebase에서 주차 데이터 로드 ─────────────────────── */
@@ -986,25 +1095,6 @@ async function loadData(date) {
       if (active[i] === undefined) active[i] = false;
     }
     syncMissingVehiclesToSlots(values, active);
-
-    /* 수동 그리드 캐시 로드 */
-    if (data.manualGrid?.values) {
-      manualGridCache[date] = {
-        values: data.manualGrid.values,
-        active: data.manualGrid.active || {},
-      };
-    } else {
-      delete manualGridCache[date];
-    }
-    /* 오토 그리드 캐시 로드 */
-    if (data.autoGrid?.values) {
-      autoGridCache[date] = {
-        values: data.autoGrid.values,
-        active: data.autoGrid.active || {},
-      };
-    } else {
-      delete autoGridCache[date];
-    }
 
     /* 제외 목록 — data에 포함된 필드 바로 사용 (추가 쿼리 없음) */
     if (!dispatchState.excludedAbsent) dispatchState.excludedAbsent = {};
@@ -1033,15 +1123,11 @@ async function loadData(date) {
     APP.parkingState = { values, active };
   } else {
     APP.parkingState = buildEmptyState();
-    delete manualGridCache[date];
-    delete autoGridCache[date];
     if (!dispatchState.excludedAbsent) dispatchState.excludedAbsent = {};
     dispatchState.excludedAbsent[date] = new Set();
   }
 
-  syncGridBtns(date);
   updateParkingOverlay(date);
-  updateLastSavedUI(data?.lastSaved || null);
   renderCards();  /* 딱 한 번 */
 
   if (typeof dispatchState !== 'undefined' && dispatchState.loaded && dispatchState.tomorrowNums?.length) {
@@ -1368,56 +1454,6 @@ async function initParking() {
     });
   }
 
-
-  /* ── 수동 / 오토 불러오기 버튼 ── */
-  const manualLoadBtn = document.getElementById('manualLoadBtn');
-  if (manualLoadBtn) {
-    manualLoadBtn.addEventListener('click', () => {
-      const date = currentDate();
-      if (!manualGridCache[date]) return;
-      showConfirm('수동으로 만든 주차 배치를\n현재 그리드에 적용할까요?', () => {
-        const g = manualGridCache[date];
-        const values = { ...g.values };
-        const active  = { ...g.active };
-        /* 제외 차량 제거 */
-        const exSet = dispatchState.excludedAbsent?.[date];
-        if (exSet && exSet.size > 0) {
-          const RC = APP.rowCount || 6;
-          for (let i = 0; i < RC * 3; i++) {
-            if (exSet.has(values[i])) { values[i] = ''; active[i] = false; }
-          }
-        }
-        APP.parkingState = { values, active };
-        renderCards();
-        saveData();
-      });
-    });
-  }
-
-  const autoLoadBtn = document.getElementById('autoLoadBtn');
-  if (autoLoadBtn) {
-    autoLoadBtn.addEventListener('click', () => {
-      const date = currentDate();
-      if (!autoGridCache[date]) return;
-      showConfirm('Auto Park로 만든 주차 배치를\n현재 그리드에 적용할까요?', () => {
-        const g = autoGridCache[date];
-        const values = { ...g.values };
-        const active  = { ...g.active };
-        /* 제외 차량 제거 */
-        const exSet = dispatchState.excludedAbsent?.[date];
-        if (exSet && exSet.size > 0) {
-          const RC = APP.rowCount || 6;
-          for (let i = 0; i < RC * 3; i++) {
-            if (exSet.has(values[i])) { values[i] = ''; active[i] = false; }
-          }
-        }
-        APP.parkingState = { values, active };
-        renderCards();
-        saveData();
-      });
-    });
-  }
-
   /* 백그라운드 자동 데이터 정리 제거 — 수동(데이터 정리 버튼)으로만 운영 */
 
   /* 화면 크기 변경 시 날짜 포맷 갱신 (가로/세로 회전, 리사이즈) */
@@ -1476,23 +1512,13 @@ function copyParkingGrid() {
       if (!toast) {
         toast = document.createElement('div');
         toast.id = 'copyToast';
-        toast.style.cssText = [
-          'position:fixed','bottom:calc(80px + env(safe-area-inset-bottom))',
-          'left:50%','transform:translateX(-50%)',
-          'background:rgba(30,30,30,0.92)','color:#fff',
-          'padding:10px 20px','border-radius:20px',
-          'font-size:14px','font-weight:700',
-          'z-index:9999','pointer-events:none',
-          'backdrop-filter:blur(8px)',
-          'box-shadow:0 2px 12px rgba(0,0,0,0.3)',
-          'white-space:nowrap',
-        ].join(';');
+        toast.className = 'ap-copy-toast';
         document.body.appendChild(toast);
       }
       toast.textContent = '✅ 주차도 복사됨';
-      toast.style.opacity = '1';
+      toast.classList.add('show');
       clearTimeout(toast._t);
-      toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+      toast._t = setTimeout(() => { toast.classList.remove('show'); }, 2000);
     })
     .catch(() => {
       const ta = document.createElement('textarea');

@@ -16,6 +16,8 @@ window.APP = {
     footerLine3: '※ 각조 팀장 & 부팀장 허락 없이 수정 절대 금지 ※',
     appVersion: 'v3.1.0',
     dispatchApiBase: 'https://api.kiki-bus.com/dispatch/126',
+    // 자동주차 옵션: 4R 1번칸이 비어있을 때 출차 체인 제약 완화
+    exitChainAllowMissing4R: true,
   },
 };
 

@@ -42,220 +42,6 @@ function tmplDispatch() {
   return `
   <section id="dispatchSection" class="dispatch-section" style="display:none">
 
-    <style>
-      /* ══════════════════════════════════════
-         Dispatch Section — Compact Card v2.0
-         ══════════════════════════════════════ */
-      .dispatch-section {
-        padding: 6px 10px 4px;
-        background: transparent;
-        overflow: hidden;
-      }
-
-      /* ── 전체 카드 감싸기 ── */
-      .dispatch-content {
-        background: #fff;
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid rgba(0,0,0,0.05);
-        box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      }
-
-      /* ── 오늘 행 ── */
-      .dispatch-row-today {
-        background: #F8FAFF;
-        padding: 5px 10px 4px;
-      }
-      .dispatch-row-today .dispatch-day-label {
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .04em;
-        color: #2563EB;
-        text-transform: uppercase;
-      }
-
-      /* ── 내일 행 ── */
-      .dispatch-row-tomorrow {
-        background: #F5F6FA;
-        padding: 5px 10px 4px;
-        border-top: 0.5px solid rgba(0,0,0,0.06);
-      }
-      .dispatch-row-tomorrow .dispatch-day-label {
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .04em;
-        color:#6B7280;
-        text-transform: uppercase;
-      }
-
-      /* ── 행 내 레이아웃 ── */
-      .dispatch-row-inner {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 4px;
-      }
-      .dispatch-date-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #6B7280;
-        letter-spacing: .01em;
-      }
-
-      /* ── 칩 컨테이너: 7개 고정 그리드 ── */
-      .dispatch-chips {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 3px;
-        width: 100%;
-      }
-
-      /* ── 칩 기본 ── */
-      .dc-chip {
-        background: #fff;
-        border: 1px solid #E5E7EB;
-        border-radius: 6px;
-        padding: 3px 0;
-        font-size: clamp(10px, 3vw, 13px);
-        font-weight: 700;
-        color: #374151;
-        line-height: 1.4;
-        letter-spacing: .01em;
-        text-align: center;
-        min-width: 0;
-        overflow: hidden;
-      }
-
-      /* ── 총5회차 (연한 파랑) ── */
-      .dc-chip--early {
-        background: #EFF6FF;
-        border-color: #BFDBFE;
-        color: #2563EB;
-      }
-
-      /* ── 휴차 (연한 노랑) ── */
-      .dc-chip--absent {
-        background: #FEFCE8;
-        border-color: #FEF08A;
-        color: #92400E;
-      }
-
-      /* ── 불러오기 버튼 ── */
-      .dispatch-load-btn-sm {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        padding: 4px 10px;
-        border-radius: 6px;
-        border: none;
-        background: #2563EB;
-        color: #fff;
-        font-size: 11px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: opacity .15s;
-        white-space: nowrap;
-        letter-spacing: .02em;
-      }
-      .dispatch-load-btn-sm:active { opacity: 0.8; transform: scale(.97); }
-      .dispatch-load-btn-sm svg {
-        width: 11px; height: 11px;
-        stroke: currentColor; stroke-width: 2.2;
-        stroke-linecap: round; stroke-linejoin: round;
-        fill: none; flex-shrink: 0;
-        transition: transform .4s ease;
-      }
-      .dispatch-load-btn-sm.spinning svg {
-        animation: dc-spin .7s linear infinite;
-      }
-      @keyframes dc-spin { to { transform: rotate(360deg); } }
-
-      /* ── 로딩 오버레이 ── */
-      .dispatch-loading {
-        position: fixed; inset: 0; z-index: 9000;
-        display: flex; flex-direction: column;
-        align-items: center; justify-content: center;
-        background: rgba(0,0,0,0.60);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-      }
-      .dispatch-loading-inner {
-        display: flex; flex-direction: column;
-        align-items: center; gap: 16px;
-        background: rgba(255,255,255,0.12);
-        border: 1px solid rgba(255,255,255,0.20);
-        border-radius: 22px; padding: 30px 40px 26px;
-      }
-      .dispatch-spinner {
-        width: 46px; height: 46px;
-        border: 4px solid rgba(255,255,255,0.22);
-        border-top-color: #3B82F6; border-radius: 50%;
-        animation: dc-spin .75s linear infinite;
-      }
-      .dispatch-loading-text {
-        font-size: 16px; font-weight: 800; color: #fff;
-        letter-spacing: .02em; text-align: center;
-        text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-      }
-      .dispatch-loading-progress {
-        font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.82);
-        text-align: center; letter-spacing: .02em;
-        min-height: 1.35em; line-height: 1.4;
-      }
-      .dispatch-loading-dots { display: inline-flex; gap: 6px; }
-      .dispatch-loading-dots span {
-        width: 8px; height: 8px; border-radius: 50%;
-        background: #60A5FA; animation: dc-bounce 1.1s ease infinite;
-      }
-      .dispatch-loading-dots span:nth-child(2) { animation-delay: .18s; }
-      .dispatch-loading-dots span:nth-child(3) { animation-delay: .36s; }
-      @keyframes dc-bounce {
-        0%,80%,100% { transform: scale(.5); opacity:.3; }
-        40%         { transform: scale(1);  opacity:1; }
-      }
-
-      /* ── 제외된 휴차 칩 (취소선 + 회색) ── */
-      .dc-chip--excluded {
-        background: #F3F4F6 !important;
-        border-color: #D1D5DB !important;
-        color: #9CA3AF !important;
-        opacity: 0.75;
-      }
-      .dc-chip--excluded s {
-        text-decoration: line-through;
-        text-decoration-color: #6B7280;
-      }
-      /* ── 휴차 칩 long press 시각 피드백 ── */
-      .dc-chip--absent:active {
-        transform: scale(0.94);
-        opacity: 0.75;
-        transition: transform 0.08s, opacity 0.08s;
-      }
-      /* 흔들림 피드백 (iOS 포함 전 기기) */
-      @keyframes dc-chip-shake {
-        0%   { transform: scale(1.08) rotate(-4deg); }
-        25%  { transform: scale(1.08) rotate(4deg); }
-        50%  { transform: scale(1.08) rotate(-3deg); }
-        75%  { transform: scale(1.08) rotate(3deg); }
-        100% { transform: scale(1) rotate(0deg); }
-      }
-      .dc-chip--shake {
-        animation: dc-chip-shake 0.35s ease;
-      }
-      .dc-chip--matched {
-        outline: 2px solid #EF4444 !important;
-        outline-offset: 1px;
-        box-shadow: 0 0 0 3px rgba(239,68,68,0.25) !important;
-        animation: dc-match-pulse 0.7s ease-in-out infinite alternate;
-      }
-      @keyframes dc-match-pulse {
-        from { box-shadow: 0 0 0 0 rgba(239,68,68,0.35); }
-        to   { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
-      }
-      .dc-chip--absent.dc-chip--matched { outline-color: #EF4444 !important; }
-    </style>
-
     <!-- ── 로딩 (전체화면 오버레이) ── -->
     <div id="dispatchLoading" class="dispatch-loading" style="display:none">
       <div class="dispatch-loading-inner">
@@ -442,13 +228,14 @@ function tmplBottomNav() {
 /* ── 앱 설정 대시보드 ──────────────────────────────────────── */
 function tmplAppSettingsModal() {
   return `
-  <div class="modal-overlay" id="appSettingsModal">
-    <div class="modal-box settings-modal-box">
-      <div class="modal-header">
-        <h3>⚙️ 앱 설정</h3>
-        <button class="modal-close-btn" id="appSettingsClose" aria-label="닫기">&#10005;</button>
+  <div class="ap-sheet-modal" id="appSettingsModal">
+    <div class="ap-sheet settings settings-modal-box">
+      <div class="ap-sheet-grabber"></div>
+      <div class="ap-sheet-header">
+        <div class="ap-sheet-title">⚙️ 앱 설정</div>
+        <button class="ap-sheet-close" id="appSettingsClose" aria-label="닫기">&#10005;</button>
       </div>
-      <div class="settings-scroll-body">
+      <div class="settings-scroll-body ap-sheet-body">
 
       <!-- 팀 표시 -->
       <div class="settings-section">
@@ -517,6 +304,39 @@ function tmplAppSettingsModal() {
           <input id="newRowInput" type="text" maxlength="8"
             class="settings-input" placeholder="행 라벨 (예: 8R)" style="flex:1">
           <button id="addRowBtn" type="button" class="btn-secondary ve-add-btn">+ 추가</button>
+        </div>
+      </div>
+
+      <!-- 🧠 자동주차 학습 -->
+      <div class="settings-section">
+        <div class="settings-section-title">🧠 자동주차 학습</div>
+        <div class="settings-footer-group">
+          <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.6">
+            현재 선택된 날짜의 주차판 배치를 학습 데이터로 저장합니다.<br>
+            수동으로 최적 배치 후 저장하면 이후 자동주차 탐색 시 유사한 패턴을 우선 탐색합니다.
+          </p>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <button type="button" id="apLearnSaveBtn" class="btn-secondary"
+              style="flex:1;min-width:140px">
+              🧠 현재 배치 학습 저장
+            </button>
+            <span id="apLearnCountBadge"
+              style="font-size:12px;color:var(--color-text-secondary);white-space:nowrap">
+              학습 데이터: —
+            </span>
+          </div>
+          <p id="apLearnStatusMsg"
+            style="font-size:12px;margin-top:6px;color:var(--color-success);min-height:18px"></p>
+
+          <!-- 자동주차 옵션 -->
+          <div style="margin-top:10px;padding-top:10px;border-top:0.5px solid rgba(0,0,0,0.08)">
+            <label class="settings-radio" style="gap:8px">
+              <input type="checkbox" id="set-exitChainAllowMissing4R">
+              <span style="font-size:13px">
+                출차 체인 제약: <b>4R 1번칸이 비면 완화</b> (완벽해가 더 잘 나옴)
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 

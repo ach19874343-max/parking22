@@ -40,13 +40,34 @@ function getTodayEntryOrder(){
 /* ══════════════════════════════════════════════════════════════
    § 2. 물리 규칙
    ══════════════════════════════════════════════════════════════ */
-function canEnterRow(ri,v){
+/**
+ * @param {number} ri - 행 인덱스
+ * @param {Object} v  - 현재 슬롯 상태
+ * @param {boolean} [fallback=false]
+ *   false(1단계): 아래 행 2번칸+3번칸 둘 다 비어야 우회 진입 허용
+ *   true (2단계): 아래 행 3번칸만 비어도 우회 진입 허용 (더 관대)
+ */
+function canEnterRow(ri,v,fallback){
   if(ri===0) return true;              // 2R 예외
+  /* 3R: 위행(2R) 3번칸 비면 진입 가능.
+     위행 3번칸에 차가 있어도 아래행(4R) 3번칸이 비면 진입 가능(아래행 2번칸까지 차 있어도 허용). */
+  if(ri===1){
+    // 위 행(2R) 3번칸 비어있으면 OK
+    if(!v[(ri-1)*3+2]) return true;
+    const RC=APP.rowCount;
+    // 아래 행(4R) 3번칸 비어있으면 OK (2번칸은 차 있어도 됨)
+    if(ri<RC-1 && !v[(ri+1)*3+2]) return true;
+    return false;
+  }
   if(!v[(ri-1)*3+2]) return true;     // 위 행 3번칸 비어있으면 진입 가능
-  // 위 행 3번칸 차 있어도 아래 행 2·3번칸 모두 비어있으면 진입 가능
-  // (아래 행이 없는 마지막 행은 해당 없음)
   const RC=APP.rowCount;
-  if(ri<RC-1&&!v[(ri+1)*3+1]&&!v[(ri+1)*3+2]) return true;
+  if(ri<RC-1){
+    if(fallback){
+      if(!v[(ri+1)*3+2]) return true;
+    } else {
+      if(!v[(ri+1)*3+1]&&!v[(ri+1)*3+2]) return true;
+    }
+  }
   return false;
 }
 function findEntryCol(ri,v){
@@ -69,16 +90,16 @@ function calcExitBlocking(values,tmrRank){
 }
 
 // 1번칸 인접행 규칙 (메인 스레드용)
-// 4R(idx=2)·5R(idx=3)·6R(idx=4): 위 행 또는 아래 행 1번칸에 차 있어야 col=0 배치 가능
-// 2R(0)·3R(1)·7R(RC-1) 예외
+// 규칙 적용: 5R(idx=3)·6R(idx=4)만 — 위 행 또는 아래 행 1번칸에 차 있어야 col=0 배치 가능
+// 예외(상관 없음): 2R(0)·3R(1)·4R(2)·7R(RC-1)
 function canEnterCol0(row, sim){
   const RC=APP.rowCount;
-  if(row<=1) return true;         // 2R·3R 예외
+  if(row<=2) return true;         // 2R·3R·4R 예외
   if(row>=RC-1) return true;      // 7R — 이 규칙 대상 아님
   return !!(sim[slotIndex(row-1,0)]||sim[slotIndex(row+1,0)]);
 }
 
-function calcEntryBlocking(values,order,base){
+function calcEntryBlocking(values,order,base,fallback){
   const sim={};
   for(let i=0;i<APP.rowCount*3;i++) sim[i]=(base&&base[i])||'';
   let s=0, col0streak=0;
@@ -86,7 +107,7 @@ function calcEntryBlocking(values,order,base){
     let si=-1; for(let i=0;i<APP.rowCount*3;i++) if(values[i]===n){si=i;break;}
     if(si===-1) continue;
     const row=slotRow(si),col=slotCol(si);
-    if(!canEnterRow(row,sim)){s++;sim[si]=n;col0streak=col===0?col0streak+1:0;continue;}
+    if(!canEnterRow(row,sim,fallback)){s++;sim[si]=n;col0streak=col===0?col0streak+1:0;continue;}
     if(col===0&&!canEnterCol0(row,sim)){s++;sim[si]=n;col0streak=col0streak+1;continue;}
     // 연속 1번칸 3대 금지
     if(col===0&&col0streak>=2){s++;sim[si]=n;col0streak=col0streak+1;continue;}
@@ -94,6 +115,45 @@ function calcEntryBlocking(values,order,base){
     col0streak=col===0?col0streak+1:0;
   }
   return s;
+}
+
+/**
+ * 디버그용: 입차 막힘 사유를 상세 로그로 반환
+ * - calcEntryBlocking과 동일한 규칙/시뮬레이션을 쓰되, "왜 막혔는지"를 기록
+ * @returns {{count:number, events:Array<{num:string, slot:number, row:number, col:number, reason:string}>}}
+ */
+function explainEntryBlocking(values, order, base, fallback){
+  const sim={};
+  for(let i=0;i<APP.rowCount*3;i++) sim[i]=(base&&base[i])||'';
+  const events=[];
+  let col0streak=0;
+  for(const n of order){
+    let si=-1; for(let i=0;i<APP.rowCount*3;i++) if(values[i]===n){si=i;break;}
+    if(si===-1) continue;
+    const row=slotRow(si),col=slotCol(si);
+    let reason='';
+    if(!canEnterRow(row,sim,fallback)){
+      reason='canEnterRow=false (위행3번칸/아래행2·3번칸 규칙)';
+      events.push({num:String(n),slot:si,row,col,reason});
+      sim[si]=n; col0streak=col===0?col0streak+1:0;
+      continue;
+    }
+    if(col===0&&!canEnterCol0(row,sim)){
+      reason='col0 인접행 규칙 위반 (5R·6R만 적용)';
+      events.push({num:String(n),slot:si,row,col,reason});
+      sim[si]=n; col0streak=col0streak+1;
+      continue;
+    }
+    if(col===0&&col0streak>=2){
+      reason='연속 1번칸 3대 금지';
+      events.push({num:String(n),slot:si,row,col,reason});
+      sim[si]=n; col0streak=col0streak+1;
+      continue;
+    }
+    sim[si]=n;
+    col0streak=col===0?col0streak+1:0;
+  }
+  return { count: events.length, events };
 }
 
 function getExitBlockingInfo(values,active,tmrRank){
@@ -109,14 +169,19 @@ function getExitBlockingInfo(values,active,tmrRank){
 }
 
 /**
- * 내일 출차 순서 제약: 3R 1번(col0) 차량이 2R 1번보다 먼저 출차해야 함 → tmrRank[3R] < tmrRank[2R]
- * 예외: 2R 1번 차량이 오늘 휴차·내일 휴차(배차표에 내일 행 없음)이면 비적용
+ * 내일 출차 순서 제약(1번칸 기준):
+ * - 5R/6R 1번(col0)이 4R 1번보다 먼저 출차해야 함
+ * - 4R 1번이 3R 1번보다 먼저 출차해야 함
+ * - 3R 1번이 2R 1번보다 먼저 출차해야 함
+ * 즉: 5R < 4R < 3R < 2R, 6R < 4R < 3R < 2R (tmrRank가 낮을수록 먼저 출차)
+ *
+ * 예외: 2R 1번 차량이 오늘·내일 모두 휴차(bothDayRest)이면 2R/3R/4R 체인은 비적용
  * @param {Object} values - 슬롯별 차번
  * @param {Object} tmrRank - 내일 출차 순번(낮을수록 먼저 출차)
  * @param {Set|Object} bothDayRest - 오늘·내일 모두 휴차인 차번 집합
  */
 function violates2r3r1ExitOrder(values,tmrRank,bothDayRest){
-  const v2=values[0], v3=values[3];
+  const v2=values[0], v3=values[3], v4=values[6], v5=values[9], v6=values[12];
   if(!v2) return false;
   const inBoth=(n)=>{
     if(!n) return false;
@@ -125,8 +190,20 @@ function violates2r3r1ExitOrder(values,tmrRank,bothDayRest){
   };
   if(inBoth(v2)) return false;
   if(!v3) return true;
-  const r2=tmrRank[v2]??9999, r3=tmrRank[v3]??9999;
-  return r3>=r2;
+  if(!v4) return true;
+  const r2=tmrRank[v2]??9999, r3=tmrRank[v3]??9999, r4=tmrRank[v4]??9999;
+  if(r3>=r2) return true; // 3R이 2R보다 먼저 나가야 함
+  if(r4>=r3) return true; // 4R이 3R보다 먼저 나가야 함
+  // 5R/6R은 4R보다 먼저(있을 때만)
+  if(v5){
+    const r5=tmrRank[v5]??9999;
+    if(r5>=r4) return true;
+  }
+  if(v6){
+    const r6=tmrRank[v6]??9999;
+    if(r6>=r4) return true;
+  }
+  return false;
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -230,6 +307,31 @@ function validRestRowCounts(cnt){
   return out;
 }
 
+/**
+ * 휴차 대수별 선호 행 분배 (2R=n2, 3R=n3, 6R=n6, 7R=n7) — validRestRowCounts 와 교집합만 사용
+ * 1~3대: 2R만 또는 7R만 / 4~6대: 2R+7R만 / 7대: 2R+3R+7R 또는 2R+6R+7R 패턴만
+ */
+function getPreferredRestTuples(cnt){
+  if(cnt<=0||cnt>7) return [];
+  const valid=validRestRowCounts(cnt);
+  const ok=t=>valid.some(u=>u[0]===t[0]&&u[1]===t[1]&&u[2]===t[2]&&u[3]===t[3]);
+  /** @type{number[][]} */
+  let raw=[];
+  if(cnt===1) raw=[[1,0,0,0],[0,0,0,1]];
+  else if(cnt===2) raw=[[2,0,0,0],[0,0,0,2]];
+  else if(cnt===3) raw=[[3,0,0,0],[0,0,0,3]];
+  else if(cnt===4) raw=[[3,0,0,1],[2,0,0,2],[1,0,0,3]];
+  else if(cnt===5) raw=[[3,0,0,2],[2,0,0,3]];
+  else if(cnt===6) raw=[[3,0,0,3]];
+  else if(cnt===7){
+    raw=[
+      [3,1,0,3],[2,2,0,3],[3,2,0,2],[3,3,0,1],
+      [1,0,3,3],[2,0,2,3],[3,0,1,3],[3,0,2,2],
+    ];
+  }
+  return raw.filter(ok);
+}
+
 /** rowPlan 조각: ROW_DEFS 순서와 동일하게 2R→7R→3R→6R */
 function rowPlansForDistribution(n2,n3,n6,n7){
   const parts=[];
@@ -298,8 +400,9 @@ function forEachPermutedRestOrder(restVehicles,tmrRank,tomorrowMissing,visit){
 /**
  * 휴차 배치 후보: validRestRowCounts 로 (n2,n3,n6,n7) 전개 → rowPlansForDistribution 으로 칸 조합 → 순열.
  * tomorrowMissing: 오늘·내일 모두 휴차(내일 배차 없음) 번호 — 순열 시드에 반영. 내일 출차 순서는 tmrRank.
+ * @param {number[][]|null} [tupleFilter] — 허용 (n2,n3,n6,n7) 만; 빈 배열이면 후보 없음
  */
-function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing,fastExitRankBanMax=3){
+function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing,fastExitRankBanMax=3,tupleFilter=null){
   if(!restVehicles.length){
     const values={},active={};
     for(let i=0;i<RC*3;i++){values[i]='';active[i]=false;}
@@ -310,9 +413,19 @@ function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing,fastExit
   const tmrMiss=(tomorrowMissing||[]).map(x=>(typeof x==='object'?x?.num:x));
   const fastBanMax=fastExitRankBanMax??0;
 
+  let tupleList;
+  if(tupleFilter!==null&&tupleFilter!==undefined){
+    if(!tupleFilter.length) return [];
+    const validSet=new Set(validRestRowCounts(cnt).map(t=>JSON.stringify(t)));
+    tupleList=tupleFilter.filter(t=>validSet.has(JSON.stringify(t)));
+    if(!tupleList.length) return [];
+  } else {
+    tupleList=validRestRowCounts(cnt);
+  }
+
   const candidates=new Map();
 
-  for(const[n2,n3,n6,n7]of validRestRowCounts(cnt)){
+  for(const[n2,n3,n6,n7]of tupleList){
     for(const plan of rowPlansForDistribution(n2,n3,n6,n7)){
       forEachPermutedRestOrder(restVehicles,tmrRank,tmrMiss,(perm)=>{
         const state=buildRestState(perm, plan, RC, tmrRank);
@@ -368,9 +481,9 @@ function generateRestCandidates(restVehicles,tmrRank,RC,tomorrowMissing,fastExit
     const nRows=(u2?1:0)+(u7?1:0)+(u3?1:0)+(u6?1:0);
 
     if(!u3&&!u6){
-      if(!u2&&u7) return 0;
-      if(u2&&u7) return 1;
-      if(u2&&!u7) return 2;
+      if(!u2&&u7) return 0;   // 7R만
+      if(u2&&!u7) return 1;   // 2R만
+      if(u2&&u7)  return 2;   // 2R + 7R
     }
     if(u2&&u3&&!u6&&u7) return 3;
     if(u2&&u3&&!u6&&!u7) return 4;

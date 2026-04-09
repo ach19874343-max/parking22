@@ -98,7 +98,8 @@ async function cleanAllOldData() {
       });
       if (tasks.length) { await Promise.all(tasks); total += tasks.length; }
     }
-    alert(`🗑️ 데이터 정리 완료!\n${total}건 삭제 (기준: ${cutoffStr})`);
+    // ※ learnData 경로는 학습 데이터 보호를 위해 데이터 정리 대상에서 제외
+    alert(`🗑️ 데이터 정리 완료!\n${total}건 삭제 (기준: ${cutoffStr})\n\n※ 자동주차 학습 데이터는 삭제되지 않습니다.`);
   } catch (err) {
     alert('데이터 정리 중 오류: ' + err.message);
   }
@@ -116,6 +117,8 @@ function fillSettingsForm() {
   setVal('set-footerLine3', s.footerLine3);
   setVal('set-appVersion',  s.appVersion);
   setVal('set-dispatchApiBase', s.dispatchApiBase);
+  const ec = document.getElementById('set-exitChainAllowMissing4R');
+  if (ec) ec.checked = (s.exitChainAllowMissing4R !== false);
   renderFooterExtraInputs(s);
   renderVehicleEditor();
   renderRowEditor();
@@ -165,6 +168,7 @@ function reindexFooterInputs() {
 async function saveAppSettings() {
   const getV = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
   const teamRadio = document.querySelector('input[name="teamMode"]:checked');
+  const getCb = id => { const el = document.getElementById(id); return el ? !!el.checked : false; };
   const newSettings = {
     teamMode:        teamRadio ? teamRadio.value : 'ab',
     footerLine1:     getV('set-footerLine1'),
@@ -172,6 +176,7 @@ async function saveAppSettings() {
     footerLine3:     getV('set-footerLine3'),
     appVersion:      getV('set-appVersion'),
     dispatchApiBase: getV('set-dispatchApiBase') || 'https://api.kiki-bus.com/dispatch/126',
+    exitChainAllowMissing4R: getCb('set-exitChainAllowMissing4R'),
   };
   for (let i = 4; i <= 10; i++) {
     const el = document.getElementById('set-footerLine' + i);
@@ -198,23 +203,30 @@ async function verifySettingsPassword() {
     if (!modal) {
       modal = document.createElement('div');
       modal.id = 'settingsPwModal';
-      modal.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;padding:20px';
+      modal.className = 'ap-sheet-modal center';
       modal.innerHTML = `
-        <div style="background:#1C1C1E;border-radius:20px;padding:28px 24px;width:100%;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
-          <div style="font-size:17px;font-weight:800;color:#fff;text-align:center;margin-bottom:6px">⚙️ 설정</div>
-          <div style="font-size:13px;color:#9CA3AF;text-align:center;margin-bottom:18px">비밀번호를 입력하세요</div>
-          <input id="settingsPwInput" type="password" inputmode="numeric"
-            style="width:100%;height:48px;border-radius:12px;border:1.5px solid #374151;background:#111827;color:#fff;font-size:20px;text-align:center;letter-spacing:6px;box-sizing:border-box;margin-bottom:14px;outline:none"
-            placeholder="••••" maxlength="20">
-          <div style="display:flex;gap:8px">
-            <button id="settingsPwCancel" style="flex:1;height:44px;border:none;border-radius:12px;background:#374151;color:#fff;font-size:15px;font-weight:700;cursor:pointer">취소</button>
-            <button id="settingsPwOk" style="flex:2;height:44px;border:none;border-radius:12px;background:linear-gradient(135deg,#3B82F6,#1D4ED8);color:#fff;font-size:15px;font-weight:800;cursor:pointer">확인</button>
+        <div class="ap-sheet center">
+          <div class="ap-sheet-grabber"></div>
+          <div class="ap-sheet-header">
+            <div>
+              <div class="ap-sheet-title">⚙️ 설정</div>
+              <div class="ap-pw-sub">비밀번호를 입력하세요</div>
+            </div>
+            <button class="ap-sheet-close" id="settingsPwClose" aria-label="닫기">&#10005;</button>
+          </div>
+          <div class="ap-sheet-body">
+            <input id="settingsPwInput" class="ap-pw-input" type="password" inputmode="numeric"
+              placeholder="••••" maxlength="20">
+            <div class="ap-pw-actions">
+              <button class="ap-pw-btn cancel" id="settingsPwCancel">취소</button>
+              <button class="ap-pw-btn ok" id="settingsPwOk">확인</button>
+            </div>
           </div>
         </div>`;
       document.body.appendChild(modal);
     }
-    modal.style.display = 'flex';
-    const inp = document.getElementById('settingsPwInput');
+    modal.classList.add('active');
+    const inp = modal.querySelector('#settingsPwInput');
     inp.value = '';
     setTimeout(() => inp.focus(), 80);
     async function doCheck() {
@@ -222,17 +234,32 @@ async function verifySettingsPassword() {
       try {
         const snap = await APP.get(APP.ref(APP.db, 'admin/password'));
         if (snap.exists() && String(snap.val()) === String(pw)) {
-          modal.style.display = 'none'; resolve(true);
+          modal.remove();
+          resolve(true);
         } else {
           inp.style.border = '1.5px solid #EF4444'; inp.value = '';
           inp.placeholder = '틀렸습니다';
-          setTimeout(() => { inp.style.border = '1.5px solid #374151'; inp.placeholder = '••••'; }, 1500);
+          setTimeout(() => { inp.style.border = ''; inp.placeholder = '••••'; }, 1500);
         }
-      } catch { modal.style.display = 'none'; resolve(true); }
+      } catch {
+        modal.remove();
+        resolve(true);
+      }
     }
-    document.getElementById('settingsPwOk').onclick = doCheck;
-    document.getElementById('settingsPwCancel').onclick = () => { modal.style.display = 'none'; resolve(false); };
-    inp.addEventListener('keypress', e => { if (e.key === 'Enter') doCheck(); });
+    const okBtn = modal.querySelector('#settingsPwOk');
+    const cancelBtn = modal.querySelector('#settingsPwCancel');
+    const closeBtn = modal.querySelector('#settingsPwClose');
+    const cancelFn = () => { modal.remove(); resolve(false); };
+    if (okBtn) okBtn.onclick = doCheck;
+    if (cancelBtn) cancelBtn.onclick = cancelFn;
+    if (closeBtn) closeBtn.onclick = cancelFn;
+    // ESC / Enter
+    inp.onkeydown = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); doCheck(); }
+      if (e.key === 'Escape') { e.preventDefault(); cancelFn(); }
+    };
+    // backdrop click closes
+    modal.onclick = (e) => { if (e.target === modal) cancelFn(); };
   });
 }
 
@@ -323,6 +350,13 @@ function initAdmin() {
       if (!ok) return;
       fillSettingsForm();
       appSettingsModal.classList.add('active');
+      // 학습 데이터 개수 갱신
+      if (window.apLearnCount) {
+        window.apLearnCount().then(count => {
+          const badge = document.getElementById('apLearnCountBadge');
+          if (badge) badge.textContent = `학습 데이터: ${count}개`;
+        }).catch(()=>{});
+      }
     });
   }
   ['appSettingsClose','appSettingsCancel'].forEach(id => {
@@ -350,6 +384,35 @@ function initAdmin() {
     if (!confirm('10일 이전의 주차도 / 배차 데이터를 모두 삭제합니다.\n계속하시겠습니까?')) return;
     cleanAllOldData();
   });
+
+  /* 🧠 자동주차 학습 버튼 */
+  const apLearnSaveBtn = document.getElementById('apLearnSaveBtn');
+  if (apLearnSaveBtn) {
+    apLearnSaveBtn.addEventListener('click', async () => {
+      const dateStr = document.getElementById('datePicker')?.value;
+      if (!dateStr) { alert('날짜를 먼저 선택해주세요.'); return; }
+      const statusMsg = document.getElementById('apLearnStatusMsg');
+      apLearnSaveBtn.disabled = true;
+      apLearnSaveBtn.textContent = '저장 중…';
+      if (statusMsg) statusMsg.textContent = '';
+      try {
+        const result = await window.apLearnSave(dateStr);
+        if (statusMsg) {
+          statusMsg.textContent = result.ok ? '✅ ' + result.msg : '❌ ' + result.msg;
+          statusMsg.style.color = result.ok ? 'var(--color-success)' : 'var(--color-danger)';
+        }
+        // 개수 갱신
+        const count = await window.apLearnCount();
+        const badge = document.getElementById('apLearnCountBadge');
+        if (badge) badge.textContent = `학습 데이터: ${count}개`;
+      } catch(e) {
+        if (statusMsg) { statusMsg.textContent = '❌ 오류 발생'; statusMsg.style.color='var(--color-danger)'; }
+      } finally {
+        apLearnSaveBtn.disabled = false;
+        apLearnSaveBtn.textContent = '🧠 현재 배치 학습 저장';
+      }
+    });
+  }
 
   /* footer 줄 추가 */
   const addFooterBtn = document.getElementById('addFooterLineBtn');

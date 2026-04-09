@@ -6,6 +6,7 @@
    · 총5회차 판정: busRound 최댓값 === 4
    ============================================================ */
 'use strict';
+const DISPATCH_DEBUG = false;
 
 /* ── 성공 프록시 캐시 키 ────────────────────────────────────── */
 const PROXY_CACHE_KEY = 'dispatchLastProxyIdx';
@@ -78,10 +79,10 @@ async function fetchDispatchItems(dateStr) {
       const json  = await proxies[idx]();
       const items = parseDispatchJson(json);
       sessionStorage.setItem(PROXY_CACHE_KEY, String(idx));
-      console.log(`[dispatch] 프록시[${idx}] 성공`);
+      if (DISPATCH_DEBUG) console.log(`[dispatch] 프록시[${idx}] 성공`);
       return items;
     } catch (e) {
-      console.warn(`[dispatch] 프록시[${idx}] 실패:`, e.message);
+      if (DISPATCH_DEBUG) console.warn(`[dispatch] 프록시[${idx}] 실패:`, e.message);
     }
   }
   throw new Error('모든 프록시 실패 — 네트워크 또는 서버 제한');

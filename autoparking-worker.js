@@ -15,23 +15,36 @@
    ══════════════════════════════════════════════════════════════ */
 const WORKER_CODE=`
 'use strict';
-function cer(ri,v,RC){
+function cer(ri,v,RC,fallback){
   if(ri===0) return true;
+  // 3R(ri=1): 위행(2R) 3번칸이 비면 OK, 또는 아래행(4R) 3번칸이 비면 OK(2번칸은 차 있어도 됨)
+  if(ri===1){
+    if(!v[(ri-1)*3+2]) return true;
+    if(RC!==undefined&&ri<RC-1&&!v[(ri+1)*3+2]) return true;
+    return false;
+  }
   if(!v[(ri-1)*3+2]) return true;
   // 위 행 3번칸 차 있어도 아래 행 2·3번칸 모두 비어있으면 진입 가능
-  if(RC!==undefined&&ri<RC-1&&!v[(ri+1)*3+1]&&!v[(ri+1)*3+2]) return true;
+  if(RC!==undefined&&ri<RC-1){
+    if(fallback){
+      // 더 관대: 아래 행 3번칸만 비어도 허용 (아래행 2번칸은 차 있어도 됨)
+      if(!v[(ri+1)*3+2]) return true;
+    } else {
+      if(!v[(ri+1)*3+1]&&!v[(ri+1)*3+2]) return true;
+    }
+  }
   return false;
 }
 function fec(ri,v){if(v[ri*3+2])return -1;for(let c=0;c<3;c++)if(!v[ri*3+c])return c;return -1;}
 function cExit(V,T,RC){let s=0;for(let r=0;r<RC;r++)for(let c=1;c<3;c++){const v=V[r*3+c];if(!v)continue;const m=T[v]??9999;for(let lc=0;lc<c;lc++){const lv=V[r*3+lc];if(lv&&(T[lv]??9999)>m)s++;}}return s;}
-function cEntry(V,O,B,RC){
+function cEntry(V,O,B,RC,fallback){
   const s={};for(let i=0;i<RC*3;i++)s[i]=(B&&B[i])||'';
   let n=0,col0streak=0; // col0streak: 연속 1번칸 입차 카운트
   for(const x of O){
     let si=-1;for(let i=0;i<RC*3;i++)if(V[i]===x){si=i;break;}
     if(si<0)continue;
     const row=Math.floor(si/3),col=si%3;
-    if(!cer(row,s)){n++;s[si]=x;col0streak=col===0?col0streak+1:0;continue;}
+    if(!cer(row,s,RC,fallback)){n++;s[si]=x;col0streak=col===0?col0streak+1:0;continue;}
     if(col===0&&!canCol0(row,s,RC)){n++;s[si]=x;col0streak=col0streak+1;continue;}
     // 연속 1번칸 3대 금지
     if(col===0&&col0streak>=2){n++;s[si]=x;col0streak=col0streak+1;continue;}
@@ -40,8 +53,8 @@ function cEntry(V,O,B,RC){
   }
   return n;
 }
-function cSlots(ar,w){let c=0;for(const r of ar){if(!cer(r,w))continue;for(let col=0;col<3;col++)if(!w[r*3+col])c++;}return c;}
-function sLost3(row,ar,w){let l=0;const t={...w,[row*3+2]:'X'};for(const r of ar){if(r<=row)continue;if(cer(r,w)&&!cer(r,t))for(let c=0;c<3;c++)if(!w[r*3+c])l++;}return l;}
+function cSlots(ar,w,RC,fallback){let c=0;for(const r of ar){if(!cer(r,w,RC,fallback))continue;for(let col=0;col<3;col++)if(!w[r*3+col])c++;}return c;}
+function sLost3(row,ar,w,RC,fallback){let l=0;const t={...w,[row*3+2]:'X'};for(const r of ar){if(r<=row)continue;if(cer(r,w,RC,fallback)&&!cer(r,t,RC,fallback))for(let c=0;c<3;c++)if(!w[r*3+c])l++;}return l;}
 
 // 아래 행 2·3번칸이 모두 비어있는지 확인
 // 적용 대상: 2R(ri=0) 제외, 7R(ri=RC-1) 제외 (아래 행 없음)
@@ -54,34 +67,50 @@ function lowerClear(ri,w,RC){
 }
 
 // 1번칸(col=0) 배치 가능 여부 확인
-// 적용: 4R(idx=2), 5R(idx=3), 6R(idx=4) — 2R·3R 예외
-// 7R은 아래 행 없지만 예외 아님 — 7R 자체에 이 규칙 적용 안 함(휴차행)
+// 적용: 5R(idx=3), 6R(idx=4)만 — 2R·3R·4R 예외
+// 7R은 이 규칙 적용 안 함(휴차행)
 // 위 행(row-1) 1번칸 또는 아래 행(row+1) 1번칸 중 하나에 차(운행·휴차 모두) 있어야 함
 function canCol0(row,w,RC){
-  if(row<=1) return true;          // 2R(0)·3R(1) 예외
+  if(row<=2) return true;          // 2R(0)·3R(1)·4R(2) 예외
   if(row>=RC-1) return true;       // 7R(마지막행) — 이 규칙 대상 아님(휴차행)
   const upHas   = w[(row-1)*3+0]; // 위 행 1번칸 (운행차·휴차 모두 포함)
   const downHas = w[(row+1)*3+0]; // 아래 행 1번칸 (운행차·휴차 모두 포함)
   return !!(upHas||downHas);
 }
 
-// 내일 출차 사슬 제약:
-// 4R 1번(col0) < 3R 1번(col0) < 2R 1번(col0)
+// 내일 출차 사슬 제약(1번칸 체인)
+// chainVer=2: 5R<4R<3R<2R AND 6R<4R<3R<2R
+// chainVer=1: 4R<3R<2R (이전 규칙)
 // (2R 1번에 해당 차량이 오늘·내일 휴차(br)이면 비적용 — 기존 의미 유지)
-function r23Viol(w,tr,br,enf){
+function r23Viol(w,tr,br,enf,chainVer,allowMissing4R){
   if(!enf)return false;
-  const v2=w[0], v3=w[3], v4=w[6];
+  const ver = chainVer||2;
+  const v2=w[0], v3=w[3], v4=w[6], v5=w[9], v6=w[12];
   if(!v2) return false;
   if(br[v2]) return false;
   if(!v3) return true;
-  if(!v4) return true;
   const r2=tr[v2]??9999, r3=tr[v3]??9999, r4=tr[v4]??9999;
   if(r3>=r2) return true; // 3R이 2R보다 먼저 나가야 함
+  if(!v4){
+    // 옵션: 4R 1번칸 비어있으면 체인 완화(4R 관련 비교는 무시)
+    return allowMissing4R ? false : true;
+  }
   if(r4>=r3) return true; // 4R이 3R보다 먼저 나가야 함
+  if(ver>=2){
+    if(v5){
+      const r5=tr[v5]??9999;
+      if(r5>=r4) return true;
+    }
+    if(v6){
+      const r6=tr[v6]??9999;
+      if(r6>=r4) return true;
+    }
+  }
   return false;
 }
-function r23SlotOk(row,col,num,w,tr,br,enf){
+function r23SlotOk(row,col,num,w,tr,br,enf,chainVer,allowMissing4R){
   if(!enf)return true;
+  const ver = chainVer||2;
   // 2R col0를 채울 때: (v3 rank < v2 rank) 유지
   if(row===0&&col===0&&!br[num]){
     const v3=w[3];
@@ -92,12 +121,42 @@ function r23SlotOk(row,col,num,w,tr,br,enf){
     const v2=w[0];
     if(v2&&!br[v2]&&(tr[num]??9999)>=(tr[v2]??9999))return false;
     const v4=w[6];
-    if(v4&&(tr[v4]??9999)>=(tr[num]??9999))return false;
+    if(v4){
+      if((tr[v4]??9999)>=(tr[num]??9999))return false;
+    } else if(!allowMissing4R){
+      return false;
+    }
   }
-  // 4R col0를 채울 때: (v4 rank < v3 rank)
+  // 4R col0를 채울 때: (v4 rank < v3 rank) + (ver=2면 v5/v6 rank < v4 rank)
   if(row===2&&col===0){
     const v3=w[3];
     if(v3&&(tr[num]??9999)>=(tr[v3]??9999))return false;
+    if(ver>=2){
+      const v5=w[9];
+      if(v5&&(tr[v5]??9999)>=(tr[num]??9999))return false;
+      const v6=w[12];
+      if(v6&&(tr[v6]??9999)>=(tr[num]??9999))return false;
+    }
+  }
+  if(ver>=2){
+    // 5R col0를 채울 때: (v5 rank < v4 rank)
+    if(row===3&&col===0){
+      const v4=w[6];
+      if(v4){
+        if((tr[num]??9999)>=(tr[v4]??9999))return false;
+      } else if(!allowMissing4R){
+        return false;
+      }
+    }
+    // 6R col0를 채울 때: (v6 rank < v4 rank)
+    if(row===4&&col===0){
+      const v4=w[6];
+      if(v4){
+        if((tr[num]??9999)>=(tr[v4]??9999))return false;
+      } else if(!allowMissing4R){
+        return false;
+      }
+    }
   }
   return true;
 }
@@ -109,60 +168,96 @@ function iterRowsBias(ar,num,tr,biasMid,earlyMax){
   for(const r of ar) if(!seen.has(r)) out.push(r);
   return out;
 }
-function sortOptsBias(opts,num,tr,biasMid,earlyMax){
+function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi){
+  const hRow = (hintSi===0||hintSi) ? Math.floor(hintSi/3) : null;
+  const hCol = (hintSi===0||hintSi) ? (hintSi%3) : null;
+  const hPri = (o)=> (hRow===null ? 1 : ((o.row===hRow && o.col===hCol) ? 0 : 1));
+
   if(!biasMid||(tr[num]??9999)>=earlyMax){
-    opts.sort((a,b)=>a.pen-b.pen||(b.fallbackPrio?1:0)-(a.fallbackPrio?1:0));
+    opts.sort((a,b)=>
+      hPri(a)-hPri(b) ||
+      a.pen-b.pen ||
+      (a.lost||0)-(b.lost||0) ||
+      (b.fallbackPrio?1:0)-(a.fallbackPrio?1:0)
+    );
     return;
   }
   const mid=r=>r>=2&&r<=4;
   opts.sort((a,b)=>{
+    const hp=hPri(a)-hPri(b);
+    if(hp!==0) return hp;
     const am=mid(a.row)?0:1,bm=mid(b.row)?0:1;
     if(am!==bm) return am-bm;
     if(a.col!==b.col) return a.col-b.col;
     if(a.pen!==b.pen) return a.pen-b.pen;
+    const al=(a.lost||0),bl=(b.lost||0);
+    if(al!==bl) return al-bl;
     return(b.fallbackPrio?1:0)-(a.fallbackPrio?1:0);
   });
 }
-function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,rej){
-  const mR=tr[num]??9999,rem=eo.length-idx-1,cur=cSlots(ar,w),opts=[];
+function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,hintSlotsByIdx,chainVer,allowMissing4R,rej){
+  const mR=tr[num]??9999,rem=eo.length-idx-1,cur=cSlots(ar,w,RC,fallback),opts=[];
   for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
     // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R(0~1행)에 배치 금지
     if(fastExitRankBanMax>0 && row<=1 && mR<fastExitRankBanMax){ if(rej) rej.fastBan=(rej.fastBan||0)+1; continue; }
-    if(!cer(row,w)){ if(rej) rej.cer=(rej.cer||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec=(rej.fec||0)+1; continue; }
-    if(col===2){const lost=sLost3(row,ar,w);if(cur-1-lost<rem){ if(rej) rej.col2Lost=(rej.col2Lost||0)+1; continue; }}
+    if(!cer(row,w,RC,fallback)){ if(rej) rej.cer=(rej.cer||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec=(rej.fec||0)+1; continue; }
+    let lost=0;
+    if(col===2){
+      lost=sLost3(row,ar,w,RC,fallback);
+      if(cur-1-lost<rem){ if(rej) rej.col2Lost=(rej.col2Lost||0)+1; continue; }
+    }
     // ── 1번칸 인접행 규칙: 4R·5R·6R에서 col=0이면 위아래 1번칸 확인 ──
     if(col===0&&!canCol0(row,w,RC)){ if(rej) rej.canCol0=(rej.canCol0||0)+1; continue; }
     // ── 연속 1번칸 3대 금지 ──
     if(col===0&&(col0streak||0)>=2){ if(rej) rej.col0Streak=(rej.col0Streak||0)+1; continue; }
-    if(!r23SlotOk(row,col,num,w,tr,br,enf)){ if(rej) rej.r23Slot=(rej.r23Slot||0)+1; continue; }
+    if(!r23SlotOk(row,col,num,w,tr,br,enf,chainVer,allowMissing4R)){ if(rej) rej.r23Slot=(rej.r23Slot||0)+1; continue; }
     let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}
-    opts.push({row,col,pen});
+    opts.push({row,col,pen,lost});
     // ── 폴백 모드: 아래 행 2·3번칸 비어있으면 3번칸 배치도 선택지에 추가 ──
     if(fallback&&col<2&&lowerClear(row,w,RC)){
-      if(!r23SlotOk(row,2,num,w,tr,br,enf)) continue;
+      if(!r23SlotOk(row,2,num,w,tr,br,enf,chainVer,allowMissing4R)) continue;
       let pen3=0;for(let lc=0;lc<2;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen3++;}
-      opts.push({row,col:2,pen:pen3,fallbackPrio:true});
+      const lost3=sLost3(row,ar,w,RC,fallback);
+      opts.push({row,col:2,pen:pen3,lost:lost3,fallbackPrio:true});
     }
   }
   if(!opts.length){
     for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
-      if(!cer(row,w)){ if(rej) rej.cer2=(rej.cer2||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec2=(rej.fec2||0)+1; continue; }if(!r23SlotOk(row,col,num,w,tr,br,enf)){ if(rej) rej.r23Slot2=(rej.r23Slot2||0)+1; continue; }
-      let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}opts.push({row,col,pen});
+      if(!cer(row,w,RC,fallback)){ if(rej) rej.cer2=(rej.cer2||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec2=(rej.fec2||0)+1; continue; }if(!r23SlotOk(row,col,num,w,tr,br,enf,chainVer,allowMissing4R)){ if(rej) rej.r23Slot2=(rej.r23Slot2||0)+1; continue; }
+      let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}
+      const lost=(col===2)?sLost3(row,ar,w,RC,fallback):0;
+      opts.push({row,col,pen,lost});
     }
     if(rej&&!opts.length) rej.noOpts=(rej.noOpts||0)+1;
   }
-  sortOptsBias(opts,num,tr,biasMid,earlyMax);
+  const hintI = (typeof hintIdxByPos!=='undefined' && hintIdxByPos && hintIdxByPos.length) ? hintIdxByPos[idx] : idx;
+  const hintSi = hintSlotsByIdx ? hintSlotsByIdx[hintI] : null;
+  sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi);
   return opts;
 }
 self.onmessage=function(e){
-  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3}=e.data;
+  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,exitChainVer=2,exitChainAllowMissing4R=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3,hintSlotsByIdx=[],perfectOnly=false}=e.data;
+  // gOpts 내부에서 "원래 entryOrder 인덱스" 기반 힌트를 쓰기 위한 매핑(탐색 중 swap됨)
+  var hintIdxByPos = Array.from({length: eo.length}, (_,i)=>i);
   const br={};
   for(let i=0;i<bothRest.length;i++) br[bothRest[i]]=1;
   // RC 캡처한 cer 재정의 — 아래행 2·3번칸 비면 진입 가능 규칙 포함
   function cer(ri,v){
     if(ri===0) return true;
+    // 3R(ri=1): 위행(2R) 3번칸이 비면 OK, 또는 아래행(4R) 3번칸이 비면 OK(2번칸은 차 있어도 됨)
+    if(ri===1){
+      if(!v[(ri-1)*3+2]) return true;
+      if(ri<RC-1&&!v[(ri+1)*3+2]) return true;
+      return false;
+    }
     if(!v[(ri-1)*3+2]) return true;
-    if(ri<RC-1&&!v[(ri+1)*3+1]&&!v[(ri+1)*3+2]) return true;
+    if(ri<RC-1){
+      if(fallback){
+        if(!v[(ri+1)*3+2]) return true;
+      } else {
+        if(!v[(ri+1)*3+1]&&!v[(ri+1)*3+2]) return true;
+      }
+    }
     return false;
   }
   const t0=Date.now();
@@ -177,7 +272,7 @@ self.onmessage=function(e){
     const placed=new Set();
     for(let i=0;i<RC*3;i++) if(w[i]) placed.add(String(w[i]));
     for(const n of eo) if(!placed.has(String(n))) return false;
-    if(enforce2r3r1&&r23Viol(w,tr,br,true))return false;
+    if(enforce2r3r1&&r23Viol(w,tr,br,true,exitChainVer,exitChainAllowMissing4R))return false;
     return true;
   }
   const perfects=[];
@@ -195,37 +290,108 @@ self.onmessage=function(e){
   const gw={...bv};
   let gStreak=0;
   for(let i=0;i<eo.length;i++){
-    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,rej);if(!o.length)continue;
+    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,exitChainVer,exitChainAllowMissing4R,rej);if(!o.length)continue;
     const chosen=o[0];
     gw[chosen.row*3+chosen.col]=eo[i];
     gStreak=chosen.col===0?gStreak+1:0;
   }
-  const ges=cExit(gw,tr,RC),gen=cEntry(gw,eo,bv,RC),gs=score(ges,gen);
-  if(gs<gBestScore&&!r23Viol(gw,tr,br,enforce2r3r1)){gBestScore=gs;gBest={values:{...gw},active:{...ba},exitScore:ges,entryScore:gen,total:gs};}
+  const ges=cExit(gw,tr,RC),gen=cEntry(gw,eo,bv,RC,fallback),gs=score(ges,gen);
+  if(gs<gBestScore&&!r23Viol(gw,tr,br,enforce2r3r1,exitChainVer,exitChainAllowMissing4R)){gBestScore=gs;gBest={values:{...gw},active:{...ba},exitScore:ges,entryScore:gen,total:gs};}
   addPerfect(gw,ges,gen);
   // DFS
   const work={...bv};
+  function lbEntry(idx){
+    // Lower bound of additional entry blocks from current partial state.
+    // Optimistic assumptions:
+    // - ignore col0 streak for future placements (use 0)
+    // - use current accessibility only (it never improves as we place more cars)
+    const rem = eo.length - idx;
+    if(rem<=0) return 0;
+    const curSlots = cSlots(ar, work, RC, fallback);
+    let lb = Math.max(0, rem - curSlots);
+    // If some remaining car has no feasible option even now, it will never become feasible later.
+    // (placing cars only reduces free slots / accessibility)
+    for(let j=idx;j<eo.length;j++){
+      const o = gOpts(eo[j], j, eo, ar, work, tr, fallback, RC, 0, enforce2r3r1, br, biasMiddleEarly, earlyExitRankMax, fastExitRankBanMax, hintSlotsByIdx, exitChainVer, exitChainAllowMissing4R, null);
+      if(!o.length) lb++;
+      if(gBestScore<99999 && lb*1000 >= gBestScore) break;
+    }
+    return lb;
+  }
   function dfs(idx,streak){
     nodes++;
     if(Date.now()-t0>maxMs){ timedOut=true; return; }
     if(perfects.length>=5) return;
     if(idx===eo.length){
-      if(enforce2r3r1&&r23Viol(work,tr,br,true)) return;
-      const es=cExit(work,tr,RC),en=cEntry(work,eo,bv,RC),sc=score(es,en);
+      if(enforce2r3r1&&r23Viol(work,tr,br,true,exitChainVer,exitChainAllowMissing4R)) return;
+      const es=cExit(work,tr,RC),en=cEntry(work,eo,bv,RC,fallback),sc=score(es,en);
       if(sc<gBestScore){gBestScore=sc;gBest={values:{...work},active:{...ba},exitScore:es,entryScore:en,total:sc};}
       addPerfect(work,es,en);
       return;
     }
     const curEs=cExit(work,tr,RC);
     if(gBestScore<1000&&curEs>=gBestScore)return;
-    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,rej);
-    if(!opts.length){dfs(idx+1,0);return;}
+    if(gBestScore<99999){
+      const lb = lbEntry(idx);
+      if(lb*1000 + curEs >= gBestScore){
+        rej.lbCut = (rej.lbCut||0) + 1;
+        return;
+      }
+    }
+    if(perfectOnly){
+      const lb = lbEntry(idx);
+      if(lb>0){
+        rej.perfectLbCut = (rej.perfectLbCut||0) + 1;
+        return;
+      }
+    }
+    // perfectOnly 모드에서는 MRV(선택지 최소)로 다음 차량을 고른다.
+    let pick = idx;
+    if(perfectOnly){
+      let bestLen = 1e9;
+      let foundZero = false;
+      for(let k=idx;k<eo.length;k++){
+        const o = gOpts(eo[k],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,exitChainVer,exitChainAllowMissing4R,null);
+        const len = o.length;
+        if(len===0){ pick=k; foundZero=true; break; }
+        if(len<bestLen){ bestLen=len; pick=k; if(bestLen===1) break; }
+      }
+      if(foundZero){
+        rej.perfectMrvZero = (rej.perfectMrvZero||0) + 1;
+      }
+      if(pick!==idx){
+        const tmp=eo[idx]; eo[idx]=eo[pick]; eo[pick]=tmp;
+        const ti=hintIdxByPos[idx]; hintIdxByPos[idx]=hintIdxByPos[pick]; hintIdxByPos[pick]=ti;
+      }
+    }
+
+    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,exitChainVer,exitChainAllowMissing4R,rej);
+    if(!opts.length){
+      if(perfectOnly){
+        rej.perfectNoOpts = (rej.perfectNoOpts||0) + 1;
+        if(pick!==idx){
+          const tmp=eo[idx]; eo[idx]=eo[pick]; eo[pick]=tmp;
+          const ti=hintIdxByPos[idx]; hintIdxByPos[idx]=hintIdxByPos[pick]; hintIdxByPos[pick]=ti;
+        }
+        return;
+      }
+      dfs(idx+1,0);
+      if(pick!==idx){
+        const tmp=eo[idx]; eo[idx]=eo[pick]; eo[pick]=tmp;
+        const ti=hintIdxByPos[idx]; hintIdxByPos[idx]=hintIdxByPos[pick]; hintIdxByPos[pick]=ti;
+      }
+      return;
+    }
     for(const{row,col}of opts){
       if(Date.now()-t0>maxMs){ timedOut=true; return; }
       if(perfects.length>=5) return;
       work[row*3+col]=eo[idx];
       dfs(idx+1,col===0?streak+1:0);
       work[row*3+col]='';
+    }
+    if(pick!==idx){
+      const tmp=eo[idx]; eo[idx]=eo[pick]; eo[pick]=tmp;
+      const ti=hintIdxByPos[idx]; hintIdxByPos[idx]=hintIdxByPos[pick]; hintIdxByPos[pick]=ti;
     }
   }
   dfs(0,0);
@@ -242,20 +408,22 @@ self.onmessage=function(e){
     if(unp.length){
       const b2={};for(let i=0;i<RC*3;i++)b2[i]=gBest.active[i]?gBest.values[i]:'';
       gBest.exitScore=cExit(gBest.values,tr,RC);
-      gBest.entryScore=cEntry(gBest.values,eo,b2,RC);
+      gBest.entryScore=cEntry(gBest.values,eo,b2,RC,fallback);
       gBest.total=gBest.entryScore*1000+gBest.exitScore;
     }
   }
-  if(gBest&&enforce2r3r1&&r23Viol(gBest.values,tr,br,true)) gBest=null;
+  if(gBest&&enforce2r3r1&&r23Viol(gBest.values,tr,br,true,exitChainVer,exitChainAllowMissing4R)) gBest=null;
   self.postMessage({best:gBest,perfects,elapsed:Date.now()-t0,stats:{nodes,timedOut,perfectCount:perfects.length,rej}});
 };
 `;
 
 let _worker=null;
 let _workerUrl=null;
-function getWorker(){
+function getWorker(opts){
   if(_worker){_worker.terminate();_worker=null;}
-  _workerUrl=URL.createObjectURL(new Blob([WORKER_CODE],{type:'application/javascript'}));
+  const o = opts || {};
+  const code = o.code || WORKER_CODE;
+  _workerUrl=URL.createObjectURL(new Blob([code],{type:'application/javascript'}));
   _worker=new Worker(_workerUrl);
   return _worker;
 }
@@ -269,10 +437,19 @@ function getWorker(){
      → 완벽해 없으면 2단계: 기존 pen 기준 탐색으로 전체 재시작(출차순 제약 ON→OFF 동일)
     ══════════════════════════════════════════════════════════════ */
 /** 완료 시 callback, 탐색 중 진행은 onProgress({ candDone, candTotal, perfectCount, perfectMax, phase, pct }) */
-function computeAutoParking(callback, onProgress){
+function computeAutoParkingSingle(callback, onProgress, opts){
   if(typeof dispatchState==='undefined'||!dispatchState.loaded){
     alert('배차 데이터를 먼저 불러와주세요.\n(FAB → 불러오기)');
     return;
+  }
+  const AP_DEBUG = false;
+  const oTop = opts || {};
+  let cancelled = false;
+  let cancelFinishFn = null;
+  function cancelNow(){
+    cancelled = true;
+    if(_worker){_worker.terminate();_worker=null;}
+    if (typeof cancelFinishFn === 'function') cancelFinishFn();
   }
   const tomorrowList=dispatchState.tomorrowNums.map(n=>n.num??n);
   const entryOrder=getTodayEntryOrder();
@@ -295,251 +472,483 @@ function computeAutoParking(callback, onProgress){
   const tomorrowRestSet=new Set(dispatchState.tomorrowMissing||[]);
   const bothRestList=[...todayRestSet].filter(n=>tomorrowRestSet.has(n));
 
-  // 모든 휴차 배치 후보 생성
-  const candidatesGenerated=generateRestCandidates(restVehicles,tmrRank,APP.rowCount,dispatchState.tomorrowMissing,fastExitRankBanMax);
+  // 학습 힌트 로드(비동기) 후 탐색 시작
+  (async ()=>{
+    let finished = false;
+    /** @type {any|null} */
+    let learn = null;
+    try {
+      learn = await apLearnLoad(entryOrder, tmrRank);
+    } catch(e) {
+      learn = null;
+      if (AP_DEBUG) console.warn('[AutoParking] 학습 힌트 로드 실패:', e?.message||e);
+    }
+    if (cancelled) return;
 
-  // ── 디버그 계측: 휴차 분배(2R/3R/6R/7R 대수) 통계 ──
-  function restDist(c){
-    const a=c.active||{};
-    const rc=APP.rowCount||6;
-    const rowCnt=(r)=>[0,1,2].filter(col=>!!a[slotIndex(r,col)]).length;
-    return { n2:rowCnt(0), n3:rowCnt(1), n6:rowCnt(4), n7:rowCnt(rc-1) };
-  }
-  const distCounts=new Map();
-  let dist_target_303=0; // (2R=3,3R=0,6R=0,7R=3)
-  for(const c of candidatesGenerated){
-    const d=restDist(c);
-    const k=`${d.n2}-${d.n3}-${d.n6}-${d.n7}`;
-    distCounts.set(k,(distCounts.get(k)||0)+1);
-    if(d.n2===3&&d.n3===0&&d.n6===0&&d.n7===3) dist_target_303++;
-  }
-  const distTop=[...distCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
-  console.log('[AutoParking v12] 휴차 후보 분배 Top:', distTop.map(([k,v])=>`${k}=${v}`).join(' | '));
-  console.log(`[AutoParking v12] 휴차 후보 중 (2R=3,3R=0,6R=0,7R=3) 개수: ${dist_target_303}/${candidatesGenerated.length}`);
-
-  // 휴차 후보 사전 점수 정렬:
-  // - 내일 출차(=tmrRank가 있는 차)들이 2R~3R에 몰리면 막힘/동선이 불리한 경향
-  // - 오늘 휴차가 많을수록(=내일 출차 압력이 클수록) 7R/6R 쪽 배치가 유리하도록 페널티를 키움
-  const weightByTodayRest=Math.max(1,Math.min(6,Math.floor(restVehicles.length/3)+1));
-  function restPrefScore(c){
-    const base=calcExitBlocking(c.values,tmrRank); // 0부터 작은 후보부터 탐색
-    let penalty=0;
-    for(let r=0;r<4;r++){ // 2R~5R(0~3행)만 페널티, 6R~7R(4~5행)은 상대적으로 선호
-      const rowMul=(r<=1)?3:1; // 2R/3R이 더 불리
-      for(let col=0;col<3;col++){
-        const v=c.values[slotIndex(r,col)];
-        if(!v) continue;
-        const rk=tmrRank[v];
-        if(rk===undefined) continue; // bothRest 등: 페널티 대상 아님
-        const rankTerm=Math.max(0,6-rk); // 빠를수록(작을수록) 페널티가 큼
-        penalty += weightByTodayRest*rowMul*rankTerm;
+    // entryOrder 인덱스별 "우선 시도 slot" 힌트 만들기
+    /** @type {(number|null)[]} */
+    const hintSlotsByIdx = Array(entryOrder.length).fill(null);
+    if (learn && Array.isArray(learn.learnRunSlots) && learn.learnRunSlots.length) {
+      const run = learn.learnRunSlots.filter(x => x && (x.slot===0 || x.slot) && (x.tmrRank===0 || x.tmrRank));
+      for (let i = 0; i < entryOrder.length; i++) {
+        const num = entryOrder[i];
+        const rk = tmrRank[num] ?? 9999;
+        // 같은 entryIdx 우선, 없으면 내일 출차순 유사(차이 최소)로 매칭
+        let best = null;
+        let bestScore = 1e9;
+        for (const r of run) {
+          const dEntry = (r.entryIdx === i) ? 0 : 1;
+          const dRank = Math.abs((r.tmrRank ?? 9999) - rk);
+          const s = dEntry * 10000 + dRank;
+          if (s < bestScore) { bestScore = s; best = r; }
+        }
+        hintSlotsByIdx[i] = best ? best.slot : null;
       }
     }
-    return base*10 + penalty;
-  }
-  const allCandidatesSorted=[...candidatesGenerated].sort((a,b)=>restPrefScore(a)-restPrefScore(b));
-  const PREFILTER_CAP=2500;
-  let candidates=allCandidatesSorted;
-  let candidatesPrefiltered=false;
-  if(allCandidatesSorted.length>PREFILTER_CAP){
-    candidates=allCandidatesSorted.slice(0,PREFILTER_CAP);
-    candidatesPrefiltered=true;
-    console.log(`[AutoParking v12] 휴차 후보 사전필터: ${PREFILTER_CAP}/${allCandidatesSorted.length}만 먼저 탐색`);
-  }
-  if(dist_target_303>0){
-    const inPref=candidates.filter(c=>{const d=restDist(c);return d.n2===3&&d.n3===0&&d.n6===0&&d.n7===3;}).length;
-    console.log(`[AutoParking v12] (2R=3,3R=0,6R=0,7R=3) 후보: 프리필터 내 ${inPref}/${candidates.length}`);
-  }
-  /** 제약 ON 패스 / 제약 OFF 재탐색 각각 독립 예산(늦게 나와도 더 넓게 탐색) */
-  const TOTAL_MS_PER_PASS=420000;
-  const MAX_PERFECT_VARIANTS=5;
-  /** 비완벽인데 입0·출1일 때 결과 페이지 수(2~3장 정도만 보이게 상한 3) */
-  const MAX_NEAR_PERFECT_PAGES=3;
-  /** 1단계: 내일 빠른 차 → 4R·5R·6R 우선. 완벽해 없으면 2단계로 기존 탐색만 */
-  let middleRowBiasPhase=true;
-  let biasMiddleEarly=true;
-  console.log(`[AutoParking v12] 시작 — 입차:${entryOrder.length}대, 휴차:${restVehicles.length}대, 후보:${candidates.length}개, 패스당~${Math.round(TOTAL_MS_PER_PASS/60000)}분 | 1단계:내일빠른차→4~6R우선(순번<${earlyExitRankMax})`);
 
-  let t0global=Date.now();
-  let globalBest=null;
-  let globalBestScore=99999;
-  const globalTop3=[];
-  const globalPerfects=[];
-  const globalPerfectKeys=new Set();
-  let candIdx=0;
-  let fallbackMode=false; // 폴백 모드 플래그
-  /** true: 내일 출차순(3R1 먼저) 제약 적용 탐색 중 — 완벽(막힘0) 불가 시 false로 두 번째 패스 */
-  let useExitOrderConstraint=true;
+    // 휴차 후보도 학습된 휴차 슬롯과 유사한 것을 먼저 탐색
+    let learnedRestSlots = null;
+    if (learn && Array.isArray(learn.learnRestSlots) && learn.learnRestSlots.length) {
+      learnedRestSlots = new Set(learn.learnRestSlots.map(x => x.slot).filter(s => s===0 || s));
+    }
 
-  function phaseLabel(){
-    const rowBias=biasMiddleEarly?'4~6R우선':'기본탐색';
-    const ex=useExitOrderConstraint?'출차순제약':'무제약';
-    const fb=fallbackMode?' · 폴백':'';
-    return rowBias+' · '+ex+fb;
-  }
-  function emitProgress(){
-    if(typeof onProgress!=='function') return;
-    const total=candidates.length||1;
-    const done=Math.min(candIdx,total);
-    const pct=Math.min(100,Math.round((done/total)*100));
-    onProgress({
-      candDone:done,
-      candTotal:total,
-      perfectCount:globalPerfects.length,
-      perfectMax:MAX_PERFECT_VARIANTS,
-      phase:phaseLabel(),
-      pct,
+    // 모든 휴차 배치 후보 생성
+    const candidatesGenerated=generateRestCandidates(restVehicles,tmrRank,APP.rowCount,dispatchState.tomorrowMissing,fastExitRankBanMax);
+
+    // 휴차 슬롯 매칭 수가 큰 후보를 먼저(동률이면 기존 restPrefScore로)
+    function restMatchCount(c){
+      if (!learnedRestSlots) return 0;
+      const a=c.active||{};
+      let m=0;
+      learnedRestSlots.forEach(si=>{ if(a[si]) m++; });
+      return m;
+    }
+
+    // (removed) debug-only rest distribution stats
+
+    // 휴차 후보 사전 점수 정렬 (기존 로직 유지)
+    const weightByTodayRest=Math.max(1,Math.min(6,Math.floor(restVehicles.length/3)+1));
+    function restPrefScore(c){
+      const base=calcExitBlocking(c.values,tmrRank); // 0부터 작은 후보부터 탐색
+      let penalty=0;
+      for(let r=0;r<4;r++){
+        const rowMul=(r<=1)?3:1;
+        for(let col=0;col<3;col++){
+          const v=c.values[slotIndex(r,col)];
+          if(!v) continue;
+          const rk=tmrRank[v];
+          if(rk===undefined) continue;
+          const rankTerm=Math.max(0,6-rk);
+          penalty += weightByTodayRest*rowMul*rankTerm;
+        }
+      }
+      return base*10 + penalty;
+    }
+
+    const allCandidatesSorted=[...candidatesGenerated].sort((a,b)=>{
+      const hm = restMatchCount(b) - restMatchCount(a);
+      if (hm !== 0) return hm;
+      return restPrefScore(a) - restPrefScore(b);
     });
-  }
 
-  function runNext(){
-    emitProgress();
-    if(candIdx>=candidates.length){
-      // 1차 탐색 소진 — 입차막힘 미해결 시 폴백 모드로 재탐색
-      if(!fallbackMode && globalBestScore>=1000){
-        fallbackMode=true;
-        candIdx=0;
-        console.log('[AutoParking v12] 폴백 모드 재탐색 시작 (아래행 3번칸 우선 배치)');
-      } else {
-        finish();return;
-      }
-    }
-    const elapsed=Date.now()-t0global;
-    if(elapsed>=TOTAL_MS_PER_PASS){emitProgress();finish();return;}
-
-    const cand=candidates[candIdx++];
-    const{values:bv,active:ba}=cand;
-    const d=restDist(cand);
-    const isTarget303=(d.n2===3&&d.n3===0&&d.n6===0&&d.n7===3);
-
-    // 가용 행: 휴차 배치 후 빈칸 있는 행
-    const availRows=[];
-    for(let row=0;row<APP.rowCount;row++){
-      const hasFree=[0,1,2].some(col=>!bv[slotIndex(row,col)]&&!ba[slotIndex(row,col)]);
-      if(hasFree) availRows.push(row);
+    const PREFILTER_CAP=2500;
+    let candidates=allCandidatesSorted;
+    let candidatesPrefiltered=false;
+    if(allCandidatesSorted.length>PREFILTER_CAP){
+      candidates=allCandidatesSorted.slice(0,PREFILTER_CAP);
+      candidatesPrefiltered=true;
+      if (AP_DEBUG) console.log(`[AutoParking v12] 휴차 후보 사전필터: ${PREFILTER_CAP}/${allCandidatesSorted.length}만 먼저 탐색`);
     }
 
-    // 남은 시간 균등 배분 (최소 500ms 보장)
-    // 폴백 모드에서는 후보 전체를 한 번 더 돌므로 나머지 시간을 후보 수로 나눔
-    const remaining=TOTAL_MS_PER_PASS-(Date.now()-t0global);
-    const leftCands=(fallbackMode?candidates.length-candIdx+1:candidates.length*2-candIdx+1);
-    const perMs=Math.min(90000,Math.max(1500,Math.floor(remaining/Math.max(1,leftCands))));
+    // 아래는 기존 computeAutoParking 본문을 그대로 쓰되,
+    // worker.postMessage에 hintSlotsByIdx만 추가하면 됨.
 
-    const worker=getWorker();
-    worker.onmessage=function(e){
-      const{best,perfects,elapsed:wMs,stats}=e.data;
-      if(perfects&&perfects.length){
-        for(const p of perfects){
-          const k=JSON.stringify(p.values);
-          if(globalPerfectKeys.has(k)) continue;
-          globalPerfectKeys.add(k);
-          globalPerfects.push({...p});
-          if(globalPerfects.length>=MAX_PERFECT_VARIANTS) break;
-        }
-      }
-      if(best&&best.total<globalBestScore){
-        globalBestScore=best.total;
-        globalBest=best;
-        console.log(`[AutoParking v12]${biasMiddleEarly?' [4~6R우선]':''}${useExitOrderConstraint?'':' [무제약]'}${fallbackMode?' [폴백]':''} 후보${candIdx}/${candidates.length} ${wMs}ms — 입차막힘:${best.entryScore} 출차막힘:${best.exitScore}${best.entryScore===0&&best.exitScore===0?' ✅완벽':best.entryScore===0?' 🟡입차OK':''}`);
-      }
-      if(isTarget303){
-        const s=stats||{};
-        const r=s.rej||{};
-        console.log(`[AutoParking v12] [휴차(2R3·7R3)] worker결과: ${wMs}ms nodes:${s.nodes??'?'} timeout:${!!s.timedOut} perfects:${s.perfectCount??0} best:${best?`입${best.entryScore}/출${best.exitScore}`:'(null)'} rej:${JSON.stringify(r)}`);
-      }
-      // top3 누적
-      if(best){
-        const dup=globalTop3.some(r=>JSON.stringify(r.values)===JSON.stringify(best.values));
-        if(!dup){
-          globalTop3.push({...best});
-          globalTop3.sort((a,b)=>a.total-b.total);
-          const cap=(best.entryScore===0&&best.exitScore===1)?MAX_NEAR_PERFECT_PAGES:3;
-          if(globalTop3.length>cap) globalTop3.length=cap;
-        }
-      }
-      if(globalPerfects.length>=MAX_PERFECT_VARIANTS){emitProgress();finish();return;}
-      if(Date.now()-t0global>=TOTAL_MS_PER_PASS){emitProgress();finish();return;}
-      runNext();
-    };
-    worker.onerror=function(err){
-      console.error('[AutoParking v12] Worker 오류:',err);
+    /** 제약 ON 패스 / 제약 OFF 재탐색 각각 독립 예산(늦게 나와도 더 넓게 탐색) */
+    const TOTAL_MS_PER_PASS=420000;
+    const MAX_PERFECT_VARIANTS=10;
+    /** 비완벽인데 입0·출1일 때 결과 페이지 수(2~3장 정도만 보이게 상한 3) */
+    const MAX_NEAR_PERFECT_PAGES=3;
+    /** 1단계: 내일 빠른 차 → 4R·5R·6R 우선. 완벽해 없으면 2단계로 기존 탐색만 */
+    let middleRowBiasPhase=true;
+    let biasMiddleEarly=(oTop.biasMiddleEarlyStart!==undefined?!!oTop.biasMiddleEarlyStart:true);
+    if (AP_DEBUG) console.log(`[AutoParking v12] 시작 — 입차:${entryOrder.length}대, 휴차:${restVehicles.length}대, 후보:${candidates.length}개, 패스당~${Math.round(TOTAL_MS_PER_PASS/60000)}분 | 1단계:내일빠른차→4~6R우선(순번<${earlyExitRankMax})${learn?' | 학습힌트 적용':''}`);
+
+    let t0global=Date.now();
+    let globalBest=null;
+    let globalBestScore=99999;
+    const globalTop3=[];
+    const globalPerfects=[];
+    const globalPerfectKeys=new Set();
+    let candIdx=0;
+    let fallbackMode=false; // 폴백 모드 플래그
+    /** true: 출차 체인 제약 적용 탐색 중 */
+    let useExitOrderConstraint=(oTop.useExitOrderConstraintStart!==undefined?!!oTop.useExitOrderConstraintStart:true);
+    /** 2: 새 체인(5/6<4<3<2), 1: 이전 체인(4<3<2) */
+    let exitChainVer=(oTop.exitChainVerStart!==undefined?oTop.exitChainVerStart:2);
+
+    function phaseLabel(){
+      const rowBias=biasMiddleEarly?'4~6R우선':'기본탐색';
+      const ex=useExitOrderConstraint?(`출차순제약(v${exitChainVer})`):'무제약';
+      const fb=fallbackMode?' · 폴백':'';
+      return rowBias+' · '+ex+fb;
+    }
+    function emitProgress(){
+      if(typeof onProgress!=='function') return;
+      const total=candidates.length||1;
+      const done=Math.min(candIdx,total);
+      const pct=Math.min(100,Math.round((done/total)*100));
+      onProgress({
+        candDone:done,
+        candTotal:total,
+        perfectCount:globalPerfects.length,
+        perfectMax:MAX_PERFECT_VARIANTS,
+        phase:phaseLabel(),
+        pct,
+      });
+    }
+
+    function runNext(){
+      if (cancelled) return;
       emitProgress();
-      runNext();
+      if(candIdx>=candidates.length){
+        if(!fallbackMode && globalBestScore>=1000){
+          fallbackMode=true;
+          candIdx=0;
+          if (AP_DEBUG) console.log('[AutoParking v12] 폴백 모드 재탐색 시작 (아래행 3번칸 우선 배치)');
+        } else {
+          finish();return;
+        }
+      }
+      const elapsed=Date.now()-t0global;
+      if(elapsed>=TOTAL_MS_PER_PASS){emitProgress();finish();return;}
+
+      const cand=candidates[candIdx++];
+      const{values:bv,active:ba}=cand;
+
+      // 가용 행: 휴차 배치 후 빈칸 있는 행
+      const availRows=[];
+      for(let row=0;row<APP.rowCount;row++){
+        const hasFree=[0,1,2].some(col=>!bv[slotIndex(row,col)]&&!ba[slotIndex(row,col)]);
+        if(hasFree) availRows.push(row);
+      }
+
+      const remaining=TOTAL_MS_PER_PASS-(Date.now()-t0global);
+      const leftCands=(fallbackMode?candidates.length-candIdx+1:candidates.length*2-candIdx+1);
+      const perMs=Math.min(90000,Math.max(1500,Math.floor(remaining/Math.max(1,leftCands))));
+
+      const worker=getWorker({ code: oTop.workerCode || WORKER_CODE });
+      worker.onmessage=function(e){
+        const{best,perfects,elapsed:wMs}=e.data;
+        if(perfects&&perfects.length){
+          for(const p of perfects){
+            const k=JSON.stringify(p.values);
+            if(globalPerfectKeys.has(k)) continue;
+            globalPerfectKeys.add(k);
+            globalPerfects.push({...p});
+            if(globalPerfects.length>=MAX_PERFECT_VARIANTS) break;
+          }
+        }
+        if(best&&best.total<globalBestScore){
+          globalBestScore=best.total;
+          globalBest=best;
+          if (AP_DEBUG) console.log(`[AutoParking v12]${biasMiddleEarly?' [4~6R우선]':''}${useExitOrderConstraint?'':' [무제약]'}${fallbackMode?' [폴백]':''} 후보${candIdx}/${candidates.length} ${wMs}ms — 입차막힘:${best.entryScore} 출차막힘:${best.exitScore}${best.entryScore===0&&best.exitScore===0?' ✅완벽':best.entryScore===0?' 🟡입차OK':''}`);
+        }
+        if(best){
+          const dup=globalTop3.some(r=>JSON.stringify(r.values)===JSON.stringify(best.values));
+          if(!dup){
+            globalTop3.push({...best});
+            globalTop3.sort((a,b)=>a.total-b.total);
+            const cap=(best.entryScore===0&&best.exitScore===1)?MAX_NEAR_PERFECT_PAGES:3;
+            if(globalTop3.length>cap) globalTop3.length=cap;
+          }
+        }
+        if(globalPerfects.length>=MAX_PERFECT_VARIANTS){emitProgress();finish();return;}
+        if(Date.now()-t0global>=TOTAL_MS_PER_PASS){emitProgress();finish();return;}
+        runNext();
+      };
+      worker.onerror=function(err){
+        console.error('[AutoParking v12] Worker 오류:',err);
+        emitProgress();
+        runNext();
+      };
+      worker.postMessage({
+        eo:entryOrder, tr:tmrRank,
+        bv, ba, ar:availRows,
+        RC:APP.rowCount,
+        maxMs:perMs,
+        fallback:fallbackMode,
+        enforce2r3r1:useExitOrderConstraint,
+        exitChainVer,
+        exitChainAllowMissing4R: (APP?.settings?.exitChainAllowMissing4R === true),
+        bothRest:bothRestList,
+        biasMiddleEarly,
+        earlyExitRankMax,
+        fastExitRankBanMax,
+        hintSlotsByIdx,
+        // 완벽해(입0·출0) 최우선: 완벽해를 찾기 전까지는 "입차 막힘이 발생하는 가지"를 탐색에서 제외
+        perfectOnly: (globalPerfects.length===0 && !fallbackMode)
+      });
+    }
+
+    function finish(opts){
+      if (finished) return;
+      const o = opts || {};
+      if (o.cancelled) finished = true;
+      if(_worker){_worker.terminate();_worker=null;}
+      const hasAnyPerfect=globalPerfects.length>0;
+      if (o.cancelled) {
+        let best = globalBest;
+        let top3 = globalTop3.length ? globalTop3 : null;
+        if (globalPerfects.length) {
+          best = globalPerfects[0];
+          top3 = globalPerfects.slice();
+        }
+        if (best) {
+          const elapsed = Date.now() - t0global;
+          best.elapsed = elapsed;
+          if (top3) top3.forEach(r => { r.elapsed = elapsed; });
+        }
+        callback && callback(best || null, top3);
+        return;
+      }
+      if(useExitOrderConstraint&&!hasAnyPerfect){
+        // 새 체인(v2)에서 완벽이 없으면 → 이전 체인(v1)로 바꿔 전체 재탐색
+        if(exitChainVer===2){
+          if (AP_DEBUG) console.log('[AutoParking v12] 출차순 제약(v2)으로 완벽해(막힘0) 불가 → 이전 체인(v1)로 전체 재탐색');
+          exitChainVer=1;
+          if(candidatesPrefiltered){
+            if (AP_DEBUG) console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
+            candidates=allCandidatesSorted;
+            candidatesPrefiltered=false;
+          }
+          candIdx=0;
+          fallbackMode=false;
+          globalBest=null;
+          globalBestScore=99999;
+          globalTop3.length=0;
+          globalPerfects.length=0;
+          globalPerfectKeys.clear();
+          t0global=Date.now();
+          runNext();
+          return;
+        }
+
+        if (AP_DEBUG) console.log('[AutoParking v12] 출차순 제약(v1)으로도 완벽해 불가 → 후보·폴백·순열 전부 처음부터 무제약 재탐색 (새 패스)');
+        useExitOrderConstraint=false;
+        if(candidatesPrefiltered){
+          if (AP_DEBUG) console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
+          candidates=allCandidatesSorted;
+          candidatesPrefiltered=false;
+        }
+        candIdx=0;
+        fallbackMode=false;
+        globalBest=null;
+        globalBestScore=99999;
+        globalTop3.length=0;
+        globalPerfects.length=0;
+        globalPerfectKeys.clear();
+        t0global=Date.now();
+        runNext();
+        return;
+      }
+      if(middleRowBiasPhase&&!hasAnyPerfect){
+        if (AP_DEBUG) console.log('[AutoParking v12] 1단계(4~6R·내일빠른차 우선)에서 완벽해 없음 → 2단계: 기존 탐색 순서로 전체 재시작');
+        middleRowBiasPhase=false;
+        biasMiddleEarly=false;
+        useExitOrderConstraint=true;
+        exitChainVer=2;
+        if(candidatesPrefiltered){
+          if (AP_DEBUG) console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
+          candidates=allCandidatesSorted;
+          candidatesPrefiltered=false;
+        }
+        candIdx=0;
+        fallbackMode=false;
+        globalBest=null;
+        globalBestScore=99999;
+        globalTop3.length=0;
+        globalPerfects.length=0;
+        globalPerfectKeys.clear();
+        t0global=Date.now();
+        runNext();
+        return;
+      }
+      if(globalPerfects.length){
+        globalBest=globalPerfects[0];
+        globalTop3.length=0;
+        globalPerfects.forEach(p=>globalTop3.push({...p}));
+      } else if(globalBest&&globalBest.entryScore===0&&globalBest.exitScore===1){
+        const only=globalTop3.filter(r=>r.entryScore===0&&r.exitScore===1).sort((a,b)=>a.total-b.total);
+        globalTop3.length=0;
+        only.slice(0,MAX_NEAR_PERFECT_PAGES).forEach(p=>globalTop3.push(p));
+        if(!globalTop3.length) globalTop3.push({...globalBest});
+      }
+      if(!globalBest){callback&&callback(null,null);return;}
+      const elapsed=Date.now()-t0global;
+      globalBest.elapsed=elapsed;
+      globalTop3.forEach(r=>{r.elapsed=elapsed;});
+      if (AP_DEBUG) console.log(`[AutoParking v12] 완료 ${elapsed}ms — 최종 입차막힘:${globalBest.entryScore} 출차막힘:${globalBest.exitScore} 대안:${globalTop3.length}개${biasMiddleEarly?'':' (2단계·기본탐색)'}${useExitOrderConstraint?'':' (출차순 제약 미적용)'}`);
+      callback&&callback(globalBest, globalTop3.length>=1?globalTop3:null);
+      finished = true;
+    }
+
+    // 취소 시: 지금까지 찾은 best/perfect/top3로 즉시 결과를 반환
+    cancelFinishFn = () => {
+      if (finished) return;
+      emitProgress();
+      finish({ cancelled: true });
     };
-    worker.postMessage({
-      eo:entryOrder, tr:tmrRank,
-      bv, ba, ar:availRows,
-      RC:APP.rowCount,
-      maxMs:perMs,
-      fallback:fallbackMode,
-      enforce2r3r1:useExitOrderConstraint,
-      bothRest:bothRestList,
-      biasMiddleEarly,
-      earlyExitRankMax,
-      fastExitRankBanMax
-    });
-  }
 
-  function finish(){
-    if(_worker){_worker.terminate();_worker=null;}
-    const hasAnyPerfect=globalPerfects.length>0;
-    if(useExitOrderConstraint&&!hasAnyPerfect){
-      console.log('[AutoParking v12] 출차순 제약(3R1 먼저)으로 막힘 0 불가 → 후보·폴백·순열 전부 처음부터 무제약 재탐색 (새 패스)');
-      useExitOrderConstraint=false;
-      if(candidatesPrefiltered){
-        console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
-        candidates=allCandidatesSorted;
-        candidatesPrefiltered=false;
-      }
-      candIdx=0;
-      fallbackMode=false;
-      globalBest=null;
-      globalBestScore=99999;
-      globalTop3.length=0;
-      globalPerfects.length=0;
-      globalPerfectKeys.clear();
-      t0global=Date.now();
-      runNext();
-      return;
-    }
-    if(middleRowBiasPhase&&!hasAnyPerfect){
-      console.log('[AutoParking v12] 1단계(4~6R·내일빠른차 우선)에서 완벽해 없음 → 2단계: 기존 탐색 순서로 전체 재시작');
-      middleRowBiasPhase=false;
-      biasMiddleEarly=false;
-      useExitOrderConstraint=true;
-      if(candidatesPrefiltered){
-        console.log('[AutoParking v12] 휴차 후보 프리필터 해제 → 전체 후보로 확장');
-        candidates=allCandidatesSorted;
-        candidatesPrefiltered=false;
-      }
-      candIdx=0;
-      fallbackMode=false;
-      globalBest=null;
-      globalBestScore=99999;
-      globalTop3.length=0;
-      globalPerfects.length=0;
-      globalPerfectKeys.clear();
-      t0global=Date.now();
-      runNext();
-      return;
-    }
-    if(globalPerfects.length){
-      globalBest=globalPerfects[0];
-      globalTop3.length=0;
-      globalPerfects.forEach(p=>globalTop3.push({...p}));
-    } else if(globalBest&&globalBest.entryScore===0&&globalBest.exitScore===1){
-      const only=globalTop3.filter(r=>r.entryScore===0&&r.exitScore===1).sort((a,b)=>a.total-b.total);
-      globalTop3.length=0;
-      only.slice(0,MAX_NEAR_PERFECT_PAGES).forEach(p=>globalTop3.push(p));
-      if(!globalTop3.length) globalTop3.push({...globalBest});
-    }
-    if(!globalBest){callback&&callback(null,null);return;}
-    const elapsed=Date.now()-t0global;
-    globalBest.elapsed=elapsed;
-    globalTop3.forEach(r=>{r.elapsed=elapsed;});
-    console.log(`[AutoParking v12] 완료 ${elapsed}ms — 최종 입차막힘:${globalBest.entryScore} 출차막힘:${globalBest.exitScore} 대안:${globalTop3.length}개${biasMiddleEarly?'':' (2단계·기본탐색)'}${useExitOrderConstraint?'':' (출차순 제약 미적용)'}`);
-    callback&&callback(globalBest, globalTop3.length>=1?globalTop3:null);
-  }
+    runNext();
+  })().catch((e)=>{
+    // 어떤 예외라도 overlay가 영원히 남지 않도록 종료 콜백 호출
+    console.error('[AutoParking] 탐색 중 오류:', e);
+    if(!cancelled) callback && callback(null, null);
+  });
 
-  runNext();
+  return function cancelAutoParking(){
+    cancelNow();
+  };
+
 }
+
+// 단일 엔진 실행(롤백): 기존처럼 1회 탐색만 수행
+function computeAutoParking(callback, onProgress){
+  return computeAutoParkingSingle(callback, onProgress, null);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   § 자동주차 학습 데이터 (Firebase)
+   경로: learnData/ap_manual_v1
+   - 수동 학습: 현재 주차판 배치를 학습 데이터로 저장
+   - 자동 활용: 탐색 시 학습 데이터와 유사한 후보 우선 탐색
+   ══════════════════════════════════════════════════════════════ */
+const AP_LEARN_PATH = 'learnData/ap_manual_v1';
+const AP_LEARN_MAX  = 60;
+
+/** 학습 데이터 키 생성: 입차 앞 5대 + 내일 출차 앞 5대 */
+function apLearnKey(entryOrder, tmrRank) {
+  const entryTop = entryOrder.slice(0,5).join(',');
+  const tmrTop = Object.keys(tmrRank)
+    .sort((a,b)=>(tmrRank[a]??9999)-(tmrRank[b]??9999))
+    .slice(0,5)
+    .join(',');
+  return entryTop + '|' + tmrTop;
+}
+
+/** 수동 학습 저장 — 현재 선택 날짜의 주차판 배치를 저장 */
+async function apLearnSave(dateStr) {
+  try {
+    if (!APP?.set||!APP?.ref||!APP?.db) return { ok:false, msg:'Firebase 미연결' };
+    // 오늘 날짜의 주차 상태
+    const snap = await APP.get(APP.ref(APP.db, 'parking/' + dateStr));
+    if (!snap.exists()) return { ok:false, msg:'해당 날짜 주차 데이터 없음' };
+    const parkData = snap.val();
+    const values = parkData.values;
+    const active  = parkData.active;
+    if (!values) return { ok:false, msg:'주차판 데이터 없음' };
+
+    // 배차 데이터에서 입차/출차 순서 구성
+    const tomorrowList = (dispatchState.tomorrowNums||[]).map(n=>n.num??n);
+    const entryOrder   = getTodayEntryOrder();
+    if (!tomorrowList.length||!entryOrder.length) return { ok:false, msg:'배차 데이터 없음' };
+    const tmrRank = {};
+    tomorrowList.forEach((num,i)=>{ tmrRank[num]=i; });
+
+    const key = apLearnKey(entryOrder, tmrRank);
+
+    // 기존 DB 로드
+    const dbSnap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH));
+    let db = [];
+    if (dbSnap.exists()) { db = dbSnap.val()||[]; if (!Array.isArray(db)) db = Object.values(db); }
+
+    // 동일 키 중복 제거 후 앞에 추가
+    const filtered = db.filter(d => d.key !== key);
+    const RC = APP.rowCount || Math.ceil(Object.keys(values).length / 3) || 6;
+    const entryIdxMap = {};
+    entryOrder.forEach((n,i)=>{ entryIdxMap[n]=i; });
+    const tmrMissSet = new Set(dispatchState.tomorrowMissing || []);
+
+    const learnRunSlots = [];
+    const learnRestSlots = [];
+    for (let si = 0; si < RC * 3; si++) {
+      const v = values[si];
+      if (!v) continue;
+      const isRest = !!(active && active[si]);
+      const entryIdx = (entryIdxMap[v] ?? 9999);
+      const rk = (tmrRank[v] ?? 9999);
+      if (isRest) {
+        learnRestSlots.push({
+          slot: si,
+          tmrRank: rk,
+          tomorrowRest: tmrMissSet.has(v) ? 1 : 0
+        });
+      } else {
+        learnRunSlots.push({
+          slot: si,
+          entryIdx,
+          tmrRank: rk
+        });
+      }
+    }
+
+    filtered.unshift({
+      key,
+      values,
+      active,
+      entryOrder: entryOrder.slice(0,8),
+      tmrTopRanks: tomorrowList.slice(0,8),
+      learnRunSlots,
+      learnRestSlots,
+      dateStr,
+      ts: Date.now()
+    });
+    if (filtered.length > AP_LEARN_MAX) filtered.length = AP_LEARN_MAX;
+    await APP.set(APP.ref(APP.db, AP_LEARN_PATH), filtered);
+    return { ok:true, msg:`학습 완료 (총 ${filtered.length}개 저장됨)` };
+  } catch(e) {
+    return { ok:false, msg:'오류: ' + e.message };
+  }
+}
+
+/** 학습 데이터 로드 — 현재 탐색 조건과 유사한 배치 반환 */
+async function apLearnLoad(entryOrder, tmrRank) {
+  try {
+    if (!APP?.get||!APP?.ref||!APP?.db) return null;
+    const snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH));
+    if (!snap.exists()) return null;
+    let db = snap.val()||[];
+    if (!Array.isArray(db)) db = Object.values(db);
+    if (!db.length) return null;
+
+    const myKey = apLearnKey(entryOrder, tmrRank);
+
+    // 1순위: 정확 키 매칭
+    const exact = db.find(d => d.key === myKey);
+    if (exact) { return exact; }
+
+    // 2순위: 입차 앞 5대만 매칭
+    const myEntry = entryOrder.slice(0,5).join(',');
+    const partial = db.find(d => d.key && d.key.startsWith(myEntry + '|'));
+    if (partial) { return partial; }
+
+    return null;
+  } catch(e) { return null; }
+}
+
+/** 학습 데이터 개수 조회 */
+async function apLearnCount() {
+  try {
+    if (!APP?.get||!APP?.ref||!APP?.db) return 0;
+    const snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH));
+    if (!snap.exists()) return 0;
+    let db = snap.val()||[];
+    if (!Array.isArray(db)) db = Object.values(db);
+    return db.length;
+  } catch(e) { return 0; }
+}
+
+/** 전역 노출 */
+window.apLearnSave  = apLearnSave;
+window.apLearnLoad  = apLearnLoad;
+window.apLearnCount = apLearnCount;

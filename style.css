@@ -18,6 +18,18 @@
   --text-sec:    #6B7280;
   --text-hint:   #9CA3AF;
 
+  /* Light glass theme tokens (B theme) */
+  --glass-bg:        rgba(255,255,255,0.62);
+  --glass-bg-strong: rgba(255,255,255,0.78);
+  --glass-border:    rgba(255,255,255,0.55);
+  --glass-border-2:  rgba(0,0,0,0.08);
+  --glass-blur:      16px;
+  --glass-shadow:    0 6px 22px rgba(100,130,180,0.14), 0 2px 8px rgba(0,0,0,0.06);
+  --glass-shadow-sm: 0 2px 10px rgba(100,130,180,0.12), 0 1px 4px rgba(0,0,0,0.04);
+  --ink:             #0F172A;
+  --ink-sub:         rgba(15,23,42,0.68);
+  --ink-hint:        rgba(15,23,42,0.42);
+
   /* Status */
   --run-bg:      #FFFFFF;
   --run-txt:     #111827;
@@ -63,9 +75,12 @@ html {
 
 body {
   font-family: var(--font);
-  background: linear-gradient(160deg, #D6E4F7 0%, #EEF3FB 40%, #E2EAF5 100%);
+  background:
+    radial-gradient(1100px 700px at 20% -10%, rgba(59,130,246,0.20) 0%, rgba(59,130,246,0.00) 60%),
+    radial-gradient(900px 650px at 110% 10%, rgba(52,211,153,0.18) 0%, rgba(52,211,153,0.00) 55%),
+    linear-gradient(160deg, #DCE9FA 0%, #F2F7FF 45%, #EAF1FB 100%);
   background-attachment: fixed;
-  color: var(--text-pri);
+  color: var(--ink);
   overscroll-behavior: none;
   min-height: 100vh;
 }
@@ -98,26 +113,7 @@ input, textarea, select {
 /* ── Header ──────────────────────────────────────────────
    Glassmorphism: 반투명 + 블러
    ─────────────────────────────────────────────────────── */
-/* ── 마지막 저장 시간 (취소/다시 버튼 자리) ── */
-.last-saved-wrap {
-  display: none; /* 기본 숨김 */
-  align-items: center;
-  gap: 6px;
-}
-.last-saved-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #34D399;
-  flex-shrink: 0;
-}
-.last-saved-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-sec);
-  white-space: nowrap;
-  font-family: var(--font);
-}
+/* (removed) last-saved UI — no longer used */
 
 /* PWA 설치 배너 */
 .pwa-banner {
@@ -179,12 +175,12 @@ input, textarea, select {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255,255,255,0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255,255,255,0.6);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
   padding: 10px 12px;
-  box-shadow: 0 1px 8px rgba(100,130,180,0.12);
+  box-shadow: var(--glass-shadow-sm);
   transform: translateZ(0);
 }
 
@@ -193,17 +189,18 @@ input, textarea, select {
   align-items: center;
 }
 
-/* pill 전체: < 날짜 팀뱃지 > — 항상 파란색 */
+/* pill 전체: < 날짜 팀뱃지 > — light glass */
 .date-pill-wrap {
   flex: 1;
   height: 48px;
   border-radius: 24px;
-  background: #1A73E8;
+  background: var(--glass-bg-strong);
   display: flex;
   align-items: center;
   padding: 0 5px;
   min-width: 0;
-  box-shadow: 0 2px 8px rgba(26,115,232,0.30);
+  box-shadow: var(--glass-shadow-sm);
+  border: 1px solid var(--glass-border);
   overflow: hidden;
 }
 
@@ -213,7 +210,8 @@ input, textarea, select {
   height: 38px;
   min-width: 38px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.20);
+  background: rgba(15,23,42,0.06);
+  border: 1px solid rgba(15,23,42,0.10);
   border: none;
   display: flex;
   align-items: center;
@@ -226,14 +224,14 @@ input, textarea, select {
 .date-nav-arrow svg {
   width: 20px;
   height: 20px;
-  stroke: #fff;
+  stroke: rgba(15,23,42,0.78);
   fill: none;
   stroke-width: 3;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .date-nav-arrow:active {
-  background: rgba(255,255,255,0.38);
+  background: rgba(15,23,42,0.10);
   transform: scale(0.92);
 }
 
@@ -254,7 +252,7 @@ input, textarea, select {
 .date-pill-text {
 
   font-weight: 900;
-  color: #fff;
+  color: var(--ink);
   letter-spacing: -0.3px;
   line-height: 1;
   font-family: var(--font);
@@ -270,25 +268,25 @@ input, textarea, select {
   flex-shrink: 0;
   font-size: clamp(12px, 2.8vw, 14px);
   font-weight: 800;
-  color: #fff;
+  color: rgba(15,23,42,0.78);
   font-family: var(--font);
   white-space: nowrap;
   line-height: 1.2;
   padding: 3px 9px;
   border-radius: 12px;
-  border: 1.5px solid rgba(255,255,255,0.5);
+  border: 1px solid rgba(15,23,42,0.12);
 }
 
 /* ── 팀 뱃지 색상만 구분 (pill은 항상 파랑) ── */
 .date-pill-wrap[data-team="A"] .date-pill-team {
-  background: rgba(255,255,255,0.22);
+  background: rgba(59,130,246,0.12);
 }
 .date-pill-wrap[data-team="B"] .date-pill-team {
-  background: rgba(42,157,143,0.70);
-  border-color: rgba(255,255,255,0.4);
+  background: rgba(52,211,153,0.14);
+  border-color: rgba(15,23,42,0.10);
 }
 .date-pill-wrap[data-team="22"] .date-pill-team {
-  background: rgba(99,179,237,0.35);
+  background: rgba(99,179,237,0.18);
 }
 
 /* ── 차량 수정 모드 완료 바 ──────────────────────────── */
@@ -578,51 +576,7 @@ input, textarea, select {
   z-index: 10;
 }
 
-/* ── 주차도 수정 전 오버레이 ──────────────────────────── */
-.parking-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  border-radius: 12px;
-  background: rgba(238,240,247,0.72);
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.parking-overlay.hidden {
-  display: none;
-}
-.parking-overlay-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-.parking-overlay-icon {
-  font-size: 32px;
-  opacity: 0.55;
-}
-.parking-overlay-text {
-  font-size: 16px;
-  font-weight: 900;
-  color: rgba(0,0,0,0.52);
-  letter-spacing: -0.3px;
-  font-family: var(--font);
-}
-.parking-overlay-sub {
-  font-size: 11px;
-  font-weight: 700;
-  color: rgba(0,0,0,0.38);
-  font-family: var(--font);
-}
-
-/* 오버레이가 보일 때만 카드 희미 */
-.parking-main:has(.parking-overlay:not(.hidden)) .slot-card {
-  opacity: 0.4;
-}
+/* (removed) parking overlay UI — no longer used */
 
 /* ── Parking Main ─────────────────────────────────────────
    주차 슬롯이 스크롤 없이 정확히 화면에 맞게 표시
@@ -632,13 +586,13 @@ input, textarea, select {
   padding: 8px 10px 6px;
   flex-shrink: 0;
   position: relative;
-  background: rgba(255,255,255,0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: 20px;
   margin: 6px 10px 0;
-  box-shadow: 0 4px 20px rgba(100,130,180,0.14), 0 1px 4px rgba(0,0,0,0.05);
-  border: 1px solid rgba(255,255,255,0.75);
+  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--glass-border);
 }
 
 /* ── 빈 날짜 안내 ── */
@@ -661,14 +615,14 @@ input, textarea, select {
 .empty-grid-title {
   font-size: clamp(15px, 4.4vw, 18px);
   font-weight: 900;
-  color: #1A1A1A;
+  color: var(--ink);
   opacity: 0.85;
   letter-spacing: -0.3px;
 }
 .empty-grid-desc {
   font-size: clamp(12px, 3.6vw, 15px);
   font-weight: 600;
-  color: #3A3A3A;
+  color: var(--ink-sub);
   text-align: center;
   line-height: 1.7;
   opacity: 0.8;
@@ -709,6 +663,26 @@ input, textarea, select {
   background: #EEF2F8;
 }
 
+/* 행 재정렬(라벨 롱프레스 드래그) */
+.line-label {
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none; /* 드래그 중 스크롤 방지 (touchmove에서 preventDefault 사용) */
+}
+.line-label.row-dragging {
+  cursor: grabbing;
+  transform: scale(1.06);
+  background: #DBEAFE;
+  color: #1D4ED8;
+  box-shadow: 0 4px 14px rgba(37,99,235,0.18);
+}
+#parkingGrid .p-row.row-dragging .slots-wrap {
+  outline: 2px dashed rgba(37,99,235,0.45);
+  outline-offset: -2px;
+  border-radius: 12px;
+}
+
 /* 슬롯 래퍼 */
 .slots-wrap {
   flex: 1;
@@ -740,25 +714,25 @@ input, textarea, select {
 
 /* 상태별 스타일 */
 .slot-card.run {
-  background: #FFFFFF;
-  color: #1A1F36;
-  border: 1px solid #E2E8F4;
-  box-shadow: 0 2px 8px rgba(100,130,180,0.12), 0 1px 2px rgba(0,0,0,0.05);
+  background: rgba(255,255,255,0.78);
+  color: var(--ink);
+  border: 1px solid rgba(15,23,42,0.10);
+  box-shadow: var(--glass-shadow-sm);
 }
 .slot-card.run::before {
   content: '';
   position: absolute;
   left: 0; top: 15%; height: 70%;
   width: 3.5px;
-  background: linear-gradient(180deg,#C7E0FF,#A8CAFF);
+  background: linear-gradient(180deg, rgba(59,130,246,0.30), rgba(59,130,246,0.18));
   border-radius: 0 3px 3px 0;
 }
 
 .slot-card.rest {
-  background: #FEFCE8;
-  color: #1A1F36;
-  border: 1px solid #FEF08A;
-  box-shadow: 0 2px 8px rgba(234,179,8,0.14), 0 1px 2px rgba(0,0,0,0.04);
+  background: rgba(254,252,232,0.85);
+  color: var(--ink);
+  border: 1px solid rgba(234,179,8,0.28);
+  box-shadow: 0 2px 10px rgba(234,179,8,0.12), 0 1px 4px rgba(0,0,0,0.04);
   font-weight: 900;
 }
 .slot-card.rest::before {
@@ -766,19 +740,25 @@ input, textarea, select {
   position: absolute;
   left: 0; top: 15%; height: 70%;
   width: 3.5px;
-  background: linear-gradient(180deg,#FEF3A0,#FDE87A);
+  background: linear-gradient(180deg, rgba(234,179,8,0.34), rgba(234,179,8,0.18));
   border-radius: 0 3px 3px 0;
 }
 
+/* 출차 막힘 표시: 왼쪽 줄을 연한 빨강으로 */
+.slot-card.blocked-exit.run::before,
+.slot-card.blocked-exit.rest::before {
+  background: linear-gradient(180deg, rgba(248,113,113,0.40), rgba(248,113,113,0.22)) !important;
+}
+
 .slot-card.empty {
-  background: rgba(240,244,250,0.6);
-  border: 1.5px dashed #C8D5E8;
+  background: rgba(255,255,255,0.35);
+  border: 1.5px dashed rgba(15,23,42,0.18);
   pointer-events: none;
   cursor: default;
 }
 
 /* 관리자 모드: 빈 슬롯도 드롭 대상으로 허용 */
-.slot-card.empty {
+body.admin-mode .slot-card.empty {
   pointer-events: auto;
   cursor: default;
 }
@@ -810,10 +790,10 @@ input, textarea, select {
 
 /* 탭-투-스왑: 첫 번째 탭 선택 강조 (빨간 — 선택/조회) */
 .slot-card.tap-selected {
-  outline: 2.5px solid #DC2626;
+  outline: 2.5px solid rgba(220,38,38,0.85);
   outline-offset: -2px;
-  background: #FEF2F2 !important;
-  color: #DC2626 !important;
+  background: rgba(254,242,242,0.92) !important;
+  color: rgba(185,28,28,0.95) !important;
   transform: scale(1.06);
   z-index: 10;
   animation: tap-pulse-red 0.7s ease-in-out infinite alternate;
@@ -828,10 +808,10 @@ input, textarea, select {
 
 /* 탭-투-스왑: 두 번째 탭 이동 확인 (파란 — 이동 확인) */
 .slot-card.tap-confirm {
-  outline: 2.5px solid var(--blue);
+  outline: 2.5px solid rgba(37,99,235,0.85);
   outline-offset: -2px;
-  background: var(--blue-light) !important;
-  color: var(--blue) !important;
+  background: rgba(239,246,255,0.92) !important;
+  color: rgba(29,78,216,0.95) !important;
   transform: scale(1.08);
   z-index: 11;
   animation: tap-pulse-blue 0.4s ease-out forwards;
@@ -846,10 +826,10 @@ input, textarea, select {
 
 /* 배차 칩 클릭으로 선택된 슬롯 (chip-to-swap 첫 번째 선택) */
 .slot-card.dispatch-slot-selected {
-  outline: 2.5px solid var(--blue);
+  outline: 2.5px solid rgba(37,99,235,0.85);
   outline-offset: -2px;
-  background: var(--blue-light) !important;
-  color: var(--blue) !important;
+  background: rgba(239,246,255,0.92) !important;
+  color: rgba(29,78,216,0.95) !important;
   transform: scale(1.04);
   z-index: 10;
   animation: tap-pulse-blue 0.7s ease-in-out infinite alternate;
@@ -903,14 +883,14 @@ input, textarea, select {
   max-width: 640px;
   height: calc(64px + var(--safe-b));
   padding-bottom: var(--safe-b);
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(220,228,242,0.8);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-top: 1px solid var(--glass-border);
   display: flex;
   align-items: stretch;
   z-index: 300;
-  box-shadow: 0 -2px 16px rgba(100,130,180,0.12);
+  box-shadow: 0 -2px 16px rgba(100,130,180,0.16);
 }
 
 /* 세로 배치: 아이콘 위 / 텍스트 아래 */
@@ -927,16 +907,21 @@ input, textarea, select {
   padding: 6px 2px 4px;
   -webkit-tap-highlight-color: transparent;
   min-width: 0;
-  transition: opacity 0.12s;
+  border-radius: 14px;
+  transition: background 0.12s, opacity 0.12s, transform 0.12s;
 }
-.bnav-btn:active { opacity: 0.55; }
+.bnav-btn:active { opacity: 0.55; transform: scale(0.96); }
 
 /* 활성 탭 배경 */
 .bnav-inner { display: contents; }
 
-.bnav-btn.active .bnav-icon svg { stroke: #0B7EF4 !important; }
-.bnav-btn.active .bnav-icon      { color: #0B7EF4; }
-.bnav-btn.active .bnav-label     { color: #0B7EF4; }
+.bnav-btn.active { background: rgba(59,130,246,0.10); }
+.bnav-btn.active {
+  box-shadow: 0 6px 16px rgba(59,130,246,0.14);
+}
+.bnav-btn.active .bnav-icon svg { stroke: #2563EB !important; }
+.bnav-btn.active .bnav-icon      { color: #2563EB; }
+.bnav-btn.active .bnav-label     { color: #2563EB; }
 
 .bnav-icon {
   width: 26px;
@@ -964,7 +949,7 @@ input, textarea, select {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #333;
+  color: rgba(15,23,42,0.70);
   max-width: 100%;
   text-align: center;
 }
@@ -974,24 +959,20 @@ input, textarea, select {
 }
 @keyframes bnav-spin { to { transform: rotate(360deg); } }
 
-.admin-ui { display: flex; }
+/* (removed) legacy admin-ui selector */
 
 
 
 /* ── Footer Note ─────────────────────────────────────── */
 .parking-footer {
   padding: 0 10px calc(var(--safe-b) + 76px);
-  background: var(--bg);  /* 앱 전체 배경과 동일 */
+  background: transparent;
 }
 .footer-version-row {
   text-align: center;
   padding: 6px 0 4px;
 }
-.app-version {
-  font-size: 11px;
-  color: var(--text-hint);
-  font-weight: 500;
-}
+/* (removed) legacy app-version selector */
 .footer-note {
   padding: 6px 0 4px;
   display: flex;
@@ -1001,16 +982,16 @@ input, textarea, select {
 
 /* 정보 카드 */
 .fn-card {
-  background: rgba(255,255,255,0.82);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: 16px;
   padding: 12px 14px;
-  border: 1px solid rgba(255,255,255,0.7);
+  border: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 2px 8px rgba(100,130,180,0.10);
+  box-shadow: var(--glass-shadow-sm);
 }
 .fn-row {
   display: flex;
@@ -1020,33 +1001,25 @@ input, textarea, select {
 .fn-icon { font-size: 16px; flex-shrink: 0; }
 .fn-text {
   font-size: clamp(12px, 3.5vw, 14px);
-  color: #3A3A3C;
+  color: var(--ink-sub);
   line-height: 1.55;
   font-weight: 500;
 }
-.fn-text b { font-weight: 800; color: #1C1C1E; }
+.fn-text b { font-weight: 800; color: var(--ink); }
 
 /* 경고 카드 */
 .fn-warn {
-  background: #FFF1F2;
+  background: rgba(248,113,113,0.14);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border-radius: 10px;
   padding: 9px 12px;
   font-size: clamp(11px, 3.3vw, 13px);
   font-weight: 800;
-  color: #BE123C;
+  color: rgba(185,28,28,0.92);
   text-align: center;
-  border: 0.5px solid rgba(239,68,68,0.15);
-}
-
-.rest-note {
-  color: #B45309;
-  font-weight: 700;
-}
-
-.warn-text {
-  color: #BE123C !important;
-  font-weight: 800 !important;
-  font-size: 13px;
+  border: 1px solid rgba(248,113,113,0.28);
+  box-shadow: 0 2px 10px rgba(248,113,113,0.10);
 }
 
 .copyright {
@@ -1062,287 +1035,759 @@ input, textarea, select {
 }
 .manual-link:hover { text-decoration: underline; }
 
-/* ── Vehicle Panel ─────────────────────────────────────── */
-#vehiclePanel {
-  display: none;
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: min(300px, 80vw);
-  height: 100svh;
-  background: var(--surface);
-  z-index: 400;
-  box-shadow: -8px 0 30px rgba(0,0,0,0.15);
-  overflow-y: auto;
-  padding-bottom: var(--safe-b);
-  flex-direction: column;
-}
+/* (removed) Vehicle panel + popup tab UI — no longer used by current templates */
 
-.vehicle-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  background: var(--surface);
-  z-index: 1;
-  gap: 8px;
+/* ══════════════════════════════════════
+   Dispatch Section — Compact Card v2.0
+   (moved from components.js inline <style>)
+   ══════════════════════════════════════ */
+.dispatch-section {
+  padding: 6px 10px 4px;
+  background: transparent;
+  overflow: hidden;
 }
-.vehicle-panel-header h3 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-pri);
-  flex: 1;
+.dispatch-content {
+  background: var(--glass-bg-strong);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-sm);
 }
-.vehicle-panel-header-btns {
+.dispatch-row-today {
+  background: #F8FAFF;
+  padding: 5px 10px 4px;
+}
+.dispatch-row-today .dispatch-day-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #2563EB;
+  text-transform: uppercase;
+}
+.dispatch-row-tomorrow {
+  background: #F5F6FA;
+  padding: 5px 10px 4px;
+  border-top: 0.5px solid rgba(0,0,0,0.06);
+}
+.dispatch-row-tomorrow .dispatch-day-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color:#6B7280;
+  text-transform: uppercase;
+}
+.dispatch-row-inner {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-bottom: 4px;
 }
-.vehicle-panel-header button {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: #F3F4F6;
-  color: var(--text-sec);
-  font-size: 14px;
+.dispatch-date-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6B7280;
+  letter-spacing: .01em;
+}
+.dispatch-chips {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  width: 100%;
+}
+.dc-chip {
+  background: rgba(255,255,255,0.66);
+  border: 1px solid rgba(15,23,42,0.10);
+  border-radius: 6px;
+  padding: 3px 0;
+  font-size: clamp(10px, 3vw, 13px);
+  font-weight: 700;
+  color: rgba(15,23,42,0.82);
+  line-height: 1.4;
+  letter-spacing: .01em;
+  text-align: center;
+  min-width: 0;
+  overflow: hidden;
+}
+.dc-chip--early {
+  background: rgba(239,246,255,0.80);
+  border-color: rgba(59,130,246,0.25);
+  color: #1D4ED8;
+}
+.dc-chip--absent {
+  background: rgba(254,252,232,0.86);
+  border-color: rgba(234,179,8,0.30);
+  color: #92400E;
+}
+.dispatch-load-btn-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #2563EB;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .15s;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.dispatch-load-btn-sm:active { opacity: 0.8; transform: scale(.97); }
+.dispatch-load-btn-sm svg {
+  width: 11px; height: 11px;
+  stroke: currentColor; stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+  fill: none; flex-shrink: 0;
+  transition: transform .4s ease;
+}
+.dispatch-load-btn-sm.spinning svg { animation: dc-spin .7s linear infinite; }
+@keyframes dc-spin { to { transform: rotate(360deg); } }
+.dispatch-loading {
+  position: fixed; inset: 0; z-index: 9000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.60);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.dispatch-loading-inner {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 16px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.20);
+  border-radius: 22px; padding: 30px 40px 26px;
+}
+.dispatch-spinner {
+  width: 46px; height: 46px;
+  border: 4px solid rgba(255,255,255,0.22);
+  border-top-color: #3B82F6; border-radius: 50%;
+  animation: dc-spin .75s linear infinite;
+}
+.dispatch-loading-text {
+  font-size: 16px; font-weight: 800; color: #fff;
+  letter-spacing: .02em; text-align: center;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.dispatch-loading-progress {
+  font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.82);
+  text-align: center; letter-spacing: .02em;
+  min-height: 1.35em; line-height: 1.4;
+}
+.dispatch-loading-dots { display: inline-flex; gap: 6px; }
+.dispatch-loading-dots span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #60A5FA; animation: dc-bounce 1.1s ease infinite;
+}
+.dispatch-loading-dots span:nth-child(2) { animation-delay: .18s; }
+.dispatch-loading-dots span:nth-child(3) { animation-delay: .36s; }
+@keyframes dc-bounce {
+  0%,80%,100% { transform: scale(.5); opacity:.3; }
+  40%         { transform: scale(1);  opacity:1; }
+}
+.dc-chip--excluded {
+  background: #F3F4F6 !important;
+  border-color: #D1D5DB !important;
+  color: #9CA3AF !important;
+  opacity: 0.75;
+}
+.dc-chip--excluded s {
+  text-decoration: line-through;
+  text-decoration-color: #6B7280;
+}
+.dc-chip--absent:active {
+  transform: scale(0.94);
+  opacity: 0.75;
+  transition: transform 0.08s, opacity 0.08s;
+}
+@keyframes dc-chip-shake {
+  0%   { transform: scale(1.08) rotate(-4deg); }
+  25%  { transform: scale(1.08) rotate(4deg); }
+  50%  { transform: scale(1.08) rotate(-3deg); }
+  75%  { transform: scale(1.08) rotate(3deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.dc-chip--shake { animation: dc-chip-shake 0.35s ease; }
+.dc-chip--matched {
+  outline: 2px solid #EF4444 !important;
+  outline-offset: 1px;
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.25) !important;
+  animation: dc-match-pulse 0.7s ease-in-out infinite alternate;
+}
+@keyframes dc-match-pulse {
+  from { box-shadow: 0 0 0 0 rgba(239,68,68,0.35); }
+  to   { box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+}
+.dc-chip--absent.dc-chip--matched { outline-color: #EF4444 !important; }
+
+/* ══════════════════════════════════════
+   Generic confirm modal (parking.js showConfirm)
+   ══════════════════════════════════════ */
+.ap-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
 }
-.vehicle-edit-toggle-btn {
-  height: 30px !important;
-  width: auto !important;
-  border-radius: 15px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  background: #EFF6FF !important;
-  color: #2563EB !important;
-  border: 1px solid #BFDBFE !important;
-  white-space: nowrap;
-}
-.vehicle-edit-done-btn {
-  height: 30px !important;
-  width: auto !important;
-  border-radius: 15px !important;
-  padding: 0 12px !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  background: #F0FDF4 !important;
-  color: #15803D !important;
-  border: 1px solid #BBF7D0 !important;
-  white-space: nowrap;
-}
-
-.vehicle-list {
-  padding: 12px;
-}
-
-.vehicle-add-btn {
+.ap-confirm-card {
+  background: var(--surface, #fff);
+  border-radius: 18px;
+  padding: 24px 20px 20px;
   width: 100%;
-  height: 42px;
-  border: 1.5px dashed #CBD5E1;
-  border-radius: 10px;
-  color: var(--blue);
-  font-size: 14px;
+  max-width: 300px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  font-family: var(--font, -apple-system, sans-serif);
+}
+.ap-confirm-msg {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-pri, #1A1F36);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  white-space: pre-line;
+}
+.ap-confirm-btns { display: flex; gap: 8px; }
+.ap-confirm-btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ap-confirm-btn.cancel {
+  border: 1px solid var(--border, rgba(0,0,0,0.1));
+  background: var(--bg, #F2F2F7);
   font-weight: 600;
-  font-family: var(--font);
-  margin-bottom: 10px;
-  transition: all 0.15s;
+  color: var(--text-sec, #6B7280);
+}
+.ap-confirm-btn.ok {
+  border: none;
+  background: linear-gradient(135deg,#2563EB,#1D4ED8);
+  font-weight: 700;
+  color: #fff;
 }
 
-.vehicle-add-btn:active {
-  background: var(--blue-light);
+/* ══════════════════════════════════════
+   Copy toast (parking.js copyParkingGrid)
+   ══════════════════════════════════════ */
+.ap-copy-toast {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30,30,30,0.92);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 9999;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
+.ap-copy-toast.show { opacity: 1; }
 
-.vehicle-add-input-container {
+/* ══════════════════════════════════════
+   AutoParking loading overlay (autoparking-ui.js)
+   ══════════════════════════════════════ */
+.ap-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  margin-bottom: 10px;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
-
-.vehicle-add-input-container input {
-  width: 100%;
-  height: 44px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 0 12px;
-  font-size: 18px;
-  font-family: var(--font);
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 2px;
-}
-
-.vehicle-add-input-container input:focus {
-  border-color: var(--blue);
-  outline: none;
-}
-
-.vehicle-add-btn-row {
+.ap-loading-card {
   display: flex;
-  gap: 7px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.11);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 22px;
+  padding: 28px 36px 24px;
+  min-width: 280px;
+  max-width: 92vw;
 }
-
-.vehicle-add-input-container .btn-confirm {
-  flex: 1;
-  height: 38px;
-  border-radius: 10px;
-  background: var(--blue);
+.ap-loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid rgba(255,255,255,0.18);
+  border-top-color: #3B82F6;
+  border-radius: 50%;
+  animation: dc-spin .75s linear infinite;
+}
+.ap-loading-title {
+  font-size: 16px;
+  font-weight: 800;
   color: #fff;
-  font-size: 14px;
-  font-weight: 700;
-  font-family: var(--font);
+  letter-spacing: .02em;
+  text-align: center;
 }
-
-.vehicle-add-input-container .btn-cancel {
-  flex: 1;
-  height: 38px;
+.ap-loading-pct {
+  font-size: 36px;
+  font-weight: 900;
+  color: #34D399;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.ap-loading-bar-wrap {
+  width: 100%;
+  max-width: 260px;
+  height: 8px;
+  background: rgba(255,255,255,0.10);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.ap-loading-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg,#2563EB,#34D399);
+  border-radius: 4px;
+  transition: width .3s ease;
+}
+.ap-loading-line1 {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  text-align: center;
+  line-height: 1.5;
+}
+.ap-loading-line2 {
+  font-size: 13px;
+  font-weight: 800;
+  color: #6EE7B7;
+  text-align: center;
+}
+.ap-loading-foot {
+  font-size: 11px;
+  color: rgba(255,255,255,0.40);
+  text-align: center;
+}
+.ap-loading-dots { display: inline-flex; gap: 6px; margin-top: 2px; }
+.ap-loading-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #60A5FA;
+  animation: dc-bounce 1.1s ease infinite;
+  display: inline-block;
+}
+.ap-loading-dots span:nth-child(2) { animation-delay: .18s; }
+.ap-loading-dots span:nth-child(3) { animation-delay: .36s; }
+.ap-loading-cancel {
+  margin-top: 2px;
+  padding: 8px 28px;
+  border: 1px solid rgba(255,255,255,0.22);
   border-radius: 10px;
-  background: #F3F4F6;
-  color: var(--text-sec);
-  font-size: 14px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.70);
+  font-size: 13px;
   font-weight: 700;
-  font-family: var(--font);
+  cursor: pointer;
 }
 
-.vehicle-item {
+/* ══════════════════════════════════════
+   AutoParking result modal shell (autoparking-ui.js)
+   (keeps dynamic colors inline where needed)
+   ══════════════════════════════════════ */
+.ap-result-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: rgba(0,0,0,0.60);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.ap-result-sheet {
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.ap-result-grabber {
+  width: 36px;
+  height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+.ap-result-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  background: #FAFAFA;
-  border: 1px solid #F3F4F6;
-  border-radius: 10px;
-  margin-bottom: 5px;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: all 0.15s;
+  margin-bottom: 16px;
 }
-
-.vehicle-item.dragging {
-  opacity: 0.4;
-  border-style: dashed;
+.ap-result-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: .02em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
-
-.vehicle-item-content {
+.ap-result-badges {
   display: flex;
-  align-items: center;
   gap: 8px;
+  margin-bottom: 14px;
 }
-
-.vehicle-item-drag-handle {
-  color: #CBD5E1;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.vehicle-item-number {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text-pri);
-  letter-spacing: -0.3px;
-}
-
-.vehicle-item-btns {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.vehicle-item-edit {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: #EFF6FF;
-  color: #2563EB;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.12s, transform 0.1s;
-}
-.vehicle-item-edit:active { background: #DBEAFE; transform: scale(0.92); }
-.vehicle-item-delete {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: #FEF2F2;
-  color: var(--red);
-  font-size: 14px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.12s, transform 0.1s;
-}
-.vehicle-item-delete:active { background: #FEE2E2; transform: scale(0.92); }
-
-/* 수정 중 인라인 인풋 */
-.vehicle-item-edit-input {
-  width: 70px;
-  height: 30px;
-  border: 1.5px solid var(--blue);
-  border-radius: 8px;
-  padding: 0 8px;
-  font-size: 15px;
-  font-weight: 800;
-  font-family: var(--font);
+.ap-result-badge {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 10px;
   text-align: center;
-  color: var(--text-pri);
-  background: var(--surface);
-  outline: none;
-  letter-spacing: -0.3px;
 }
-
-/* ── 팝업 설정 다중 탭 ── */
-.popup-tab-bar {
+.ap-result-badge-num { font-size: 22px; font-weight: 900; }
+.ap-result-badge-label { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+.ap-result-grid {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 12px;
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  padding: 0 0 12px;
-  border-bottom: 0.5px solid var(--border);
+  flex-direction: column;
+  gap: 6px;
   margin-bottom: 12px;
 }
-.popup-tab-btn {
-  height: 30px;
-  padding: 0 14px;
-  border-radius: 15px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-sec);
-  font-size: 12px;
+.ap-result-actions { display: flex; gap: 8px; }
+.ap-result-btn {
+  height: 48px;
+  border-radius: 14px;
+  font-size: 15px;
   font-weight: 700;
-  font-family: var(--font);
   cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
 }
-.popup-tab-btn.active {
-  background: #1C1C1E;
+.ap-result-btn.cancel {
+  flex: 1;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.80);
+}
+.ap-result-btn.apply {
+  flex: 2;
+  border: none;
+  background: linear-gradient(135deg,#34D399,#059669);
   color: #fff;
-  border-color: #1C1C1E;
+  font-weight: 800;
+  box-shadow: 0 2px 12px rgba(52,211,153,0.35);
 }
-.popup-tab-btn:active { transform: scale(0.95); }
-.popup-tab-add {
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 15px;
-  border: 1.5px dashed #60A5FA;
-  background: transparent;
-  color: #3B82F6;
-  font-size: 12px;
-  font-weight: 700;
-  font-family: var(--font);
+
+/* ══════════════════════════════════════
+   Settings-style bottom sheet (password + app settings)
+   Uses same overlay feel as auto result modal
+   ══════════════════════════════════════ */
+.ap-sheet-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0,0,0,0.60);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.ap-sheet-modal.active { display: flex; }
+.ap-sheet-modal.center { align-items: center; }
+.ap-sheet {
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  padding: 18px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.ap-sheet.center {
+  max-width: 360px;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  border-radius: 24px;
+  padding: 18px 16px 16px;
+}
+.ap-sheet-grabber {
+  width: 36px;
+  height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+  margin: 0 auto 14px;
+}
+.ap-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.ap-sheet-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: .02em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+.ap-sheet-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.85);
+  font-size: 14px;
   cursor: pointer;
-  transition: background 0.12s;
-  white-space: nowrap;
 }
-.popup-tab-add:active { background: #EFF6FF; }
+.ap-sheet-close:active { transform: scale(0.95); opacity: 0.85; }
+.ap-sheet-body {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px;
+  padding: 14px 14px 12px;
+}
+
+/* Password sheet */
+.ap-pw-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.70);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.ap-pw-input {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.18);
+  background: rgba(17,24,39,0.55);
+  color: #fff;
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 6px;
+  box-sizing: border-box;
+  margin-top: 12px;
+  outline: none;
+}
+.ap-pw-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ap-pw-btn {
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.ap-pw-btn.cancel { flex: 1; font-weight: 700; color: rgba(255,255,255,0.85); }
+.ap-pw-btn.ok {
+  flex: 2;
+  border: none;
+  background: linear-gradient(135deg,#3B82F6,#1D4ED8);
+}
+
+/* App settings sheet refinements (reuse existing inner layout) */
+.ap-sheet.settings .settings-scroll-body {
+  background: transparent;
+}
+.ap-sheet.settings .settings-btns-fixed {
+  background: transparent;
+}
+
+/* ══════════════════════════════════════
+   App Settings — glass theme (scoped)
+   ══════════════════════════════════════ */
+#appSettingsModal .ap-sheet-body {
+  padding: 14px 14px 12px;
+}
+#appSettingsModal .settings-section {
+  border-bottom: 1px solid rgba(255,255,255,0.10);
+  padding: 14px 0 12px;
+}
+#appSettingsModal .settings-section:last-of-type { border-bottom: none; }
+#appSettingsModal .settings-section-title {
+  color: rgba(255,255,255,0.80);
+  font-weight: 900;
+  letter-spacing: .06em;
+}
+#appSettingsModal .settings-label,
+#appSettingsModal .settings-radio,
+#appSettingsModal .settings-radio span,
+#appSettingsModal .settings-version-row .settings-label {
+  color: rgba(255,255,255,0.86);
+}
+#appSettingsModal p,
+#appSettingsModal .ap-pw-sub {
+  color: rgba(255,255,255,0.65);
+}
+
+/* Inputs */
+#appSettingsModal .settings-input,
+#appSettingsModal textarea.settings-input {
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(17,24,39,0.40);
+  color: #fff;
+}
+#appSettingsModal .settings-input::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+#appSettingsModal .settings-input:focus {
+  border-color: rgba(96,165,250,0.85);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.20);
+}
+
+/* Vehicle/row editor list items inside settings */
+#appSettingsModal .ve-item {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+#appSettingsModal .ve-num {
+  color: rgba(255,255,255,0.92);
+}
+#appSettingsModal .ve-input {
+  background: rgba(17,24,39,0.45);
+  color: #fff;
+  border-color: rgba(96,165,250,0.75);
+}
+
+/* Edit/Delete buttons tone */
+#appSettingsModal .ve-btn {
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.85);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+}
+#appSettingsModal .ve-btn:active { transform: scale(0.94); opacity: 0.85; }
+#appSettingsModal .ve-btn.del {
+  background: rgba(248,113,113,0.18);
+  border-color: rgba(248,113,113,0.28);
+  color: #FCA5A5;
+}
+
+/* Scrollbars (modal + lists) */
+#appSettingsModal .settings-scroll-body,
+#appSettingsModal .ve-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.22) rgba(255,255,255,0.06);
+}
+#appSettingsModal .settings-scroll-body::-webkit-scrollbar,
+#appSettingsModal .ve-list::-webkit-scrollbar {
+  width: 10px;
+}
+#appSettingsModal .settings-scroll-body::-webkit-scrollbar-track,
+#appSettingsModal .ve-list::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+#appSettingsModal .settings-scroll-body::-webkit-scrollbar-thumb,
+#appSettingsModal .ve-list::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border: 2px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+#appSettingsModal .settings-scroll-body::-webkit-scrollbar-thumb:hover,
+#appSettingsModal .ve-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.26);
+}
+
+/* Fixed buttons row */
+#appSettingsModal .settings-btns-fixed {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.10);
+}
+#appSettingsModal .settings-btns-fixed .btn-primary{
+  background: linear-gradient(135deg,#34D399,#059669);
+  border: none;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 2px 12px rgba(52,211,153,0.30);
+}
+#appSettingsModal .settings-btns-fixed .btn-primary:active { opacity: 0.9; transform: scale(0.98); }
+
+#appSettingsModal .settings-btns-fixed .btn-secondary{
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.86);
+  font-weight: 800;
+}
+#appSettingsModal .settings-btns-fixed .btn-secondary:active { background: rgba(255,255,255,0.16); transform: scale(0.98); }
+
+#appSettingsModal .settings-btns-fixed .btn-danger{
+  background: rgba(248,113,113,0.18);
+  border: 1px solid rgba(248,113,113,0.30);
+  color: #FCA5A5;
+  font-weight: 900;
+}
+#appSettingsModal .settings-btns-fixed .btn-danger:active { background: rgba(248,113,113,0.24); transform: scale(0.98); }
+
+/* Footer note editor (+line / delete line) tone */
+#appSettingsModal .footer-add-btn{
+  border-color: rgba(96,165,250,0.55);
+  background: rgba(59,130,246,0.08);
+  color: rgba(255,255,255,0.88);
+}
+#appSettingsModal .footer-add-btn:active{
+  background: rgba(59,130,246,0.14);
+  transform: scale(0.98);
+}
+#appSettingsModal .footer-del-btn{
+  background: rgba(248,113,113,0.16);
+  border: 1px solid rgba(248,113,113,0.30);
+  color: #FCA5A5;
+}
+#appSettingsModal .footer-del-btn:active{
+  background: rgba(248,113,113,0.22);
+  transform: scale(0.96);
+}
+
+/* Checkboxes inside settings modal (accent + focus ring) */
+#appSettingsModal input[type="checkbox"]{
+  accent-color: #34D399;
+}
+#appSettingsModal input[type="checkbox"]:focus-visible{
+  outline: 3px solid rgba(52,211,153,0.30);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Team display radios inside settings modal */
+#appSettingsModal input[type="radio"]{
+  accent-color: #34D399;
+}
+#appSettingsModal input[type="radio"]:focus-visible{
+  outline: 3px solid rgba(52,211,153,0.30);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
 
 /* 삭제 버튼 */
 .btn-danger {
@@ -1440,24 +1885,11 @@ input, textarea, select {
   margin-bottom: 10px;
   font-family: var(--font);
 }
-.settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 0;
-  cursor: pointer;
-}
+/* (removed) legacy settings-row selector */
 .settings-label {
   font-size: 14px;
   color: var(--text-pri);
   font-family: var(--font);
-}
-.settings-cb {
-  width: 20px;
-  height: 20px;
-  accent-color: #1C1C1E;
-  cursor: pointer;
-  flex-shrink: 0;
 }
 .settings-radio-group {
   display: flex;
@@ -1500,65 +1932,6 @@ input, textarea, select {
   gap: 10px;
 }
 .settings-version-row .settings-label { flex: 1; }
-.settings-btns {
-  display: flex;
-  gap: 8px;
-  padding-top: 14px;
-}
-.settings-btns .btn-primary,
-.settings-btns .btn-secondary {
-  flex: 1;
-}
-/* 설정 ? 툴팁 */
-.settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 0;
-}
-.settings-row-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--text-pri);
-  font-family: var(--font);
-  flex: 1;
-}
-.settings-help-btn {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1.5px solid var(--text-hint);
-  background: transparent;
-  color: var(--text-hint);
-  font-size: 10px;
-  font-weight: 800;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: background 0.12s;
-}
-.settings-help-btn:active { background: var(--bg); }
-.settings-tooltip {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #1C1C1E;
-  color: #F2F2F7;
-  font-size: 13px;
-  line-height: 1.7;
-  padding: 14px 18px;
-  border-radius: 14px;
-  max-width: 280px;
-  white-space: pre-line;
-  z-index: 9999;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-  font-family: var(--font);
-}
 
 /* ── Modals ──────────────────────────────────────────────── */
 .modal-overlay {
@@ -1616,120 +1989,7 @@ input, textarea, select {
   justify-content: center;
 }
 
-/* Admin Login Modal */
-.admin-modal-box input {
-  width: 100%;
-  height: 48px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 12px;
-  padding: 0 16px;
-  font-size: 18px;
-  font-family: var(--font);
-  text-align: center;
-  letter-spacing: 4px;
-  margin-bottom: 12px;
-  transition: border-color 0.2s;
-}
-
-.admin-modal-box input:focus {
-  border-color: var(--blue);
-  outline: none;
-}
-
-/* Popup Settings Modal */
-.popup-settings-content {
-  max-width: 420px;
-  max-height: 90svh;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-.popup-settings-group {
-  margin-bottom: 14px;
-}
-
-.popup-settings-group > label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-sec);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.popup-settings-group textarea {
-  width: 100%;
-  height: 80px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 14px;
-  font-family: var(--font);
-  resize: vertical;
-  line-height: 1.5;
-}
-
-.popup-days-container {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.popup-day-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.popup-day-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--blue);
-}
-
-.popup-day-checkbox label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-sec);
-  cursor: pointer;
-}
-
-.popup-time-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.popup-time-input > label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-hint);
-  margin-bottom: 5px;
-}
-
-.popup-time-input input[type="time"] {
-  width: 100%;
-  min-width: 0;
-  height: 42px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 0 6px;
-  font-size: 13px;
-  font-family: var(--font);
-  font-weight: 600;
-  box-sizing: border-box;
-}
-
-.popup-settings-buttons {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
+/* (removed) legacy admin/popup settings modal UI — no longer used */
 
 /* Shared Button Styles */
 .btn-primary {
@@ -1760,50 +2020,9 @@ input, textarea, select {
 
 .btn-secondary:active { background: #E5E7EB; }
 
-.btn-full { width: 100%; }
+/* (removed) legacy btn-full helper */
 
-/* ── Popup Notification ──────────────────────────────────── */
-.popup-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  z-index: 600;
-}
-
-.popup-overlay.active { display: block; }
-
-.popup-notification {
-  display: none;
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  z-index: 700;
-  background: var(--surface);
-  border-radius: 20px;
-  padding: 24px 20px 16px;
-  width: min(340px, 90vw);
-  box-shadow: var(--shadow-lg);
-  flex-direction: column;
-  gap: 16px;
-  transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s;
-  opacity: 0;
-}
-
-.popup-notification.active {
-  display: flex;
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 1;
-}
-
-.popup-notification-content {
-  font-size: 15px;
-  line-height: 1.65;
-  color: var(--text-pri);
-  white-space: pre-wrap;
-  text-align: center;
-}
+/* (removed) legacy popup notification UI — no longer used */
 
 /* ══════════════════════════════════════════════
    반응형 — 소형 폰 (360px 이하)
@@ -1924,15 +2143,6 @@ input, textarea, select {
   padding: 0 12px; font-size: 13px;
 }
 
-/* ══════════════════════════════════════════════
-   사용설명서 링크
-   ══════════════════════════════════════════════ */
-.manual-link {
-  color: #3B82F6;
-  font-weight: 700;
-  text-decoration: underline;
-  cursor: pointer;
-}
 /* ══════════════════════════════════════════════
    모바일 iOS / Android 최적화
    ══════════════════════════════════════════════ */

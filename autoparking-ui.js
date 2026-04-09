@@ -20,55 +20,75 @@ let _resultPages=[], _resultPageIdx=0;
 function applyAutoParking(){
   let cancelled=false;
 
-  // dispatch-loading 동일 구조 오버레이
   let overlay=document.getElementById('apLoadingOverlay');
   if(!overlay){overlay=document.createElement('div');overlay.id='apLoadingOverlay';document.body.appendChild(overlay);}
-  overlay.style.cssText='position:fixed;inset:0;z-index:9100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)';
+  overlay.className='ap-loading-overlay';
   overlay.innerHTML=`
-    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);border-radius:22px;padding:30px 40px 26px;min-width:260px;max-width:92vw">
-      <div style="width:46px;height:46px;border:4px solid rgba(255,255,255,0.22);border-top-color:#3B82F6;border-radius:50%;animation:dc-spin .75s linear infinite"></div>
-      <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:.02em;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,0.4)">최적 배치 탐색 중</div>
-      <div id="apProgLine1" style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.88);text-align:center;line-height:1.45;padding:0 4px">준비 중…</div>
-      <div id="apProgLine2" style="font-size:13px;font-weight:800;color:#6EE7B7;text-align:center">완벽해 0/5</div>
-      <div style="width:100%;max-width:260px;height:6px;background:rgba(255,255,255,0.12);border-radius:3px;overflow:hidden">
-        <div id="apProgBar" style="height:100%;width:0%;background:linear-gradient(90deg,#2563EB,#34D399);border-radius:3px;transition:width .22s ease"></div>
-      </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.50);text-align:center;margin-top:-4px">휴차 순열·다중 패스(수 분 걸릴 수 있음)</div>
-      <div style="display:inline-flex;gap:6px">
-        <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite;display:inline-block"></span>
-        <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite .18s;display:inline-block"></span>
-        <span style="width:8px;height:8px;border-radius:50%;background:#60A5FA;animation:dc-bounce 1.1s ease infinite .36s;display:inline-block"></span>
-      </div>
-      <button id="apCancelBtn" style="margin-top:4px;padding:8px 24px;border:1px solid rgba(255,255,255,0.20);border-radius:10px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.70);font-size:13px;font-weight:700;cursor:pointer">✕ 취소</button>
-    </div>`;
+    <div class="ap-loading-card">
+      <div class="ap-loading-spinner"></div>
+      <div class="ap-loading-title">최적 배치 탐색 중</div>
 
-  document.getElementById('apCancelBtn').onclick=()=>{
-    cancelled=true;
-    if(_worker){_worker.terminate();_worker=null;}
-    overlay.style.display='none';
-  };
+      <!-- 퍼센트 크게 표시 -->
+      <div id="apPctNum" class="ap-loading-pct">0%</div>
+
+      <!-- 진행바 -->
+      <div class="ap-loading-bar-wrap">
+        <div id="apProgBar" class="ap-loading-bar"></div>
+      </div>
+
+      <!-- 상세 텍스트 -->
+      <div id="apProgLine1" class="ap-loading-line1">준비 중…</div>
+
+      <!-- 완벽해 카운터 -->
+      <div id="apProgLine2" class="ap-loading-line2">완벽해 0 / 10</div>
+
+      <div class="ap-loading-foot">
+        백트래킹 DFS 탐색 · 모바일도 정상 작동
+      </div>
+      <div class="ap-loading-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <button id="apCancelBtn" class="ap-loading-cancel">✕ 취소</button>
+    </div>`;
 
   _resultPages=[];
   _resultPageIdx=0;
 
   function updateApProgress(p){
+    const pct=document.getElementById('apPctNum');
     const l1=document.getElementById('apProgLine1');
     const l2=document.getElementById('apProgLine2');
     const bar=document.getElementById('apProgBar');
-    if(l1) l1.textContent=`${p.phase} · 후보 ${p.candDone}/${p.candTotal} (${p.pct}%)`;
-    if(l2) l2.textContent=`완벽해 ${p.perfectCount}/${p.perfectMax}`;
+    if(pct) pct.textContent=`${p.pct}%`;
+    if(l1) l1.textContent=`후보 ${p.candDone} / ${p.candTotal} · ${p.phase}`;
+    if(l2){
+      const cnt=p.perfectCount||0;
+      const max=p.perfectMax||10;
+      l2.textContent=cnt>0?`완벽해 ${cnt} / ${max} ✅`:`완벽해 탐색 중…`;
+      l2.style.color=cnt>0?'#34D399':'#6EE7B7';
+    }
     if(bar) bar.style.width=`${p.pct}%`;
   }
 
-  computeAutoParking(function(result, top3){
+  // cancelFn 받아서 취소 버튼에 연결
+  const cancelFn=computeAutoParking(function(result,top3){
     overlay.style.display='none';
-    if(cancelled) return;
-    if(!result){alert('배치를 찾지 못했습니다.');return;}
-    // 완벽해 대안 여러 개(최대 5) 또는 비완벽 시 여러 페이지면 스와이프, 아니면 1페이지
-    _resultPages = (top3&&top3.length>1) ? top3 : [result];
+    if(!result){
+      if(cancelled) return;
+      alert('배치를 찾지 못했습니다.');
+      return;
+    }
+    _resultPages=(top3&&top3.length>1)?top3:[result];
     _resultPageIdx=0;
-    showResultModal(_resultPages[0], 0);
-  }, updateApProgress);
+    showResultModal(_resultPages[0],0);
+  },updateApProgress);
+
+  document.getElementById('apCancelBtn').onclick=()=>{
+    cancelled=true;
+    // 취소는 즉시 UI를 닫고, 백그라운드 탐색도 중단
+    overlay.style.display='none';
+    if(typeof cancelFn==='function') cancelFn();
+  };
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -90,12 +110,7 @@ function showResultModal(result, pageIdx){
   if(!modal){
     modal=document.createElement('div');
     modal.id='autoResultModal';
-    modal.style.cssText=[
-      'position:fixed','inset:0','z-index:9000',
-      'background:rgba(0,0,0,0.60)',
-      'backdrop-filter:blur(6px)','-webkit-backdrop-filter:blur(6px)',
-      'display:flex','align-items:flex-end','justify-content:center',
-    ].join(';');
+    modal.className='ap-result-modal';
     document.body.appendChild(modal);
   }
   const rows=APP.rowLabels||['2R','3R','4R','5R','6R','7R'];
@@ -148,28 +163,28 @@ function showResultModal(result, pageIdx){
   const pageNavHTML=totalPages>1?`<div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px">${prevBtn}${pageLabel}${nextBtn}</div>`:'';
 
   modal.innerHTML=`
-    <div style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);border-bottom:none;border-radius:24px 24px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:600px;max-height:90vh;overflow-y:auto">
-      <div style="width:36px;height:4px;background:rgba(255,255,255,0.25);border-radius:2px;margin:0 auto 16px"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:.02em;text-shadow:0 1px 4px rgba(0,0,0,0.4)">자동 주차 배치 결과</div>
+    <div class="ap-result-sheet">
+      <div class="ap-result-grabber"></div>
+      <div class="ap-result-header">
+        <div class="ap-result-title">자동 주차 배치 결과</div>
         <div style="font-size:13px;font-weight:700;color:${scoreColor};text-shadow:0 1px 3px rgba(0,0,0,0.3)">${scoreLabel}</div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px;text-align:center">
-          <div style="font-size:22px;font-weight:900;color:${es===0?'#34D399':'#F87171'}">${es}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px">출차막힘</div>
+      <div class="ap-result-badges">
+        <div class="ap-result-badge">
+          <div class="ap-result-badge-num" style="color:${es===0?'#34D399':'#F87171'}">${es}</div>
+          <div class="ap-result-badge-label">출차막힘</div>
         </div>
-        <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px;text-align:center">
-          <div style="font-size:22px;font-weight:900;color:${en===0?'#34D399':'#F87171'}">${en}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px">입차막힘</div>
+        <div class="ap-result-badge">
+          <div class="ap-result-badge-num" style="color:${en===0?'#34D399':'#F87171'}">${en}</div>
+          <div class="ap-result-badge-label">입차막힘</div>
         </div>
-        <div style="flex:1;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:10px;text-align:center">
+        <div class="ap-result-badge">
           <div style="font-size:12px;font-weight:700;color:#fff;margin-top:2px">${result.elapsed?result.elapsed+'ms':'―'}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,0.85);margin-top:2px">탐색시간</div>
+          <div class="ap-result-badge-label">탐색시간</div>
         </div>
       </div>
       ${dotHTML}
-      <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
+      <div class="ap-result-grid">
         <div style="display:flex;gap:4px;margin-bottom:4px">
           <div style="width:28px"></div>
           ${['1번','2번','3번'].map(l=>`<div style="flex:1;font-size:10px;color:rgba(255,255,255,0.80);text-align:center;font-weight:700">${l}</div>`).join('')}
@@ -177,9 +192,9 @@ function showResultModal(result, pageIdx){
         ${gridRows}
       </div>
       ${pageNavHTML}
-      <div style="display:flex;gap:8px">
-        <button id="autoResultCancel" style="flex:1;height:48px;border:1px solid rgba(255,255,255,0.18);border-radius:14px;background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.80);font-size:15px;font-weight:700;cursor:pointer">취소</button>
-        <button id="autoResultApply" style="flex:2;height:48px;border:none;border-radius:14px;background:linear-gradient(135deg,#34D399,#059669);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 2px 12px rgba(52,211,153,0.35)">✓ 적용하기</button>
+      <div class="ap-result-actions">
+        <button id="autoResultCancel" class="ap-result-btn cancel">취소</button>
+        <button id="autoResultApply" class="ap-result-btn apply">✓ 적용하기</button>
       </div>
     </div>`;
 
@@ -195,16 +210,6 @@ function showResultModal(result, pageIdx){
     APP.parkingState.values=result.values;
     APP.parkingState.active=result.active;
     renderCards();saveData();
-    /* 오토 그리드 저장 */
-    if(typeof saveAutoGrid==='function') saveAutoGrid(date,result.values,result.active);
-    /* Firebase autoGrid 필드 저장 */
-    if(date&&APP.set&&APP.ref&&APP.db){
-      APP.set(APP.ref(APP.db,'parking/'+date+'/autoGrid'),{
-        values:result.values,
-        active:result.active,
-        savedAt:new Date().toISOString(),
-      }).catch(()=>{});
-    }
     modal.remove();
     if(es>0){
       const tmrRank={};
@@ -227,6 +232,7 @@ function initAutoParking(){
   APP.getExitBlockingInfo=getExitBlockingInfo;
   APP.calcExitBlocking   =calcExitBlocking;
   APP.calcEntryBlocking  =calcEntryBlocking;
+  APP.explainEntryBlocking = explainEntryBlocking;
   APP.computeAutoParking =computeAutoParking;
   APP.canEnterRow        =canEnterRow;
   APP.findEntryCol       =findEntryCol;
