@@ -44,6 +44,9 @@ function cEntry(V,O,B,RC,fallback){
     let si=-1;for(let i=0;i<RC*3;i++)if(V[i]===x){si=i;break;}
     if(si<0)continue;
     const row=Math.floor(si/3),col=si%3;
+    // 행은 반드시 1→2→3 순서(prefix)로만 채워질 수 있음 (점프 배치 금지)
+    const first = fec(row,s);
+    if(first!==col){n++;s[si]=x;col0streak=col===0?col0streak+1:0;continue;}
     if(!cer(row,s,RC,fallback)){n++;s[si]=x;col0streak=col===0?col0streak+1:0;continue;}
     if(col===0&&!canCol0(row,s,RC)){n++;s[si]=x;col0streak=col0streak+1;continue;}
     // 연속 1번칸 3대 금지
@@ -201,6 +204,9 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
     // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R(0~1행)에 배치 금지
     if(fastExitRankBanMax>0 && row<=1 && mR<fastExitRankBanMax){ if(rej) rej.fastBan=(rej.fastBan||0)+1; continue; }
     if(!cer(row,w,RC,fallback)){ if(rej) rej.cer=(rej.cer||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec=(rej.fec||0)+1; continue; }
+    // 행은 반드시 1→2→3 순서(prefix)로만 채워진다.
+    // (fec가 "첫 빈칸"이므로, 이 옵션은 항상 prefix를 만족하지만 안전망으로 한 번 더 체크)
+    if(col>0 && !w[row*3+(col-1)]){ if(rej) rej.prefix=(rej.prefix||0)+1; continue; }
     let lost=0;
     if(col===2){
       lost=sLost3(row,ar,w,RC,fallback);
@@ -213,17 +219,12 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
     if(!r23SlotOk(row,col,num,w,tr,br,enf,chainVer,allowMissing4R)){ if(rej) rej.r23Slot=(rej.r23Slot||0)+1; continue; }
     let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}
     opts.push({row,col,pen,lost});
-    // ── 폴백 모드: 아래 행 2·3번칸 비어있으면 3번칸 배치도 선택지에 추가 ──
-    if(fallback&&col<2&&lowerClear(row,w,RC)){
-      if(!r23SlotOk(row,2,num,w,tr,br,enf,chainVer,allowMissing4R)) continue;
-      let pen3=0;for(let lc=0;lc<2;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen3++;}
-      const lost3=sLost3(row,ar,w,RC,fallback);
-      opts.push({row,col:2,pen:pen3,lost:lost3,fallbackPrio:true});
-    }
   }
   if(!opts.length){
     for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
-      if(!cer(row,w,RC,fallback)){ if(rej) rej.cer2=(rej.cer2||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec2=(rej.fec2||0)+1; continue; }if(!r23SlotOk(row,col,num,w,tr,br,enf,chainVer,allowMissing4R)){ if(rej) rej.r23Slot2=(rej.r23Slot2||0)+1; continue; }
+      if(!cer(row,w,RC,fallback)){ if(rej) rej.cer2=(rej.cer2||0)+1; continue; }const col=fec(row,w);if(col<0){ if(rej) rej.fec2=(rej.fec2||0)+1; continue; }
+      if(col>0 && !w[row*3+(col-1)]){ if(rej) rej.prefix2=(rej.prefix2||0)+1; continue; }
+      if(!r23SlotOk(row,col,num,w,tr,br,enf,chainVer,allowMissing4R)){ if(rej) rej.r23Slot2=(rej.r23Slot2||0)+1; continue; }
       let pen=0;for(let lc=0;lc<col;lc++){const lv=w[row*3+lc];if(lv&&(tr[lv]??9999)>mR)pen++;}
       const lost=(col===2)?sLost3(row,ar,w,RC,fallback):0;
       opts.push({row,col,pen,lost});
@@ -401,8 +402,27 @@ self.onmessage=function(e){
     const unp=eo.filter(n=>!placed.has(n)).sort((a,b)=>(tr[a]??9999)-(tr[b]??9999));
     for(const num of unp){
       let bsi=-1,bp=99999;
-      for(let si=0;si<RC*3;si++){if(gBest.values[si]||gBest.active[si])continue;const row=Math.floor(si/3),col=si%3;if(!cer(row,gBest.values))continue;if(fec(row,gBest.values)<0)continue;let pen=0;for(let lc=0;lc<col;lc++){const lv=gBest.values[row*3+lc];if(lv&&(tr[lv]??9999)>(tr[num]??9999))pen++;}if(pen<bp){bp=pen;bsi=si;}}
-      if(bsi<0)for(let si=0;si<RC*3;si++)if(!gBest.values[si]&&!gBest.active[si]){bsi=si;break;}
+      for(let si=0;si<RC*3;si++){
+        if(gBest.values[si]||gBest.active[si])continue;
+        const row=Math.floor(si/3),col=si%3;
+        if(!cer(row,gBest.values))continue;
+        const first=fec(row,gBest.values);
+        if(first<0)continue;
+        // 행은 항상 1→2→3 순서로만 채운다 (점프 배치 금지)
+        if(col!==first) continue;
+        let pen=0;for(let lc=0;lc<col;lc++){const lv=gBest.values[row*3+lc];if(lv&&(tr[lv]??9999)>(tr[num]??9999))pen++;}
+        if(pen<bp){bp=pen;bsi=si;}
+      }
+      if(bsi<0){
+        // 물리 규칙이 허용하는 "첫 빈칸"을 못 찾은 경우에만, 남은 첫 빈칸에 순서대로 채움
+        for(let row=0;row<RC;row++){
+          if(!cer(row,gBest.values)) continue;
+          const first=fec(row,gBest.values);
+          if(first<0) continue;
+          const si=row*3+first;
+          if(!gBest.values[si]&&!gBest.active[si]){ bsi=si; break; }
+        }
+      }
       if(bsi>=0)gBest.values[bsi]=num;
     }
     if(unp.length){

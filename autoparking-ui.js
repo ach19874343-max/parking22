@@ -23,6 +23,8 @@ function applyAutoParking(){
   let overlay=document.getElementById('apLoadingOverlay');
   if(!overlay){overlay=document.createElement('div');overlay.id='apLoadingOverlay';document.body.appendChild(overlay);}
   overlay.className='ap-loading-overlay';
+  // 이전 실행에서 display:none 으로 숨겨졌을 수 있으니 항상 다시 표시
+  overlay.style.display='';
   overlay.innerHTML=`
     <div class="ap-loading-card">
       <div class="ap-loading-spinner"></div>

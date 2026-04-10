@@ -107,6 +107,9 @@ function calcEntryBlocking(values,order,base,fallback){
     let si=-1; for(let i=0;i<APP.rowCount*3;i++) if(values[i]===n){si=i;break;}
     if(si===-1) continue;
     const row=slotRow(si),col=slotCol(si);
+    // 행은 반드시 1→2→3 순서(prefix)로만 채워질 수 있음 (점프 배치 금지)
+    const firstEmpty=findEntryCol(row,sim);
+    if(firstEmpty!==col){s++;sim[si]=n;col0streak=col===0?col0streak+1:0;continue;}
     if(!canEnterRow(row,sim,fallback)){s++;sim[si]=n;col0streak=col===0?col0streak+1:0;continue;}
     if(col===0&&!canEnterCol0(row,sim)){s++;sim[si]=n;col0streak=col0streak+1;continue;}
     // 연속 1번칸 3대 금지
@@ -132,6 +135,13 @@ function explainEntryBlocking(values, order, base, fallback){
     if(si===-1) continue;
     const row=slotRow(si),col=slotCol(si);
     let reason='';
+    const firstEmpty=findEntryCol(row,sim);
+    if(firstEmpty!==col){
+      reason='행 1→2→3 순서(prefix) 위반 (점프 배치 금지)';
+      events.push({num:String(n),slot:si,row,col,reason});
+      sim[si]=n; col0streak=col===0?col0streak+1:0;
+      continue;
+    }
     if(!canEnterRow(row,sim,fallback)){
       reason='canEnterRow=false (위행3번칸/아래행2·3번칸 규칙)';
       events.push({num:String(n),slot:si,row,col,reason});
