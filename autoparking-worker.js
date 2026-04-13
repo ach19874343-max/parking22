@@ -238,6 +238,8 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
 }
 self.onmessage=function(e){
   const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,exitChainVer=2,exitChainAllowMissing4R=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3,hintSlotsByIdx=[],perfectOnly=false}=e.data;
+  // perfectOnly MRV 가 eo 를 swap 하므로, 입차 시뮬(cEntry)은 항상 "불러온 순서" 복사본으로만 계산
+  const entryOrderCanonical=eo.slice();
   // gOpts 내부에서 "원래 entryOrder 인덱스" 기반 힌트를 쓰기 위한 매핑(탐색 중 swap됨)
   var hintIdxByPos = Array.from({length: eo.length}, (_,i)=>i);
   const br={};
@@ -272,7 +274,7 @@ self.onmessage=function(e){
     // (DFS에서 옵션이 없어 스킵되는 경우가 있어, 그때는 값이 일부만 채워져도 막힘 점수만 0이 될 수 있음)
     const placed=new Set();
     for(let i=0;i<RC*3;i++) if(w[i]) placed.add(String(w[i]));
-    for(const n of eo) if(!placed.has(String(n))) return false;
+    for(const n of entryOrderCanonical) if(!placed.has(String(n))) return false;
     if(enforce2r3r1&&r23Viol(w,tr,br,true,exitChainVer,exitChainAllowMissing4R))return false;
     return true;
   }
@@ -296,7 +298,7 @@ self.onmessage=function(e){
     gw[chosen.row*3+chosen.col]=eo[i];
     gStreak=chosen.col===0?gStreak+1:0;
   }
-  const ges=cExit(gw,tr,RC),gen=cEntry(gw,eo,bv,RC,fallback),gs=score(ges,gen);
+  const ges=cExit(gw,tr,RC),gen=cEntry(gw,entryOrderCanonical,bv,RC,fallback),gs=score(ges,gen);
   if(gs<gBestScore&&!r23Viol(gw,tr,br,enforce2r3r1,exitChainVer,exitChainAllowMissing4R)){gBestScore=gs;gBest={values:{...gw},active:{...ba},exitScore:ges,entryScore:gen,total:gs};}
   addPerfect(gw,ges,gen);
   // DFS
@@ -325,7 +327,7 @@ self.onmessage=function(e){
     if(perfects.length>=5) return;
     if(idx===eo.length){
       if(enforce2r3r1&&r23Viol(work,tr,br,true,exitChainVer,exitChainAllowMissing4R)) return;
-      const es=cExit(work,tr,RC),en=cEntry(work,eo,bv,RC,fallback),sc=score(es,en);
+      const es=cExit(work,tr,RC),en=cEntry(work,entryOrderCanonical,bv,RC,fallback),sc=score(es,en);
       if(sc<gBestScore){gBestScore=sc;gBest={values:{...work},active:{...ba},exitScore:es,entryScore:en,total:sc};}
       addPerfect(work,es,en);
       return;
@@ -399,7 +401,7 @@ self.onmessage=function(e){
   // 미배치 강제
   if(gBest){
     const placed=new Set(Object.values(gBest.values).filter(Boolean));
-    const unp=eo.filter(n=>!placed.has(n)).sort((a,b)=>(tr[a]??9999)-(tr[b]??9999));
+    const unp=entryOrderCanonical.filter(n=>!placed.has(n)).sort((a,b)=>(tr[a]??9999)-(tr[b]??9999));
     for(const num of unp){
       let bsi=-1,bp=99999;
       for(let si=0;si<RC*3;si++){
@@ -428,7 +430,7 @@ self.onmessage=function(e){
     if(unp.length){
       const b2={};for(let i=0;i<RC*3;i++)b2[i]=gBest.active[i]?gBest.values[i]:'';
       gBest.exitScore=cExit(gBest.values,tr,RC);
-      gBest.entryScore=cEntry(gBest.values,eo,b2,RC,fallback);
+      gBest.entryScore=cEntry(gBest.values,entryOrderCanonical,b2,RC,fallback);
       gBest.total=gBest.entryScore*1000+gBest.exitScore;
     }
   }

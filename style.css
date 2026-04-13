@@ -189,6 +189,40 @@ input, textarea, select {
   align-items: center;
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.header-row .date-nav {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 입·출차 시뮬 (헤더) */
+.parking-sim-header-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  box-shadow: var(--shadow-sm);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s, background 0.12s;
+  flex-shrink: 0;
+}
+.parking-sim-header-btn:active {
+  transform: scale(0.94);
+  background: rgba(59, 130, 246, 0.12);
+}
+
 /* pill 전체: < 날짜 팀뱃지 > — light glass */
 .date-pill-wrap {
   flex: 1;
@@ -1376,6 +1410,35 @@ body.admin-mode .slot-card.empty {
   color: #6EE7B7;
   text-align: center;
 }
+.ap-loading-entry-wrap {
+  width: 100%;
+  max-width: min(92vw, 340px);
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+.ap-loading-entry-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.55);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 6px;
+  text-align: center;
+}
+.ap-loading-entry-line {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.55;
+  word-break: break-all;
+  text-align: center;
+}
 .ap-loading-foot {
   font-size: 11px;
   color: rgba(255,255,255,0.40);
@@ -2263,4 +2326,218 @@ input[type="number"] {
   flex-shrink: 0;
 }
 
- 
+/* ══════════════════════════════════════════════
+   입·출차 시뮬레이션 오버레이
+   ══════════════════════════════════════════════ */
+body.parking-sim-active {
+  overflow: hidden;
+}
+
+.parking-sim-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.parking-sim-overlay.is-open {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.parking-sim-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* 시뮬 전용 모달(주차 그리드 포함) */
+.parking-sim-modal-shell {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 20px));
+  max-height: min(88vh, 920px);
+  display: flex;
+  flex-direction: column;
+  z-index: 2;
+  pointer-events: auto;
+  gap: 0;
+}
+
+.parking-sim-modal-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.parking-sim-hud {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow-md);
+  pointer-events: auto;
+}
+
+body.dark-mode .parking-sim-hud {
+  background: rgba(30, 41, 59, 0.94);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.parking-sim-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+
+.parking-sim-phase {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-sub);
+  line-height: 1.45;
+}
+
+.parking-sim-modal-scroll {
+  flex: 1;
+  min-height: 140px;
+  max-height: min(52vh, 420px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 10px 10px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 16px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow-sm);
+}
+
+.parking-sim-modal-grid-inner {
+  height: auto !important;
+  min-height: 180px;
+}
+
+.parking-sim-modal-scroll .p-row {
+  min-height: 44px;
+}
+
+.parking-sim-close {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  pointer-events: auto;
+  transition: transform 0.1s, background 0.12s;
+}
+.parking-sim-close:active {
+  transform: scale(0.94);
+}
+
+body.dark-mode .parking-sim-close {
+  background: rgba(51, 65, 85, 0.95);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+.parking-sim-stage {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.parking-sim-bus {
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  z-index: 2;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
+}
+
+.parking-sim-bus-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* 입차·출차(왼쪽 이동): 진행 방향으로 */
+.parking-sim-bus-enter .parking-sim-bus-icon,
+.parking-sim-bus-exit .parking-sim-bus-icon {
+  display: inline-block;
+  transform: scaleX(-1);
+}
+
+.parking-sim-bus-num {
+  font-size: 12px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(37, 99, 235, 0.95);
+  color: #fff;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
+}
+
+.parking-sim-bus-exit .parking-sim-bus-num {
+  background: rgba(22, 163, 74, 0.95);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.35);
+}
+
+.parking-sim-slot-highlight {
+  outline: 3px solid rgba(37, 99, 235, 0.75) !important;
+  outline-offset: 1px;
+  z-index: 5;
+  animation: parking-sim-pulse 0.9s ease-in-out infinite;
+}
+
+@keyframes parking-sim-pulse {
+  0%, 100% { outline-color: rgba(37, 99, 235, 0.55); }
+  50% { outline-color: rgba(59, 130, 246, 0.95); }
+}
+
+.parking-sim-overlay.parking-sim-night .parking-sim-backdrop {
+  background: rgba(15, 23, 42, 0.55);
+  transition: background 1.2s ease;
+}
+
+.parking-sim-overlay.parking-sim-night .parking-sim-hud {
+  background: rgba(30, 27, 75, 0.92);
+  border-color: rgba(129, 140, 248, 0.35);
+}
+.parking-sim-overlay.parking-sim-night .parking-sim-title {
+  color: #e0e7ff;
+}
+.parking-sim-overlay.parking-sim-night .parking-sim-phase {
+  color: #c7d2fe;
+}
+
+@media (max-width: 380px) {
+  .parking-sim-header-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    font-size: 18px;
+  }
+}

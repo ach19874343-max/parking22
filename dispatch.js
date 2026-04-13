@@ -166,16 +166,38 @@ function getMissingNums(numsArr) {
   return (APP.currentBusList || []).filter(n => !set.has(n));
 }
 
-/* ── 칩 HTML 생성 ───────────────────────────────────────────── */
-function buildChipsHTML(numsArr, missing) {
+/* ── 칩 HTML 생성 ─────────────────────────────────────────────
+   @param {'todayEntry'|undefined} orderMode — 오늘만 'todayEntry' 로 자동주차 입차 순열과 동일 정렬
+────────────────────────────────────────────────────────────── */
+function buildChipsHTML(numsArr, missing, orderMode) {
   const parts = [];
   const so = (n) => (typeof n.startOrder === 'number' ? n.startOrder : 9999);
-  const early = numsArr.filter((n) => n.isEarly).sort((a, b) => so(a) - so(b));
-  const normal = numsArr.filter((n) => !n.isEarly).sort((a, b) => so(a) - so(b));
-  const ordered = [...early, ...normal];
-  ordered.forEach(({ num, isEarly }) => {
+  const missingSet = new Set(missing);
+  const inNums = new Set((numsArr || []).map(n => n.num ?? n));
+
+  /** 오늘 입차: 엔진과 동일(전체 startOrder 정렬 후 조기 최소에서 원형). 내일 칩은 기존 조기+일반 묶음 유지 */
+  let runningOrdered = [];
+  if (orderMode === 'todayEntry' && typeof getTodayRunningOrderedEntries === 'function') {
+    runningOrdered = getTodayRunningOrderedEntries().filter(b => inNums.has(b.num ?? b));
+  } else {
+    const early = numsArr.filter((n) => n.isEarly).sort((a, b) => so(a) - so(b));
+    const normal = numsArr.filter((n) => !n.isEarly).sort((a, b) => so(a) - so(b));
+    runningOrdered = [...early, ...normal];
+  }
+  const used = new Set();
+  runningOrdered.forEach(({ num, isEarly }) => {
+    if (missingSet.has(num)) return;
+    used.add(num);
     parts.push(`<span class="dc-chip${isEarly ? ' dc-chip--early' : ''}" data-num="${num}" style="cursor:pointer">${num}</span>`);
   });
+  /* 엔진에서 제외(정비소 등)됐지만 todayNums 에 남아 있는 운행 칩 — 뒤에 startOrder 순 */
+  (numsArr || [])
+    .filter(n => !missingSet.has(n.num ?? n) && !used.has(n.num ?? n))
+    .sort((a, b) => so(a) - so(b))
+    .forEach(({ num, isEarly }) => {
+      used.add(num);
+      parts.push(`<span class="dc-chip${isEarly ? ' dc-chip--early' : ''}" data-num="${num}" style="cursor:pointer">${num}</span>`);
+    });
 
   /* 휴차 칩 — 제외 여부에 따라 스타일 분기 */
   const dateStr = document.getElementById('datePicker')?.value || '';
@@ -424,7 +446,7 @@ function renderDispatchSection() {
   const todayEl    = document.getElementById('dispatchTodayChips');
   const tomorrowEl = document.getElementById('dispatchTomorrowChips');
   if (todayEl)
-    todayEl.innerHTML    = buildChipsHTML(dispatchState.todayNums,    dispatchState.todayMissing);
+    todayEl.innerHTML    = buildChipsHTML(dispatchState.todayNums,    dispatchState.todayMissing, 'todayEntry');
   if (tomorrowEl)
     tomorrowEl.innerHTML = buildChipsHTML(dispatchState.tomorrowNums, dispatchState.tomorrowMissing);
 

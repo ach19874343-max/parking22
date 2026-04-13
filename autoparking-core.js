@@ -13,28 +13,26 @@ const slotIndex = (row,col) => row*3+col;
 const slotRow   = si => Math.floor(si/3);
 const slotCol   = si => si%3;
 
-function getTodayEntryOrder(){
+/**
+ * 오늘 운행 차량만, 자동주차 `getTodayEntryOrder` 와 동일한 규칙으로 정렬된 객체 배열.
+ * (배차 칩 표시 순서와 엔진 입차 순열을 맞추기 위해 dispatch.js 에서도 사용)
+ */
+function getTodayRunningOrderedEntries(){
   const restSet=new Set(dispatchState.todayMissing||[]);
-  /* 정비소 제외 차량도 입차 순서에서 제외 */
   const dateStr=document.getElementById('datePicker')?.value||'';
   const exSet=dispatchState.excludedAbsent?.[dateStr]||new Set();
   const all=(dispatchState.todayNums||[]).filter(n=>!restSet.has(n.num??n)&&!exSet.has(n.num??n));
   const so=(n)=>(typeof n.startOrder==='number'?n.startOrder:9999);
-
-  /* startOrder 오름차순 정렬 */
   const sorted=[...all].sort((a,b)=>so(a)-so(b));
-
-  /* 조기(isEarly===true) 중 가장 작은 startOrder → 원형 시작점 */
   const earlyOrders=sorted.filter(n=>n.isEarly).map(n=>so(n));
-  if(!earlyOrders.length){
-    /* 조기 없으면 그냥 순서대로 */
-    return sorted.map(n=>n.num??n);
-  }
+  if(!earlyOrders.length) return sorted;
   const earlyFirst=Math.min(...earlyOrders);
-  /* earlyFirst 인덱스부터 끝까지 + 처음부터 earlyFirst 앞까지 (원형) */
   const pivot=sorted.findIndex(n=>so(n)===earlyFirst);
-  const ordered=[...sorted.slice(pivot),...sorted.slice(0,pivot)];
-  return ordered.map(n=>n.num??n);
+  return [...sorted.slice(pivot),...sorted.slice(0,pivot)];
+}
+
+function getTodayEntryOrder(){
+  return getTodayRunningOrderedEntries().map(n=>n.num??n);
 }
 
 /* ══════════════════════════════════════════════════════════════

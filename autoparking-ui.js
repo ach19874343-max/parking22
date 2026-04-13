@@ -44,6 +44,11 @@ function applyAutoParking(){
       <!-- 완벽해 카운터 -->
       <div id="apProgLine2" class="ap-loading-line2">완벽해 0 / 10</div>
 
+      <div id="apEntryOrderWrap" class="ap-loading-entry-wrap" aria-label="탐색에 사용하는 오늘 입차 순서">
+        <div class="ap-loading-entry-label">탐색에 쓰는 오늘 입차 순서</div>
+        <div id="apEntryOrderLine" class="ap-loading-entry-line"></div>
+      </div>
+
       <div class="ap-loading-foot">
         백트래킹 DFS 탐색 · 모바일도 정상 작동
       </div>
@@ -52,6 +57,14 @@ function applyAutoParking(){
       </div>
       <button id="apCancelBtn" class="ap-loading-cancel">✕ 취소</button>
     </div>`;
+
+  const apEntryEl = document.getElementById('apEntryOrderLine');
+  if (apEntryEl && typeof getTodayEntryOrder === 'function') {
+    const eo = getTodayEntryOrder();
+    apEntryEl.textContent = eo.length ? eo.join(' → ') : '(입차 대상 없음)';
+  } else if (apEntryEl) {
+    apEntryEl.textContent = '(순서를 불러올 수 없음)';
+  }
 
   _resultPages=[];
   _resultPageIdx=0;

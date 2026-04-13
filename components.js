@@ -10,6 +10,7 @@ function tmplHeader() {
   <header class="app-header">
     <input type="date" id="datePicker" autocomplete="off"
            style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+    <div class="header-row">
     <div class="date-nav">
       <div class="date-pill-wrap" id="datePillWrap">
 
@@ -33,6 +34,9 @@ function tmplHeader() {
         </button>
 
       </div>
+    </div>
+    <button type="button" class="parking-sim-header-btn" id="parkingSimBtn"
+      aria-label="입출차 시뮬레이션" title="오늘 입차 → 내일 출차 시뮬">🎮</button>
     </div>
   </header>`;
 }
