@@ -1396,7 +1396,7 @@ async function initParking() {
     });
   }
 
-  todayBtn.addEventListener('click', () => changeDate(getTodayStr()));
+  if (todayBtn) todayBtn.addEventListener('click', () => changeDate(getTodayStr()));
 
   /* ── 차량 패널 이벤트 ── */
   /* ── 차량·행 버튼: 클릭마다 차량모드 → 행모드 → 종료 순환 ── */
