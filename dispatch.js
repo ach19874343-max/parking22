@@ -21,7 +21,8 @@ const dispatchState = {
   tomorrowMissing:[],
   todayStr:       '',
   tomorrowStr:    '',
-  excludedAbsent: {},   /* { 'YYYY-MM-DD': Set<num> } — 날짜별 정비소 제외 목록 */
+  excludedAbsentToday:   {},   /* { 'YYYY-MM-DD': Set<num> } — 날짜별: 오늘 입차 휴차칩 제외(취소선) */
+  excludedAbsentTomorrow:{},   /* { 'YYYY-MM-DD': Set<num> } — 날짜별: 내일 출차 휴차칩 제외(취소선) */
 };
 
 /* ── 날짜 유틸 ─────────────────────────────────────────────── */
@@ -169,7 +170,7 @@ function getMissingNums(numsArr) {
 /* ── 칩 HTML 생성 ─────────────────────────────────────────────
    @param {'todayEntry'|undefined} orderMode — 오늘만 'todayEntry' 로 자동주차 입차 순열과 동일 정렬
 ────────────────────────────────────────────────────────────── */
-function buildChipsHTML(numsArr, missing, orderMode) {
+function buildChipsHTML(numsArr, missing, orderMode, dayKey) {
   const parts = [];
   const so = (n) => (typeof n.startOrder === 'number' ? n.startOrder : 9999);
   const missingSet = new Set(missing);
@@ -201,13 +202,16 @@ function buildChipsHTML(numsArr, missing, orderMode) {
 
   /* 휴차 칩 — 제외 여부에 따라 스타일 분기 */
   const dateStr = document.getElementById('datePicker')?.value || '';
-  const excluded = dispatchState.excludedAbsent[dateStr] || new Set();
+  const excluded =
+    dayKey === 'tomorrow'
+      ? (dispatchState.excludedAbsentTomorrow[dateStr] || new Set())
+      : (dispatchState.excludedAbsentToday[dateStr] || new Set());
   missing.forEach(n => {
     if (excluded.has(n)) {
       /* 제외 상태: 취소선 + 회색 */
-      parts.push(`<span class="dc-chip dc-chip--absent dc-chip--excluded" data-num="${n}" data-absent="1" style="cursor:pointer"><s>${n}</s></span>`);
+      parts.push(`<span class="dc-chip dc-chip--absent dc-chip--excluded" data-num="${n}" data-absent="1" data-day="${dayKey||''}" style="cursor:pointer"><s>${n}</s></span>`);
     } else {
-      parts.push(`<span class="dc-chip dc-chip--absent" data-num="${n}" data-absent="1" style="cursor:pointer">${n}</span>`);
+      parts.push(`<span class="dc-chip dc-chip--absent" data-num="${n}" data-absent="1" data-day="${dayKey||''}" style="cursor:pointer">${n}</span>`);
     }
   });
   return parts.join('');
@@ -221,6 +225,7 @@ function bindChipClickEvents() {
   document.querySelectorAll('.dc-chip').forEach(chip => {
     const num = chip.dataset.num;
     if (!num) return;
+    const dayKey = chip.dataset.day === 'tomorrow' ? 'tomorrow' : 'today';
 
     /* ── 휴차 칩(absent): long press → 제외/복귀, 짧은 탭 → 하이라이트 ── */
     if (chip.dataset.absent === '1') {
@@ -237,7 +242,7 @@ function bindChipClickEvents() {
           /* 시각 피드백 — iOS 포함 전 기기 (칩 흔들림) */
           chip.classList.add('dc-chip--shake');
           setTimeout(() => chip.classList.remove('dc-chip--shake'), 400);
-          _toggleExcludeAbsent(num);
+          _toggleExcludeAbsent(num, dayKey);
         }, LONG_PRESS_MS);
       };
 
@@ -290,13 +295,12 @@ function bindChipClickEvents() {
 }
 
 /* ── 휴차 제외 토글 ─────────────────────────────────────────── */
-function _toggleExcludeAbsent(num) {
+function _toggleExcludeAbsent(num, dayKey) {
   const dateStr = document.getElementById('datePicker')?.value || '';
   if (!dateStr) return;
-  if (!dispatchState.excludedAbsent[dateStr]) {
-    dispatchState.excludedAbsent[dateStr] = new Set();
-  }
-  const exSet = dispatchState.excludedAbsent[dateStr];
+  const map = dayKey === 'tomorrow' ? dispatchState.excludedAbsentTomorrow : dispatchState.excludedAbsentToday;
+  if (!map[dateStr]) map[dateStr] = new Set();
+  const exSet = map[dateStr];
 
   if (exSet.has(num)) {
     /* 제외 해제 → 그리드 복원 */
@@ -309,7 +313,7 @@ function _toggleExcludeAbsent(num) {
   }
 
   /* Firebase 저장 */
-  _saveExcludedAbsent(dateStr);
+  _saveExcludedAbsent(dateStr, dayKey);
   /* 칩 재렌더링 */
   renderDispatchSection();
 }
@@ -375,10 +379,12 @@ function _restoreAbsentToGrid(num, dateStr) {
 }
 
 /* ── 제외 목록 Firebase 저장 ── */
-function _saveExcludedAbsent(dateStr) {
-  const exSet = dispatchState.excludedAbsent[dateStr];
+function _saveExcludedAbsent(dateStr, dayKey) {
+  const map = dayKey === 'tomorrow' ? dispatchState.excludedAbsentTomorrow : dispatchState.excludedAbsentToday;
+  const exSet = map[dateStr];
   const arr   = exSet ? [...exSet] : [];
-  APP.set(APP.ref(APP.db, `parking/${dateStr}/excludedAbsent`), arr).catch(() => {});
+  const key = dayKey === 'tomorrow' ? 'excludedAbsentTomorrow' : 'excludedAbsentToday';
+  APP.set(APP.ref(APP.db, `parking/${dateStr}/${key}`), arr).catch(() => {});
 }
 
 /* ── Firebase: 날짜별 저장 ──────────────────────────────────── */
@@ -445,10 +451,30 @@ function renderDispatchSection() {
 
   const todayEl    = document.getElementById('dispatchTodayChips');
   const tomorrowEl = document.getElementById('dispatchTomorrowChips');
-  if (todayEl)
-    todayEl.innerHTML    = buildChipsHTML(dispatchState.todayNums,    dispatchState.todayMissing, 'todayEntry');
-  if (tomorrowEl)
-    tomorrowEl.innerHTML = buildChipsHTML(dispatchState.tomorrowNums, dispatchState.tomorrowMissing);
+  const dateStrNow = document.getElementById('datePicker')?.value || '';
+  const exToday = dispatchState.excludedAbsentToday?.[dateStrNow] || new Set();
+  const exTomorrow = dispatchState.excludedAbsentTomorrow?.[dateStrNow] || new Set();
+
+  if (todayEl) {
+    const miss = new Set(dispatchState.todayMissing || []);
+    // 수동 휴차(그리드 노란색)
+    try{
+      const manual = (APP && typeof APP.getManualRestSetForCurrentDate==='function')
+        ? APP.getManualRestSetForCurrentDate()
+        : new Set();
+      manual.forEach(n => miss.add(String(n).trim()));
+    }catch{}
+    // 오늘 전용 제외(취소선)도 오늘 휴차 칩 영역에 포함
+    exToday.forEach(n => miss.add(String(n).trim()));
+    todayEl.innerHTML = buildChipsHTML(dispatchState.todayNums, [...miss], 'todayEntry', 'today');
+  }
+
+  if (tomorrowEl) {
+    const miss = new Set(dispatchState.tomorrowMissing || []);
+    // 내일 전용 제외(취소선)만 내일 휴차 칩 영역에 포함
+    exTomorrow.forEach(n => miss.add(String(n).trim()));
+    tomorrowEl.innerHTML = buildChipsHTML(dispatchState.tomorrowNums, [...miss], undefined, 'tomorrow');
+  }
 
   /* 칩 클릭 이벤트 바인딩 */
   bindChipClickEvents();

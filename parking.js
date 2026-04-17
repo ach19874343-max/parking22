@@ -631,6 +631,22 @@ function toggleCardState(slotIdx) {
   APP.parkingState.active[slotIdx] = !APP.parkingState.active[slotIdx];
   renderCards();
   saveData();
+  /* 수동 휴차가 오늘 입차/AutoPark 휴차 후보에 반영되도록 배차 섹션도 갱신 */
+  if (typeof renderDispatchSection === 'function') renderDispatchSection();
+}
+
+/* ── 수동 휴차(노란색) 차량 Set (현재 선택 날짜 기준) ────────── */
+function getManualRestSetForCurrentDate() {
+  const set = new Set();
+  const values = APP?.parkingState?.values || {};
+  const active = APP?.parkingState?.active || {};
+  const totalSlots = (APP.rowCount || 0) * 3;
+  for (let i = 0; i < totalSlots; i++) {
+    if (!active[i]) continue;
+    const v = values[i];
+    if (v !== undefined && v !== null && String(v).trim() !== '') set.add(String(v).trim());
+  }
+  return set;
 }
 
 /* ── 카드 터치/드래그 이벤트 설정 ──────────────────────── */
@@ -696,17 +712,23 @@ function setupCardEvents(card, slotIdx) {
   });
 
   /* ── 모바일: 롱프레스 → 휴차토글 / 탭 → 탭-투-스왑 ── */
-  let startX, startY, touchMoved = false, longPressed = false;
+  let startX, startY, startScrollY, touchMoved = false, longPressed = false;
+  let cardTouchTimer = null;
 
   card.addEventListener('touchstart', e => {
     startX      = e.touches[0].clientX;
     startY      = e.touches[0].clientY;
+    startScrollY = window.scrollY || 0;
     touchMoved  = false;
     longPressed = false;
 
-    /* 롱프레스 타이머: 480ms 꾹 누르면 휴차 토글 */
-    touchTimer = setTimeout(() => {
+    /* 롱프레스 타이머:
+       - 모바일 스크롤 중(또는 손가락이 조금이라도 움직이면) 휴차 토글이 되지 않게 보수적으로 판정 */
+    clearTimeout(cardTouchTimer);
+    cardTouchTimer = setTimeout(() => {
+      const curScrollY = window.scrollY || 0;
       if (touchMoved) return;
+      if (Math.abs(curScrollY - (startScrollY || 0)) > 2) return; /* 스크롤 발생 */
       longPressed = true;
       toggleCardState(slotIdx);
       if (navigator.vibrate) navigator.vibrate(35);
@@ -715,20 +737,20 @@ function setupCardEvents(card, slotIdx) {
       if (tapFirstSlot !== null || tapConfirmSlot !== null) {
         clearTapState();
       }
-    }, 480);
+    }, 650);
   }, { passive: true });
 
   card.addEventListener('touchmove', e => {
     const dx = Math.abs(e.touches[0].clientX - startX);
     const dy = Math.abs(e.touches[0].clientY - startY);
-    if (dx > 9 || dy > 9) {
+    if (dx > 6 || dy > 6) {
       touchMoved = true;
-      clearTimeout(touchTimer);
+      clearTimeout(cardTouchTimer);
     }
   }, { passive: true });
 
   card.addEventListener('touchend', e => {
-    clearTimeout(touchTimer);
+    clearTimeout(cardTouchTimer);
     if (touchMoved || longPressed) return; /* 스크롤 or 롱프레스 → 무시 */
 
     e.preventDefault(); /* 탭 처리 */
@@ -771,7 +793,7 @@ function setupCardEvents(card, slotIdx) {
   }, { passive: false });
 
   card.addEventListener('touchcancel', () => {
-    clearTimeout(touchTimer);
+    clearTimeout(cardTouchTimer);
     touchMoved  = false;
     longPressed = false;
   });
@@ -1096,21 +1118,27 @@ async function loadData(date) {
     }
     syncMissingVehiclesToSlots(values, active);
 
-    /* 제외 목록 — data에 포함된 필드 바로 사용 (추가 쿼리 없음) */
-    if (!dispatchState.excludedAbsent) dispatchState.excludedAbsent = {};
-    if (data.excludedAbsent) {
-      const arr  = data.excludedAbsent;
+    /* 제외 목록(취소선) — 오늘/내일 분리 저장 */
+    if (!dispatchState.excludedAbsentToday) dispatchState.excludedAbsentToday = {};
+    if (!dispatchState.excludedAbsentTomorrow) dispatchState.excludedAbsentTomorrow = {};
+    const toSet = (arr) => {
       const list = Array.isArray(arr) ? arr : Object.values(arr || {});
-      dispatchState.excludedAbsent[date] = new Set(list);
-    } else {
-      dispatchState.excludedAbsent[date] = new Set();
-    }
+      return new Set((list || []).map(x => String(x).trim()).filter(Boolean));
+    };
+    dispatchState.excludedAbsentToday[date] =
+      data.excludedAbsentToday ? toSet(data.excludedAbsentToday) : new Set();
+    dispatchState.excludedAbsentTomorrow[date] =
+      data.excludedAbsentTomorrow ? toSet(data.excludedAbsentTomorrow) : new Set();
     /* 원위치 맵 */
     if (!APP.excludedSlotMap) APP.excludedSlotMap = {};
     APP.excludedSlotMap[date] = data.excludedSlotMap || {};
 
-    /* 제외 차량 values에서 제거 — renderCards 전에 처리 (깜빡임 방지) */
-    const exSet = dispatchState.excludedAbsent[date];
+    /* 제외 차량 values에서 제거 — renderCards 전에 처리 (깜빡임 방지)
+       - 제외(취소선) 상태는 오늘/내일 칩에서 분리 저장되지만,
+         실제 그리드에서는 둘 중 하나라도 제외면 동일하게 제거 처리 */
+    const exToday = dispatchState.excludedAbsentToday?.[date] || new Set();
+    const exTomorrow = dispatchState.excludedAbsentTomorrow?.[date] || new Set();
+    const exSet = new Set([...exToday, ...exTomorrow]);
     if (exSet.size > 0) {
       for (let i = 0; i < totalSlots; i++) {
         if (exSet.has(values[i])) {
@@ -1123,8 +1151,10 @@ async function loadData(date) {
     APP.parkingState = { values, active };
   } else {
     APP.parkingState = buildEmptyState();
-    if (!dispatchState.excludedAbsent) dispatchState.excludedAbsent = {};
-    dispatchState.excludedAbsent[date] = new Set();
+    if (!dispatchState.excludedAbsentToday) dispatchState.excludedAbsentToday = {};
+    if (!dispatchState.excludedAbsentTomorrow) dispatchState.excludedAbsentTomorrow = {};
+    dispatchState.excludedAbsentToday[date] = new Set();
+    dispatchState.excludedAbsentTomorrow[date] = new Set();
   }
 
   updateParkingOverlay(date);
@@ -1320,6 +1350,7 @@ async function initParking() {
   APP.loadData                   = loadData;
   APP.renderCards                = renderCards;
   APP.saveData                   = saveData;
+  APP.getManualRestSetForCurrentDate = getManualRestSetForCurrentDate;
   APP.highlightDispatchChip      = highlightDispatchChip;
   APP.clearDispatchChipHighlight = clearDispatchChipHighlight;
   APP.updateParkingOverlay       = updateParkingOverlay;

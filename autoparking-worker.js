@@ -487,6 +487,13 @@ function computeAutoParkingSingle(callback, onProgress, opts){
   const fastExitRankBanMax=Math.min(3,tomorrowList.length);
 
   const todayRestSet=new Set(dispatchState.todayMissing||[]);
+  /* 수동 휴차(그리드 노란색)도 휴차 후보에 포함 */
+  try{
+    const manual = (APP && typeof APP.getManualRestSetForCurrentDate==='function')
+      ? APP.getManualRestSetForCurrentDate()
+      : new Set();
+    manual.forEach(n=>todayRestSet.add(String(n).trim()));
+  }catch{}
   /* 정비소 제외 차량은 휴차 배치에서도 제외 */
   const dateStr=document.getElementById('datePicker')?.value||'';
   const exSet=dispatchState.excludedAbsent?.[dateStr]||new Set();

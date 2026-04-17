@@ -19,6 +19,13 @@ const slotCol   = si => si%3;
  */
 function getTodayRunningOrderedEntries(){
   const restSet=new Set(dispatchState.todayMissing||[]);
+  /* 수동 휴차(그리드 노란색)도 오늘 운행에서 제외 */
+  try{
+    const manual = (APP && typeof APP.getManualRestSetForCurrentDate==='function')
+      ? APP.getManualRestSetForCurrentDate()
+      : new Set();
+    manual.forEach(n=>restSet.add(String(n).trim()));
+  }catch{}
   const dateStr=document.getElementById('datePicker')?.value||'';
   const exSet=dispatchState.excludedAbsent?.[dateStr]||new Set();
   const all=(dispatchState.todayNums||[]).filter(n=>!restSet.has(n.num??n)&&!exSet.has(n.num??n));
