@@ -325,10 +325,14 @@
   }
 
   function bind() {
-    const btn = document.getElementById('parkingSimBtn');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      runParkingSimulation().catch(e => console.error(e));
+    const btns = [
+      document.getElementById('parkingSimBtn'),
+    ].filter(Boolean);
+    if (!btns.length) return;
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        runParkingSimulation().catch(e => console.error(e));
+      });
     });
   }
 

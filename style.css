@@ -200,28 +200,7 @@ input, textarea, select {
   min-width: 0;
 }
 
-/* 입·출차 시뮬 (헤더) */
-.parking-sim-header-btn {
-  width: 36px;
-  height: 44px;
-  min-width: 36px;
-  border-radius: 14px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg-strong);
-  box-shadow: var(--shadow-sm);
-  font-size: 18px;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.12s, background 0.12s;
-  flex-shrink: 0;
-}
-.parking-sim-header-btn:active {
-  transform: scale(0.94);
-  background: rgba(59, 130, 246, 0.12);
-}
+/* (removed) 입·출차 시뮬 헤더 버튼 — 하단 탭바로 이동 */
 
 /* pill 전체: < 날짜 팀뱃지 > — light glass */
 .date-pill-wrap {
@@ -2534,10 +2513,5 @@ body.dark-mode .parking-sim-close {
 }
 
 @media (max-width: 380px) {
-  .parking-sim-header-btn {
-    width: 34px;
-    height: 40px;
-    min-width: 34px;
-    font-size: 17px;
-  }
+  /* 헤더 시뮬 버튼 제거됨 */
 }

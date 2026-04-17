@@ -35,8 +35,6 @@ function tmplHeader() {
 
       </div>
     </div>
-    <button type="button" class="parking-sim-header-btn" id="parkingSimBtn"
-      aria-label="입출차 시뮬레이션" title="오늘 입차 → 내일 출차 시뮬">🎮</button>
     </div>
   </header>`;
 }
@@ -201,6 +199,16 @@ function tmplBottomNav() {
           </svg>
         </span>
         <span class="bnav-label">복사</span>
+      </span>
+    </button>
+
+    <!-- 시뮬 — 하늘 아이콘 -->
+    <button class="bnav-btn" id="parkingSimBtn" aria-label="시뮬">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#0EA5E9">
+          <span style="font-size:18px;line-height:1">🎮</span>
+        </span>
+        <span class="bnav-label">시뮬</span>
       </span>
     </button>
 
