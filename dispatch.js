@@ -303,13 +303,19 @@ function _toggleExcludeAbsent(num, dayKey) {
   const exSet = map[dateStr];
 
   if (exSet.has(num)) {
-    /* 제외 해제 → 그리드 복원 */
+    /* 제외 해제 */
     exSet.delete(num);
-    _restoreAbsentToGrid(num, dateStr);
+    /* 오늘 입차쪽 제외는 실제 그리드 제거/복원을 동반 */
+    if (dayKey !== 'tomorrow') {
+      _restoreAbsentToGrid(num, dateStr);
+    }
   } else {
-    /* 제외 → 그리드에서 제거 + 원위치 기억 */
+    /* 제외 */
     exSet.add(num);
-    _removeAbsentFromGrid(num, dateStr);
+    /* 오늘 입차쪽 제외는 실제 그리드 제거/복원을 동반 */
+    if (dayKey !== 'tomorrow') {
+      _removeAbsentFromGrid(num, dateStr);
+    }
   }
 
   /* Firebase 저장 */
