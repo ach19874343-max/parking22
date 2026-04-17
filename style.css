@@ -202,14 +202,14 @@ input, textarea, select {
 
 /* 입·출차 시뮬 (헤더) */
 .parking-sim-header-btn {
-  width: 44px;
+  width: 36px;
   height: 44px;
-  min-width: 44px;
+  min-width: 36px;
   border-radius: 14px;
   border: 1px solid var(--glass-border);
   background: var(--glass-bg-strong);
   box-shadow: var(--shadow-sm);
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   display: flex;
@@ -2535,9 +2535,9 @@ body.dark-mode .parking-sim-close {
 
 @media (max-width: 380px) {
   .parking-sim-header-btn {
-    width: 40px;
+    width: 34px;
     height: 40px;
-    min-width: 40px;
-    font-size: 18px;
+    min-width: 34px;
+    font-size: 17px;
   }
 }
