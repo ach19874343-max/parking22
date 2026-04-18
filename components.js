@@ -362,7 +362,18 @@ function tmplDragGhost() {
     document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px');
   }
   setAppVh();
-  window.addEventListener('orientationchange', () => setTimeout(setAppVh, 300));
+  // 모바일 주소창/툴바로 innerHeight가 변하면 하단 행(5R~7R)이 탭바 아래로 숨어 터치가 먹통처럼 될 수 있음
+  // → resize/visualViewport resize 때마다 --app-vh를 갱신하여 항상 레이아웃이 맞도록 유지
+  let _vhT = null;
+  const scheduleVh = () => {
+    clearTimeout(_vhT);
+    _vhT = setTimeout(setAppVh, 60);
+  };
+  window.addEventListener('resize', scheduleVh, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(setAppVh, 300), { passive: true });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleVh, { passive: true });
+  }
   /* 앱 래퍼 내부: 헤더 → 주차그리드 → 배차칩 → 하단안내 → 탭바 */
   const wrapper = document.getElementById('app-wrapper');
   if (wrapper) {

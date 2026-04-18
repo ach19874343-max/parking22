@@ -173,6 +173,11 @@
       document.querySelectorAll('.parking-sim-slot-highlight').forEach(c => {
         c.classList.remove('parking-sim-slot-highlight');
       });
+      // 닫힌 뒤 overlay가 남아 클릭을 막는 케이스 방지: DOM에서 제거
+      // (다음 실행 시 ensureOverlay가 새로 생성)
+      setTimeout(() => {
+        try { el.remove(); } catch {}
+      }, 0);
     };
     backdrop.addEventListener('click', close);
     closeBtn.addEventListener('click', close);

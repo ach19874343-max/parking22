@@ -608,6 +608,13 @@ input, textarea, select {
   border: 1px solid var(--glass-border);
 }
 
+/* dvh 지원 브라우저에서는 동적 뷰포트를 우선 사용 (PC/모바일 공통: 하단 탭바 겹침 방지) */
+@supports (height: 100dvh) {
+  .parking-main {
+    height: calc((100dvh - var(--header-h) - var(--nav-h) - var(--safe-b)) * 0.62);
+  }
+}
+
 /* ── 빈 날짜 안내 ── */
 .empty-grid-hint {
   position: absolute;
@@ -904,6 +911,8 @@ body.admin-mode .slot-card.empty {
   align-items: stretch;
   z-index: 300;
   box-shadow: 0 -2px 16px rgba(100,130,180,0.16);
+  /* 탭바 배경 자체가 그리드 터치를 막아 '데드존'이 되는 경우 방지 */
+  pointer-events: none;
 }
 
 /* 세로 배치: 아이콘 위 / 텍스트 아래 */
@@ -922,6 +931,7 @@ body.admin-mode .slot-card.empty {
   min-width: 0;
   border-radius: 14px;
   transition: background 0.12s, opacity 0.12s, transform 0.12s;
+  pointer-events: auto; /* 버튼만 터치/클릭 수신 */
 }
 .bnav-btn:active { opacity: 0.55; transform: scale(0.96); }
 
