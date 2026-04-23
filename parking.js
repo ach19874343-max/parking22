@@ -623,6 +623,20 @@ function swapSlots(srcIdx, dstIdx) {
 
   renderCards();
   saveData();
+
+  // 학습(사용자 조작 로그): 스왑 후 두 차량의 "현재 슬롯" 기록
+  // - 학습은 차량번호가 아니라 entryIdx/slot 기준으로 활용됨(autoparking-worker.js)
+  try {
+    const dateStr = document.getElementById('datePicker')?.value || '';
+    if (dateStr && typeof window.apLearnLogEdit === 'function') {
+      const v1 = APP.parkingState.values[srcIdx];
+      const v2 = APP.parkingState.values[dstIdx];
+      const updates = [];
+      if (v1) updates.push({ num: String(v1).trim(), slot: srcIdx });
+      if (v2) updates.push({ num: String(v2).trim(), slot: dstIdx });
+      if (updates.length) window.apLearnLogEdit({ type: 'swap', dateStr, updates });
+    }
+  } catch {}
 }
 
 /* ── 슬롯 상태 토글 (운행 ↔ 휴차) ─────────────────────── */

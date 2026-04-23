@@ -171,14 +171,22 @@ function iterRowsBias(ar,num,tr,biasMid,earlyMax){
   for(const r of ar) if(!seen.has(r)) out.push(r);
   return out;
 }
-function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi){
+function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref){
   const hRow = (hintSi===0||hintSi) ? Math.floor(hintSi/3) : null;
   const hCol = (hintSi===0||hintSi) ? (hintSi%3) : null;
   const hPri = (o)=> (hRow===null ? 1 : ((o.row===hRow && o.col===hCol) ? 0 : 1));
+  const lp = learnPref || null;
+  const lRow = (lp && (lp.row===0 || lp.row)) ? lp.row : null;
+  const lCol = (lp && (lp.col===0 || lp.col)) ? lp.col : null;
+  const lDist = (o) => {
+    if (lRow === null || lCol === null) return 0;
+    return Math.abs(o.row - lRow) * 2 + Math.abs(o.col - lCol);
+  };
 
   if(!biasMid||(tr[num]??9999)>=earlyMax){
     opts.sort((a,b)=>
       hPri(a)-hPri(b) ||
+      lDist(a)-lDist(b) ||
       a.pen-b.pen ||
       (a.lost||0)-(b.lost||0) ||
       (b.fallbackPrio?1:0)-(a.fallbackPrio?1:0)
@@ -189,6 +197,8 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi){
   opts.sort((a,b)=>{
     const hp=hPri(a)-hPri(b);
     if(hp!==0) return hp;
+    const ld = lDist(a)-lDist(b);
+    if(ld!==0) return ld;
     const am=mid(a.row)?0:1,bm=mid(b.row)?0:1;
     if(am!==bm) return am-bm;
     if(a.col!==b.col) return a.col-b.col;
@@ -198,7 +208,7 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi){
     return(b.fallbackPrio?1:0)-(a.fallbackPrio?1:0);
   });
 }
-function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,hintSlotsByIdx,chainVer,allowMissing4R,rej){
+function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,chainVer,allowMissing4R,rej){
   const mR=tr[num]??9999,rem=eo.length-idx-1,cur=cSlots(ar,w,RC,fallback),opts=[];
   for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
     // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R(0~1행)에 배치 금지
@@ -233,11 +243,14 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
   }
   const hintI = (typeof hintIdxByPos!=='undefined' && hintIdxByPos && hintIdxByPos.length) ? hintIdxByPos[idx] : idx;
   const hintSi = hintSlotsByIdx ? hintSlotsByIdx[hintI] : null;
-  sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi);
+  const g = (eo && eo.length) ? (hintI / eo.length) : 0;
+  const gi = g < 1/3 ? 0 : g < 2/3 ? 1 : 2;
+  const learnPref = (learnGroupPref && learnGroupPref[gi]) ? learnGroupPref[gi] : null;
+  sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref);
   return opts;
 }
 self.onmessage=function(e){
-  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,exitChainVer=2,exitChainAllowMissing4R=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3,hintSlotsByIdx=[],perfectOnly=false}=e.data;
+  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,exitChainVer=2,exitChainAllowMissing4R=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3,hintSlotsByIdx=[],learnGroupPref=null,perfectOnly=false,livePreview=false,livePreviewIntervalMs=200}=e.data;
   // perfectOnly MRV 가 eo 를 swap 하므로, 입차 시뮬(cEntry)은 항상 "불러온 순서" 복사본으로만 계산
   const entryOrderCanonical=eo.slice();
   // gOpts 내부에서 "원래 entryOrder 인덱스" 기반 힌트를 쓰기 위한 매핑(탐색 중 swap됨)
@@ -267,6 +280,17 @@ self.onmessage=function(e){
   let nodes=0;
   let timedOut=false;
   const rej={};
+  let lastLiveMs=0;
+  function emitLive(label, values){
+    if(!livePreview) return;
+    const now=Date.now();
+    const iv = (livePreviewIntervalMs===0 || livePreviewIntervalMs) ? livePreviewIntervalMs : 200;
+    if(now-lastLiveMs<iv) return;
+    lastLiveMs=now;
+    try{
+      self.postMessage({ live:{ label, values:{...values}, active:{...ba}, nodes } });
+    }catch{}
+  }
   function score(es,en){return en*1000+es;}
   function isPerfect(es,en,w){
     if(es!==0||en!==0)return false;
@@ -292,15 +316,40 @@ self.onmessage=function(e){
   // 그리디 초기해
   const gw={...bv};
   let gStreak=0;
+  // (1) Seed: 학습 hint 슬롯에 "가능한 것부터" 먼저 배치 시도
+  // - 규칙(접두사/진입/col0 제약/연속 col0 제한)을 만족하는 경우에만 선배치
+  const _seedPlaced = {};
+  if(hintSlotsByIdx && hintSlotsByIdx.length){
+    for(let i=0;i<eo.length;i++){
+      const si = hintSlotsByIdx[i];
+      if(!(si===0||si)) continue;
+      if(gw[si]) continue;             // 이미 차가 있음
+      if(ba && ba[si]) continue;       // 휴차(active) 슬롯엔 배치 금지
+      const row=Math.floor(si/3), col=si%3;
+      if(!cer(row,gw)) continue;
+      const first=fec(row,gw);
+      if(first<0 || col!==first) continue; // prefix 위반 방지
+      if(col===0 && !canCol0(row,gw,RC)) continue;
+      if(col===0 && gStreak>=2) continue;
+      if(!r23SlotOk(row,col,eo[i],gw,tr,br,enforce2r3r1,exitChainVer,exitChainAllowMissing4R)) continue;
+      gw[si]=eo[i];
+      _seedPlaced[i]=1;
+      gStreak = (col===0) ? (gStreak+1) : 0;
+    }
+  }
   for(let i=0;i<eo.length;i++){
-    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,exitChainVer,exitChainAllowMissing4R,rej);if(!o.length)continue;
+    // seed에서 이미 배치된 차량은 건너뜀
+    if(_seedPlaced[i]) continue;
+    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,rej);if(!o.length)continue;
     const chosen=o[0];
     gw[chosen.row*3+chosen.col]=eo[i];
     gStreak=chosen.col===0?gStreak+1:0;
+    emitLive('그리디', gw);
   }
   const ges=cExit(gw,tr,RC),gen=cEntry(gw,entryOrderCanonical,bv,RC,fallback),gs=score(ges,gen);
   if(gs<gBestScore&&!r23Viol(gw,tr,br,enforce2r3r1,exitChainVer,exitChainAllowMissing4R)){gBestScore=gs;gBest={values:{...gw},active:{...ba},exitScore:ges,entryScore:gen,total:gs};}
   addPerfect(gw,ges,gen);
+  if(gBest) emitLive('현재최고', gBest.values);
   // DFS
   const work={...bv};
   function lbEntry(idx){
@@ -315,7 +364,7 @@ self.onmessage=function(e){
     // If some remaining car has no feasible option even now, it will never become feasible later.
     // (placing cars only reduces free slots / accessibility)
     for(let j=idx;j<eo.length;j++){
-      const o = gOpts(eo[j], j, eo, ar, work, tr, fallback, RC, 0, enforce2r3r1, br, biasMiddleEarly, earlyExitRankMax, fastExitRankBanMax, hintSlotsByIdx, exitChainVer, exitChainAllowMissing4R, null);
+      const o = gOpts(eo[j], j, eo, ar, work, tr, fallback, RC, 0, enforce2r3r1, br, biasMiddleEarly, earlyExitRankMax, fastExitRankBanMax, hintSlotsByIdx, learnGroupPref, exitChainVer, exitChainAllowMissing4R, null);
       if(!o.length) lb++;
       if(gBestScore<99999 && lb*1000 >= gBestScore) break;
     }
@@ -325,11 +374,14 @@ self.onmessage=function(e){
     nodes++;
     if(Date.now()-t0>maxMs){ timedOut=true; return; }
     if(perfects.length>=5) return;
+    // 현재 탐색 상태 스냅샷(너무 자주 안 보냄)
+    if((nodes & 1023)===0) emitLive('DFS', work);
     if(idx===eo.length){
       if(enforce2r3r1&&r23Viol(work,tr,br,true,exitChainVer,exitChainAllowMissing4R)) return;
       const es=cExit(work,tr,RC),en=cEntry(work,entryOrderCanonical,bv,RC,fallback),sc=score(es,en);
       if(sc<gBestScore){gBestScore=sc;gBest={values:{...work},active:{...ba},exitScore:es,entryScore:en,total:sc};}
       addPerfect(work,es,en);
+      if(gBest) emitLive('현재최고', gBest.values);
       return;
     }
     const curEs=cExit(work,tr,RC);
@@ -354,7 +406,7 @@ self.onmessage=function(e){
       let bestLen = 1e9;
       let foundZero = false;
       for(let k=idx;k<eo.length;k++){
-        const o = gOpts(eo[k],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,exitChainVer,exitChainAllowMissing4R,null);
+        const o = gOpts(eo[k],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,null);
         const len = o.length;
         if(len===0){ pick=k; foundZero=true; break; }
         if(len<bestLen){ bestLen=len; pick=k; if(bestLen===1) break; }
@@ -368,7 +420,7 @@ self.onmessage=function(e){
       }
     }
 
-    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,exitChainVer,exitChainAllowMissing4R,rej);
+    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,rej);
     if(!opts.length){
       if(perfectOnly){
         rej.perfectNoOpts = (rej.perfectNoOpts||0) + 1;
@@ -450,6 +502,24 @@ function getWorker(opts){
   return _worker;
 }
 
+/* ── 자동주차 후보 제외(세션) ───────────────────────────────── */
+const _apBannedCandidateKeys = new Set(); // JSON.stringify(values)
+function apBanAutoParkingCandidateByValues(values){
+  try{
+    if(!values) return;
+    const k = JSON.stringify(values);
+    _apBannedCandidateKeys.add(k);
+  }catch{}
+}
+function apIsBannedAutoParkingCandidateByValues(values){
+  try{
+    if(!values) return false;
+    const k = JSON.stringify(values);
+    return _apBannedCandidateKeys.has(k);
+  }catch{ return false; }
+}
+window.apBanAutoParkingCandidateByValues = apBanAutoParkingCandidateByValues;
+
 /* ══════════════════════════════════════════════════════════════
    § 6. 메인 계산 — 휴차 후보별 순차 Worker 탐색
    ─ generateRestCandidates 로 후보 목록 생성
@@ -496,7 +566,10 @@ function computeAutoParkingSingle(callback, onProgress, opts){
   }catch{}
   /* 정비소 제외 차량은 휴차 배치에서도 제외 */
   const dateStr=document.getElementById('datePicker')?.value||'';
-  const exSet=dispatchState.excludedAbsent?.[dateStr]||new Set();
+  // 제외(취소선) 차량은 휴차 후보에서도 제외
+  const exToday = dispatchState.excludedAbsentToday?.[dateStr] || new Set();
+  const exTomorrow = dispatchState.excludedAbsentTomorrow?.[dateStr] || new Set();
+  const exSet = new Set([...exToday, ...exTomorrow]);
   const restVehicles=[...todayRestSet].filter(n=>!exSet.has(n));
   const tomorrowRestSet=new Set(dispatchState.tomorrowMissing||[]);
   const bothRestList=[...todayRestSet].filter(n=>tomorrowRestSet.has(n));
@@ -517,7 +590,13 @@ function computeAutoParkingSingle(callback, onProgress, opts){
     // entryOrder 인덱스별 "우선 시도 slot" 힌트 만들기
     /** @type {(number|null)[]} */
     const hintSlotsByIdx = Array(entryOrder.length).fill(null);
-    if (learn && Array.isArray(learn.learnRunSlots) && learn.learnRunSlots.length) {
+    if (learn && learn.derivedHints && learn.derivedHints.runSlotByEntryIdx) {
+      const map = learn.derivedHints.runSlotByEntryIdx || {};
+      for (let i = 0; i < entryOrder.length; i++) {
+        const si = map[i];
+        hintSlotsByIdx[i] = (si === 0 || si) ? si : null;
+      }
+    } else if (learn && Array.isArray(learn.learnRunSlots) && learn.learnRunSlots.length) {
       const run = learn.learnRunSlots.filter(x => x && (x.slot===0 || x.slot) && (x.tmrRank===0 || x.tmrRank));
       for (let i = 0; i < entryOrder.length; i++) {
         const num = entryOrder[i];
@@ -537,7 +616,9 @@ function computeAutoParkingSingle(callback, onProgress, opts){
 
     // 휴차 후보도 학습된 휴차 슬롯과 유사한 것을 먼저 탐색
     let learnedRestSlots = null;
-    if (learn && Array.isArray(learn.learnRestSlots) && learn.learnRestSlots.length) {
+    if (learn && learn.derivedHints && Array.isArray(learn.derivedHints.restSlotSet) && learn.derivedHints.restSlotSet.length) {
+      learnedRestSlots = new Set(learn.derivedHints.restSlotSet.map(s => +s).filter(s => s === 0 || !!s));
+    } else if (learn && Array.isArray(learn.learnRestSlots) && learn.learnRestSlots.length) {
       learnedRestSlots = new Set(learn.learnRestSlots.map(x => x.slot).filter(s => s===0 || s));
     }
 
@@ -633,6 +714,7 @@ function computeAutoParkingSingle(callback, onProgress, opts){
         perfectMax:MAX_PERFECT_VARIANTS,
         phase:phaseLabel(),
         pct,
+        top: (globalPerfects.length ? globalPerfects.slice(0,8) : globalTop3.slice(0,8)),
       });
     }
 
@@ -667,9 +749,34 @@ function computeAutoParkingSingle(callback, onProgress, opts){
 
       const worker=getWorker({ code: oTop.workerCode || WORKER_CODE });
       worker.onmessage=function(e){
-        const{best,perfects,elapsed:wMs}=e.data;
+        // live preview 메시지는 결과(best/perfects)와 별도로 들어올 수 있음
+        if(e.data && e.data.live){
+          try{
+            const live = e.data.live;
+            // 탐색 중 UI 업데이트
+            if(typeof onProgress==='function'){
+              onProgress({
+                candDone: Math.min(candIdx, candidates.length||1),
+                candTotal: (candidates.length||1),
+                perfectCount: globalPerfects.length,
+                perfectMax: 10,
+                phase: phaseLabel(),
+                pct: Math.min(100, Math.round((Math.min(candIdx, candidates.length||1)/(candidates.length||1))*100)),
+                live: { values: live.values, active: live.active },
+                liveLabel: live.label,
+              });
+            }
+          }catch{}
+          return;
+        }
+
+        let {best,perfects,elapsed:wMs}=e.data;
+        // 제외된 후보는 결과 수집/갱신 대상에서 제외
+        if(best && apIsBannedAutoParkingCandidateByValues(best.values)) best = null;
+
         if(perfects&&perfects.length){
           for(const p of perfects){
+            if(apIsBannedAutoParkingCandidateByValues(p.values)) continue;
             const k=JSON.stringify(p.values);
             if(globalPerfectKeys.has(k)) continue;
             globalPerfectKeys.add(k);
@@ -714,6 +821,10 @@ function computeAutoParkingSingle(callback, onProgress, opts){
         earlyExitRankMax,
         fastExitRankBanMax,
         hintSlotsByIdx,
+        learnGroupPref: (learn && learn.derivedHints && learn.derivedHints.runGroupPref) ? learn.derivedHints.runGroupPref : null,
+        livePreview: true,
+        // 모바일/저사양에서 렉 방지: live 프리뷰 갱신 간격을 더 길게
+        livePreviewIntervalMs: (window.matchMedia && window.matchMedia('(pointer:coarse)').matches) ? 320 : 200,
         // 완벽해(입0·출0) 최우선: 완벽해를 찾기 전까지는 "입차 막힘이 발생하는 가지"를 탐색에서 제외
         perfectOnly: (globalPerfects.length===0 && !fallbackMode)
       });
@@ -848,12 +959,47 @@ function computeAutoParking(callback, onProgress){
 
 /* ══════════════════════════════════════════════════════════════
    § 자동주차 학습 데이터 (Firebase)
-   경로: learnData/ap_manual_v1
-   - 수동 학습: 현재 주차판 배치를 학습 데이터로 저장
-   - 자동 활용: 탐색 시 학습 데이터와 유사한 후보 우선 탐색
+   - v1: learnData/ap_manual_v1 (차량번호 중심, 기존 유지)
+   - v2: learnData/ap_orderpattern_v2 (entryIdx/tmrRank 패턴 중심, 우선 사용)
    ══════════════════════════════════════════════════════════════ */
-const AP_LEARN_PATH = 'learnData/ap_manual_v1';
+const AP_LEARN_PATH_V1 = 'learnData/ap_manual_v1';
+const AP_LEARN_PATH_V2 = 'learnData/ap_orderpattern_v2';
 const AP_LEARN_MAX  = 60;
+
+/* ── 사용자 조작 로그(세션) → 학습 힌트로 반영 ─────────────── */
+const AP_EDITLOG_MAX = 200;
+const _apEditLog = []; // { ts, dateStr, entryIdx, slot }
+
+function apLearnLogEdit(ev) {
+  try {
+    const dateStr = ev?.dateStr || document.getElementById('datePicker')?.value || '';
+    if (!dateStr) return;
+    const updates = Array.isArray(ev?.updates) ? ev.updates : [];
+    if (!updates.length) return;
+
+    // entryIdxMap from current entryOrder
+    const entryOrder = getTodayEntryOrder();
+    const entryIdxMap = {};
+    entryOrder.forEach((n, i) => { entryIdxMap[String(n)] = i; });
+
+    const now = Date.now();
+    updates.forEach(u => {
+      const num = (u?.num !== undefined && u?.num !== null) ? String(u.num).trim() : '';
+      const slot = u?.slot;
+      if (!num || !(slot === 0 || slot)) return;
+      const entryIdx = entryIdxMap[num];
+      if (!(entryIdx === 0 || entryIdx)) return; // 입차 대상이 아닌 차는 제외
+      _apEditLog.push({ ts: now, dateStr, entryIdx, slot: +slot });
+    });
+
+    // cap
+    if (_apEditLog.length > AP_EDITLOG_MAX) {
+      _apEditLog.splice(0, _apEditLog.length - AP_EDITLOG_MAX);
+    }
+  } catch {}
+}
+
+window.apLearnLogEdit = apLearnLogEdit;
 
 /** 학습 데이터 키 생성: 입차 앞 5대 + 내일 출차 앞 5대 */
 function apLearnKey(entryOrder, tmrRank) {
@@ -863,6 +1009,175 @@ function apLearnKey(entryOrder, tmrRank) {
     .slice(0,5)
     .join(',');
   return entryTop + '|' + tmrTop;
+}
+
+/* ── v2: 순서 패턴 기반 토큰 학습 ───────────────────────────── */
+function _apLearnV2Fingerprint(entryOrder, tmrRank, opts = {}) {
+  const entryK = Math.max(5, Math.min(10, opts.entryK ?? 8));
+  const tmrK   = Math.max(5, Math.min(10, opts.tmrK ?? 8));
+
+  const entryLen = entryOrder.length;
+  const tmrLen = Object.keys(tmrRank || {}).length;
+
+  const entryTopKRanks = entryOrder
+    .slice(0, entryK)
+    .map(n => (tmrRank[n] ?? 9999))
+    .sort((a, b) => a - b);
+
+  // 내일 상위 K (0..K-1) 존재 여부만 요약 (길이만 있으면 충분하므로 단순화)
+  const tmrTopK = Array.from({ length: Math.min(tmrK, tmrLen) }, (_, i) => i);
+
+  const todayRestCount = opts.restCount ?? 0;
+  const bothRestCount = opts.bothRestCount ?? 0;
+
+  return {
+    entryLen,
+    tmrLen,
+    entryTopKRanks,
+    tmrTopK,
+    restCount: todayRestCount,
+    bothRestCount,
+  };
+}
+
+function _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tomorrowMissingSet, RC) {
+  const entryIdxMap = {};
+  entryOrder.forEach((n, i) => { entryIdxMap[String(n)] = i; });
+
+  /** @type {any[]} */
+  const layoutTokens = [];
+  const total = RC * 3;
+
+  /** derived hints */
+  const runSlotByEntryIdx = {};
+  const restSlots = [];
+
+  for (let si = 0; si < total; si++) {
+    const raw = values?.[si];
+    const num = (raw !== undefined && raw !== null && String(raw).trim() !== '') ? String(raw).trim() : '';
+    const isRest = !!(active && active[si]);
+
+    if (!num) {
+      layoutTokens.push({ kind: 'empty' });
+      continue;
+    }
+
+    const rk = (tmrRank[num] ?? 9999);
+
+    if (isRest) {
+      const tomorrowRest = tomorrowMissingSet?.has(num) ? 1 : 0;
+      layoutTokens.push({ kind: 'rest', tmrRank: rk, tomorrowRest });
+      restSlots.push(si);
+      continue;
+    }
+
+    const entryIdx = (entryIdxMap[num] ?? 9999);
+    layoutTokens.push({ kind: 'run', entryIdx, tmrRank: rk });
+    if (entryIdx !== 9999 && runSlotByEntryIdx[entryIdx] === undefined) {
+      runSlotByEntryIdx[entryIdx] = si;
+    }
+  }
+
+  // 휴차 분배 튜플(2R/3R/6R/7R) + restSlotSet
+  const restRowCounts = { r2: 0, r3: 0, r6: 0, r7: 0 };
+  restSlots.forEach(si => {
+    const row = Math.floor(si / 3);
+    if (row === 0) restRowCounts.r2++;
+    else if (row === 1) restRowCounts.r3++;
+    else if (row === 4) restRowCounts.r6++;
+    else if (row === 5) restRowCounts.r7++;
+  });
+
+  return {
+    layoutTokens,
+    derivedHints: {
+      runSlotByEntryIdx,
+      restSlotSet: restSlots,
+      restRowTuple: [restRowCounts.r2, restRowCounts.r3, restRowCounts.r6, restRowCounts.r7],
+    }
+  };
+}
+
+async function apLearnSaveV2(dateStr) {
+  try {
+    if (!APP?.set || !APP?.ref || !APP?.db) return { ok: false, msg: 'Firebase 미연결' };
+
+    const snap = await APP.get(APP.ref(APP.db, 'parking/' + dateStr));
+    if (!snap.exists()) return { ok: false, msg: '해당 날짜 주차 데이터 없음' };
+    const parkData = snap.val();
+    const values = parkData.values;
+    const active = parkData.active;
+    if (!values) return { ok: false, msg: '주차판 데이터 없음' };
+
+    const tomorrowList = (dispatchState.tomorrowNums || []).map(n => n.num ?? n);
+    const entryOrder = getTodayEntryOrder();
+    if (!tomorrowList.length || !entryOrder.length) return { ok: false, msg: '배차 데이터 없음' };
+
+    const tmrRank = {};
+    tomorrowList.forEach((num, i) => { tmrRank[String(num)] = i; });
+
+    const tmrMissSet = new Set((dispatchState.tomorrowMissing || []).map(x => String(x).trim()));
+
+    // 휴차 카운트(오늘 휴차: todayMissing + 수동휴차 포함) — 기존 AutoPark와 동일한 입력 기반
+    const todayRestSet = new Set((dispatchState.todayMissing || []).map(x => String(x).trim()));
+    try {
+      const manual = (APP && typeof APP.getManualRestSetForCurrentDate === 'function')
+        ? APP.getManualRestSetForCurrentDate()
+        : new Set();
+      manual.forEach(n => todayRestSet.add(String(n).trim()));
+    } catch {}
+    const bothRestCount = [...todayRestSet].filter(n => tmrMissSet.has(n)).length;
+
+    const fp = _apLearnV2Fingerprint(entryOrder, tmrRank, {
+      restCount: todayRestSet.size,
+      bothRestCount,
+    });
+
+    const RC = APP.rowCount || Math.ceil(Object.keys(values).length / 3) || 6;
+    const { layoutTokens, derivedHints } =
+      _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tmrMissSet, RC);
+
+    // 세션 조작 로그가 있으면 derivedHints를 보강(가장 최신 이벤트 우선)
+    try {
+      const recent = _apEditLog.filter(e => e.dateStr === dateStr);
+      if (recent.length) {
+        // 최신이 이김
+        const byIdx = { ...(derivedHints.runSlotByEntryIdx || {}) };
+        recent.sort((a, b) => (a.ts || 0) - (b.ts || 0)).forEach(e => {
+          byIdx[e.entryIdx] = e.slot;
+        });
+        derivedHints.runSlotByEntryIdx = byIdx;
+      }
+    } catch {}
+
+    const dbSnap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH_V2));
+    let db = [];
+    if (dbSnap.exists()) { db = dbSnap.val() || []; if (!Array.isArray(db)) db = Object.values(db); }
+
+    // v2 key는 v1과 동일 규칙을 유지하되(디버깅/중복 제거용), 매칭은 fingerprint 기반으로 수행
+    const key = apLearnKey(entryOrder, tmrRank);
+    const filtered = db.filter(d => d && d.key !== key);
+
+    filtered.unshift({
+      v: 2,
+      key,
+      meta: {
+        ts: Date.now(),
+        dateStr,
+        rowCount: RC,
+        rowLabels: (APP.rowLabels || []).slice(),
+      },
+      patternFingerprint: fp,
+      layoutTokens,
+      derivedHints,
+    });
+
+    if (filtered.length > AP_LEARN_MAX) filtered.length = AP_LEARN_MAX;
+    await APP.set(APP.ref(APP.db, AP_LEARN_PATH_V2), filtered);
+    return { ok: true, msg: `학습 완료(v2) (총 ${filtered.length}개 저장됨)` };
+  } catch (e) {
+    return { ok: false, msg: '오류: ' + e.message };
+  }
 }
 
 /** 수동 학습 저장 — 현재 선택 날짜의 주차판 배치를 저장 */
@@ -887,7 +1202,7 @@ async function apLearnSave(dateStr) {
     const key = apLearnKey(entryOrder, tmrRank);
 
     // 기존 DB 로드
-    const dbSnap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH));
+    const dbSnap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH_V1));
     let db = [];
     if (dbSnap.exists()) { db = dbSnap.val()||[]; if (!Array.isArray(db)) db = Object.values(db); }
 
@@ -933,8 +1248,12 @@ async function apLearnSave(dateStr) {
       ts: Date.now()
     });
     if (filtered.length > AP_LEARN_MAX) filtered.length = AP_LEARN_MAX;
-    await APP.set(APP.ref(APP.db, AP_LEARN_PATH), filtered);
-    return { ok:true, msg:`학습 완료 (총 ${filtered.length}개 저장됨)` };
+    await APP.set(APP.ref(APP.db, AP_LEARN_PATH_V1), filtered);
+
+    // v2도 함께 저장 (가능하면)
+    let v2 = null;
+    try { v2 = await apLearnSaveV2(dateStr); } catch {}
+    return { ok:true, msg:`학습 완료 (총 ${filtered.length}개 저장됨)${v2?.ok ? ' + v2' : ''}` };
   } catch(e) {
     return { ok:false, msg:'오류: ' + e.message };
   }
@@ -944,19 +1263,140 @@ async function apLearnSave(dateStr) {
 async function apLearnLoad(entryOrder, tmrRank) {
   try {
     if (!APP?.get||!APP?.ref||!APP?.db) return null;
-    const snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH));
+    // 1) v2 우선 로드/매칭 (entryIdx/tmrRank 패턴 기반)
+    try {
+      const v2Snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH_V2));
+      if (v2Snap.exists()) {
+        let v2db = v2Snap.val() || [];
+        if (!Array.isArray(v2db)) v2db = Object.values(v2db);
+        v2db = v2db.filter(x => x && (x.v === 2 || x.layoutTokens || x.derivedHints));
+        if (v2db.length) {
+          const myTodayRestSet = new Set((dispatchState.todayMissing || []).map(x => String(x).trim()));
+          try {
+            const manual = (APP && typeof APP.getManualRestSetForCurrentDate === 'function')
+              ? APP.getManualRestSetForCurrentDate()
+              : new Set();
+            manual.forEach(n => myTodayRestSet.add(String(n).trim()));
+          } catch {}
+          const myTmrMissSet = new Set((dispatchState.tomorrowMissing || []).map(x => String(x).trim()));
+          const myBoth = [...myTodayRestSet].filter(n => myTmrMissSet.has(n)).length;
+
+          const myFp = _apLearnV2Fingerprint(entryOrder, tmrRank, {
+            restCount: myTodayRestSet.size,
+            bothRestCount: myBoth,
+          });
+
+          const distSum = (a, b) => {
+            const n = Math.max(a.length, b.length);
+            let s = 0;
+            for (let i = 0; i < n; i++) s += Math.abs((a[i] ?? 9999) - (b[i] ?? 9999));
+            return s;
+          };
+
+          const scored = [];
+          for (const rec of v2db) {
+            const fp = rec.patternFingerprint || {};
+            const dEntry = Math.abs((fp.entryLen ?? 0) - myFp.entryLen);
+            const dTmr = Math.abs((fp.tmrLen ?? 0) - myFp.tmrLen);
+            // entryTopKRanks 분포 차이 + 휴차 카운트 차이
+            const dRanks = distSum(fp.entryTopKRanks || [], myFp.entryTopKRanks || []);
+            const dRest = Math.abs((fp.restCount ?? 0) - (myFp.restCount ?? 0));
+            const dBoth = Math.abs((fp.bothRestCount ?? 0) - (myFp.bothRestCount ?? 0));
+
+            // 길이가 너무 다르면 사실상 다른 날 → 강패널티
+            const score = dEntry * 20000 + dTmr * 20000 + dRanks * 3 + dRest * 200 + dBoth * 200;
+            scored.push({ rec, score });
+          }
+
+          scored.sort((a, b) => a.score - b.score);
+          const topN = scored.slice(0, 3);
+          const best = topN[0]?.rec || null;
+          if (best) {
+            // (3) 앙상블: runSlotByEntryIdx 투표 + restSlotSet 빈도 기반 합성
+            const slotVotesByIdx = {};
+            const restSlotVotes = {};
+            topN.forEach(({ rec }) => {
+              const m = rec?.derivedHints?.runSlotByEntryIdx || {};
+              Object.keys(m).forEach(k => {
+                const idx = +k;
+                const si = m[k];
+                if (!(si === 0 || si)) return;
+                if (!slotVotesByIdx[idx]) slotVotesByIdx[idx] = {};
+                slotVotesByIdx[idx][si] = (slotVotesByIdx[idx][si] || 0) + 1;
+              });
+              const rs = rec?.derivedHints?.restSlotSet || [];
+              rs.forEach(si => {
+                const s = +si;
+                if (!(s === 0 || s)) return;
+                restSlotVotes[s] = (restSlotVotes[s] || 0) + 1;
+              });
+            });
+
+            const combinedRunSlotByEntryIdx = {};
+            Object.keys(slotVotesByIdx).forEach(k => {
+              const idx = +k;
+              const votes = slotVotesByIdx[idx];
+              let bestSlot = null, bestCnt = -1;
+              Object.keys(votes).forEach(siKey => {
+                const cnt = votes[siKey];
+                if (cnt > bestCnt) { bestCnt = cnt; bestSlot = +siKey; }
+              });
+              if (bestSlot === 0 || bestSlot) combinedRunSlotByEntryIdx[idx] = bestSlot;
+            });
+
+            const combinedRestSlots = Object.keys(restSlotVotes)
+              .map(k => ({ si: +k, c: restSlotVotes[k] }))
+              .filter(x => x.c >= 2) // 3개 중 2개 이상에서 반복된 휴차 슬롯만
+              .map(x => x.si);
+
+            // best 레코드에 합성 힌트를 덮어씌워 반환(탐색에 직접 사용)
+            best.derivedHints = best.derivedHints || {};
+            best.derivedHints.runSlotByEntryIdx = { ...(best.derivedHints.runSlotByEntryIdx || {}), ...combinedRunSlotByEntryIdx };
+            if (combinedRestSlots.length) best.derivedHints.restSlotSet = combinedRestSlots;
+
+            // soft-constraint용: entryIdx별 선호 row/col (hint가 없으면 그룹 선호)
+            const entryLen = myFp.entryLen || entryOrder.length;
+            const groupOf = (i) => {
+              if (entryLen <= 0) return 0;
+              const t = i / entryLen;
+              return t < 1/3 ? 0 : t < 2/3 ? 1 : 2;
+            };
+            const groupVotes = [{}, {}, {}]; // group -> "row,col" vote
+            Object.keys(best.derivedHints.runSlotByEntryIdx || {}).forEach(k => {
+              const idx = +k;
+              const si = best.derivedHints.runSlotByEntryIdx[k];
+              if (!(si === 0 || si)) return;
+              const row = Math.floor(si / 3), col = si % 3;
+              const g = groupOf(idx);
+              const key = row + ',' + col;
+              groupVotes[g][key] = (groupVotes[g][key] || 0) + 1;
+            });
+            const groupPref = groupVotes.map(v => {
+              let bestK = null, bestC = -1;
+              Object.keys(v).forEach(k => { if (v[k] > bestC) { bestC = v[k]; bestK = k; } });
+              if (!bestK) return { row: null, col: null };
+              const [r, c] = bestK.split(',').map(Number);
+              return { row: r, col: c };
+            });
+            best.derivedHints.runGroupPref = groupPref;
+
+            return best;
+          }
+        }
+      }
+    } catch {}
+
+    // 2) v1 폴백 (기존 키 매칭)
+    const snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH_V1));
     if (!snap.exists()) return null;
     let db = snap.val()||[];
     if (!Array.isArray(db)) db = Object.values(db);
     if (!db.length) return null;
 
     const myKey = apLearnKey(entryOrder, tmrRank);
-
-    // 1순위: 정확 키 매칭
     const exact = db.find(d => d.key === myKey);
     if (exact) { return exact; }
 
-    // 2순위: 입차 앞 5대만 매칭
     const myEntry = entryOrder.slice(0,5).join(',');
     const partial = db.find(d => d.key && d.key.startsWith(myEntry + '|'));
     if (partial) { return partial; }
@@ -969,11 +1409,17 @@ async function apLearnLoad(entryOrder, tmrRank) {
 async function apLearnCount() {
   try {
     if (!APP?.get||!APP?.ref||!APP?.db) return 0;
-    const snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH));
-    if (!snap.exists()) return 0;
-    let db = snap.val()||[];
-    if (!Array.isArray(db)) db = Object.values(db);
-    return db.length;
+    const snap = await APP.get(APP.ref(APP.db, AP_LEARN_PATH_V2));
+    if (snap.exists()) {
+      let db = snap.val()||[];
+      if (!Array.isArray(db)) db = Object.values(db);
+      if (db.length) return db.length;
+    }
+    const snap1 = await APP.get(APP.ref(APP.db, AP_LEARN_PATH_V1));
+    if (!snap1.exists()) return 0;
+    let db1 = snap1.val()||[];
+    if (!Array.isArray(db1)) db1 = Object.values(db1);
+    return db1.length;
   } catch(e) { return 0; }
 }
 
