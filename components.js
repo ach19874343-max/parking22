@@ -201,6 +201,30 @@ function tmplBottomNav() {
       </span>
     </button>
 
+    <!-- 시뮬 (PC에서는 하단에 직접 노출, 모바일에서는 더보기로 대체) -->
+    <button class="bnav-btn bnav-desktop-only" id="parkingSimBtn" aria-label="시뮬">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#0EA5E9">
+          <span style="font-size:18px;line-height:1">🎮</span>
+        </span>
+        <span class="bnav-label">시뮬</span>
+      </span>
+    </button>
+
+    <!-- 설정 (PC에서는 하단에 직접 노출, 모바일에서는 더보기로 대체) -->
+    <button class="bnav-btn bnav-desktop-only" id="appSettingsBtn" aria-label="설정">
+      <span class="bnav-inner">
+        <span class="bnav-icon" style="color:#6B7280">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </span>
+        <span class="bnav-label">설정</span>
+      </span>
+    </button>
+
     <!-- 더보기 -->
     <div class="bnav-more-wrap" id="morePopWrap">
       <button class="bnav-btn" id="moreMenuBtn" aria-label="더보기">
@@ -218,7 +242,7 @@ function tmplBottomNav() {
       </button>
 
       <div class="bnav-more-pop" id="morePop" aria-hidden="true">
-        <button class="bnav-more-btn" id="appSettingsBtn" aria-label="설정">
+        <button class="bnav-more-btn" id="moreSettingsBtn" aria-label="설정">
           <span class="bnav-more-icon" style="color:#6B7280">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -229,7 +253,7 @@ function tmplBottomNav() {
           <span class="bnav-more-label">설정</span>
         </button>
 
-        <button class="bnav-more-btn" id="parkingSimBtn" aria-label="시뮬">
+        <button class="bnav-more-btn" id="moreSimBtn" aria-label="시뮬">
           <span class="bnav-more-icon" style="color:#0EA5E9">
             <span style="font-size:18px;line-height:1">🎮</span>
           </span>

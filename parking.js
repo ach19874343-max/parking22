@@ -1511,9 +1511,21 @@ async function initParking() {
     });
 
     /* 팝오버 내부 버튼 클릭 시 자동 닫기 (기능 실행은 각 모듈 바인딩이 담당) */
-    moreWrap.querySelectorAll('#appSettingsBtn,#parkingSimBtn').forEach(el => {
+    moreWrap.querySelectorAll('#moreSettingsBtn,#moreSimBtn').forEach(el => {
       el.addEventListener('click', () => setTimeout(closeMorePop, 0));
     });
+
+    // 더보기 팝업 버튼 → 실제 기능 버튼 클릭 위임
+    const moreSettingsBtn = document.getElementById('moreSettingsBtn');
+    const moreSimBtn = document.getElementById('moreSimBtn');
+    const appSettingsBtn = document.getElementById('appSettingsBtn');
+    const parkingSimBtn = document.getElementById('parkingSimBtn');
+    if (moreSettingsBtn && appSettingsBtn) {
+      moreSettingsBtn.addEventListener('click', () => appSettingsBtn.click());
+    }
+    if (moreSimBtn && parkingSimBtn) {
+      moreSimBtn.addEventListener('click', () => parkingSimBtn.click());
+    }
 
     /* 바깥 클릭/스크롤 시 닫기 */
     document.addEventListener('click', (e) => {

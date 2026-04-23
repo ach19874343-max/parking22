@@ -989,6 +989,17 @@ body.dark-mode .bnav-more-btn{
 }
 body.dark-mode .bnav-more-label{ color: rgba(255,255,255,0.86); }
 
+/* PC에서는 설정/시뮬을 하단에 직접 노출하고, 더보기는 숨김 */
+@media (min-width: 641px) {
+  .bnav-more-wrap { display: none; }
+  .bnav-desktop-only { display: flex; }
+}
+
+/* 모바일에서는 설정/시뮬을 숨기고 더보기로만 접근 */
+@media (max-width: 640px) {
+  .bnav-desktop-only { display: none; }
+}
+
 /* 세로 배치: 아이콘 위 / 텍스트 아래 */
 .bnav-btn {
   flex: 1;
