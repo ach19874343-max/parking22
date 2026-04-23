@@ -141,7 +141,7 @@ function tmplBottomNav() {
   return `
   <nav class="bottom-nav" id="bottomNav">
 
-    <!-- Auto Park — 파란 아이콘 -->
+    <!-- Auto Park -->
     <button class="bnav-btn" id="dispatchAutoBtn" aria-label="Auto Park">
       <span class="bnav-inner">
         <span class="bnav-icon" style="color:#0B7EF4">
@@ -155,7 +155,7 @@ function tmplBottomNav() {
       </span>
     </button>
 
-    <!-- 배차순서조회 — 초록 아이콘 -->
+    <!-- 순서조회 -->
     <button class="bnav-btn" id="dispatchLoadBtn" aria-label="순서조회">
       <span class="bnav-inner">
         <span class="bnav-icon" style="color:#16A34A">
@@ -186,28 +186,57 @@ function tmplBottomNav() {
     </button>
 
     <!-- 시뮬 — 하늘 아이콘 -->
-    <button class="bnav-btn" id="parkingSimBtn" aria-label="시뮬">
+    <button class="bnav-btn" id="todayBtn" aria-label="오늘">
       <span class="bnav-inner">
-        <span class="bnav-icon" style="color:#0EA5E9">
-          <span style="font-size:18px;line-height:1">🎮</span>
+        <span class="bnav-icon" style="color:#F59E0B">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2.5" x2="16" y2="6"/>
+            <line x1="8" y1="2.5" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
         </span>
-        <span class="bnav-label">시뮬</span>
+        <span class="bnav-label">오늘</span>
       </span>
     </button>
 
-    <!-- 설정 — 회색 아이콘 -->
-    <button class="bnav-btn" id="appSettingsBtn" aria-label="설정">
-      <span class="bnav-inner">
-        <span class="bnav-icon" style="color:#6B7280">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+    <!-- 더보기 -->
+    <div class="bnav-more-wrap" id="morePopWrap">
+      <button class="bnav-btn" id="moreMenuBtn" aria-label="더보기">
+        <span class="bnav-inner">
+          <span class="bnav-icon" style="color:#6B7280">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="5" cy="12" r="1.6"/>
+              <circle cx="12" cy="12" r="1.6"/>
+              <circle cx="19" cy="12" r="1.6"/>
+            </svg>
+          </span>
+          <span class="bnav-label">더보기</span>
         </span>
-        <span class="bnav-label">설정</span>
-      </span>
-    </button>
+      </button>
+
+      <div class="bnav-more-pop" id="morePop" aria-hidden="true">
+        <button class="bnav-more-btn" id="appSettingsBtn" aria-label="설정">
+          <span class="bnav-more-icon" style="color:#6B7280">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <span class="bnav-more-label">설정</span>
+        </button>
+
+        <button class="bnav-more-btn" id="parkingSimBtn" aria-label="시뮬">
+          <span class="bnav-more-icon" style="color:#0EA5E9">
+            <span style="font-size:18px;line-height:1">🎮</span>
+          </span>
+          <span class="bnav-more-label">시뮬</span>
+        </button>
+      </div>
+    </div>
 
   </nav>`;
 }

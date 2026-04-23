@@ -909,7 +909,11 @@ function renderCards() {
     for (let col = 0; col < 3; col++) {
       const slotIdx = rowIdx * 3 + col;
       const vehicle = APP.parkingState.values[slotIdx] || '';
-      const isRest  = APP.parkingState.active[slotIdx] || false;
+      const manualRest  = APP.parkingState.active[slotIdx] || false;
+      const dateStrNow = document.getElementById('datePicker')?.value || '';
+      const autoRestSet = APP.autoRestByDate?.[dateStrNow];
+      const autoRest = !!(vehicle && autoRestSet && autoRestSet.has(String(vehicle).trim()));
+      const isRest = manualRest || autoRest;
 
       const card = document.createElement('div');
       card.dataset.slot = slotIdx;
@@ -1365,6 +1369,19 @@ async function initParking() {
   APP.renderCards                = renderCards;
   APP.saveData                   = saveData;
   APP.getManualRestSetForCurrentDate = getManualRestSetForCurrentDate;
+  /* 자동 휴차(순서조회 기반) 표시용 — 저장하지 않고 렌더링에만 합산 */
+  if (!APP.autoRestByDate) APP.autoRestByDate = {}; /* { [dateStr]: Set<num> } */
+  APP.setAutoRestSetForDate = function(dateStr, nums){
+    if (!dateStr) return;
+    const set = new Set((nums || []).map(x => String(x).trim()).filter(Boolean));
+    APP.autoRestByDate[dateStr] = set;
+    renderCards();
+  };
+  APP.clearAutoRestForDate = function(dateStr){
+    if (!dateStr) return;
+    if (APP.autoRestByDate) delete APP.autoRestByDate[dateStr];
+    renderCards();
+  };
   APP.highlightDispatchChip      = highlightDispatchChip;
   APP.clearDispatchChipHighlight = clearDispatchChipHighlight;
   APP.updateParkingOverlay       = updateParkingOverlay;
@@ -1411,6 +1428,104 @@ async function initParking() {
   }
 
   if (todayBtn) todayBtn.addEventListener('click', () => changeDate(getTodayStr()));
+
+  /* ── 하단 더보기 메뉴: 설정/시뮬 팝오버 ── */
+  const moreWrap = document.getElementById('morePopWrap');
+  const moreBtn  = document.getElementById('moreMenuBtn');
+  const morePop  = document.getElementById('morePop');
+
+  const positionMorePop = () => {
+    if (!morePop || !moreBtn) return;
+    const vw = window.innerWidth || document.documentElement.clientWidth || 360;
+    const pad = 8;
+    const r = moreBtn.getBoundingClientRect();
+    const center = r.left + r.width / 2;
+    const nav = document.getElementById('bottomNav');
+    const clampRect = nav ? nav.getBoundingClientRect() : null;
+
+    // clamp 영역 = (app-wrapper 영역) ∩ (탭바 영역) ∩ (뷰포트)
+    const wrapper = document.getElementById('app-wrapper');
+    const wr = wrapper ? wrapper.getBoundingClientRect() : null;
+    const minBound = Math.max(
+      pad,
+      wr ? Math.round(wr.left + pad) : pad,
+      clampRect ? Math.round(clampRect.left + pad) : pad
+    );
+    const maxBound = Math.min(
+      vw - pad,
+      wr ? Math.round(wr.right - pad) : (vw - pad),
+      clampRect ? Math.round(clampRect.right - pad) : (vw - pad)
+    );
+    const avail = Math.max(0, maxBound - minBound);
+
+    // 팝업 maxWidth는 "필요할 때만" (PC에선 CSS max-width를 유지해야 함)
+    // - avail이 너무 작아 팝업이 잘릴 수 있는 경우에만 인라인 maxWidth로 추가 제한
+    const PREF_MAX = 172; // style.css의 .bnav-more-pop max-width와 맞춤
+    if (avail > 0) {
+      morePop.style.maxWidth = Math.min(avail, PREF_MAX) + 'px';
+    } else {
+      morePop.style.maxWidth = PREF_MAX + 'px';
+    }
+
+    // display된 실제 폭으로 재계산
+    const bw = Math.ceil(morePop.getBoundingClientRect().width) || PREF_MAX;
+    let left = Math.round(center - bw / 2);
+
+    const maxLeft = Math.round(maxBound - bw);
+    if (avail > 0) {
+      left = Math.max(minBound, Math.min(left, maxLeft));
+    } else {
+      left = Math.max(pad, Math.min(left, vw - bw - pad));
+    }
+
+    morePop.style.left = left + 'px';
+  };
+
+  const closeMorePop = () => {
+    if (!moreWrap) return;
+    moreWrap.classList.remove('is-open');
+    if (morePop) morePop.setAttribute('aria-hidden', 'true');
+  };
+  const openMorePop = () => {
+    if (!moreWrap) return;
+    moreWrap.classList.add('is-open');
+    if (morePop) morePop.setAttribute('aria-hidden', 'false');
+    // display 전환 직후엔 폭 계산이 0일 수 있어 rAF로 1~2번 재배치
+    positionMorePop();
+    requestAnimationFrame(() => {
+      positionMorePop();
+      requestAnimationFrame(positionMorePop);
+    });
+  };
+  const toggleMorePop = () => {
+    if (!moreWrap) return;
+    const open = moreWrap.classList.contains('is-open');
+    if (open) closeMorePop(); else openMorePop();
+  };
+
+  if (moreBtn && moreWrap) {
+    moreBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleMorePop();
+    });
+
+    /* 팝오버 내부 버튼 클릭 시 자동 닫기 (기능 실행은 각 모듈 바인딩이 담당) */
+    moreWrap.querySelectorAll('#appSettingsBtn,#parkingSimBtn').forEach(el => {
+      el.addEventListener('click', () => setTimeout(closeMorePop, 0));
+    });
+
+    /* 바깥 클릭/스크롤 시 닫기 */
+    document.addEventListener('click', (e) => {
+      if (!moreWrap.classList.contains('is-open')) return;
+      if (moreWrap.contains(e.target)) return;
+      closeMorePop();
+    }, { capture: true });
+    window.addEventListener('scroll', () => closeMorePop(), { passive: true });
+    window.addEventListener('resize', () => {
+      if (moreWrap.classList.contains('is-open')) positionMorePop();
+    }, { passive: true });
+  }
 
   /* ── 차량 패널 이벤트 ── */
   /* ── 차량·행 버튼: 클릭마다 차량모드 → 행모드 → 종료 순환 ── */

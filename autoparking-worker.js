@@ -1102,11 +1102,21 @@ async function apLearnSaveV2(dateStr) {
   try {
     if (!APP?.set || !APP?.ref || !APP?.db) return { ok: false, msg: 'Firebase 미연결' };
 
-    const snap = await APP.get(APP.ref(APP.db, 'parking/' + dateStr));
-    if (!snap.exists()) return { ok: false, msg: '해당 날짜 주차 데이터 없음' };
-    const parkData = snap.val();
-    const values = parkData.values;
-    const active = parkData.active;
+    // 우선: 화면에 보이는 "현재 배치"를 학습 저장(저장 버튼 직후 즉시 반영)
+    // - 같은 날짜를 보고 있을 때는 Firebase round-trip 없이 현재 상태를 그대로 사용
+    const curDate = document.getElementById('datePicker')?.value || '';
+    let values = null;
+    let active = null;
+    if (curDate && curDate === dateStr && APP?.parkingState?.values) {
+      values = APP.parkingState.values;
+      active = APP.parkingState.active || {};
+    } else {
+      const snap = await APP.get(APP.ref(APP.db, 'parking/' + dateStr));
+      if (!snap.exists()) return { ok: false, msg: '해당 날짜 주차 데이터 없음' };
+      const parkData = snap.val();
+      values = parkData.values;
+      active = parkData.active;
+    }
     if (!values) return { ok: false, msg: '주차판 데이터 없음' };
 
     const tomorrowList = (dispatchState.tomorrowNums || []).map(n => n.num ?? n);
@@ -1184,12 +1194,20 @@ async function apLearnSaveV2(dateStr) {
 async function apLearnSave(dateStr) {
   try {
     if (!APP?.set||!APP?.ref||!APP?.db) return { ok:false, msg:'Firebase 미연결' };
-    // 오늘 날짜의 주차 상태
-    const snap = await APP.get(APP.ref(APP.db, 'parking/' + dateStr));
-    if (!snap.exists()) return { ok:false, msg:'해당 날짜 주차 데이터 없음' };
-    const parkData = snap.val();
-    const values = parkData.values;
-    const active  = parkData.active;
+    // 우선: 화면에 보이는 "현재 배치"를 학습 저장
+    const curDate = document.getElementById('datePicker')?.value || '';
+    let values = null;
+    let active = null;
+    if (curDate && curDate === dateStr && APP?.parkingState?.values) {
+      values = APP.parkingState.values;
+      active = APP.parkingState.active || {};
+    } else {
+      const snap = await APP.get(APP.ref(APP.db, 'parking/' + dateStr));
+      if (!snap.exists()) return { ok:false, msg:'해당 날짜 주차 데이터 없음' };
+      const parkData = snap.val();
+      values = parkData.values;
+      active  = parkData.active;
+    }
     if (!values) return { ok:false, msg:'주차판 데이터 없음' };
 
     // 배차 데이터에서 입차/출차 순서 구성

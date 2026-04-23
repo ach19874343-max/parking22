@@ -200,6 +200,8 @@ input, textarea, select {
   min-width: 0;
 }
 
+/* (moved) 헤더 오늘 버튼 제거 — 하단 '오늘'로 이동 */
+
 /* (removed) 입·출차 시뮬 헤더 버튼 — 하단 탭바로 이동 */
 
 /* pill 전체: < 날짜 팀뱃지 > — light glass */
@@ -914,6 +916,78 @@ body.admin-mode .slot-card.empty {
   /* 탭바 배경 자체가 그리드 터치를 막아 '데드존'이 되는 경우 방지 */
   pointer-events: none;
 }
+
+/* 하단 더보기 팝오버 (설정/시뮬) */
+.bnav-more-wrap{
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  pointer-events: auto;
+}
+.bnav-more-pop{
+  position: fixed;
+  left: 8px; /* JS에서 열 때 보정 */
+  transform: none;
+  bottom: calc(64px + var(--safe-b) + 10px);
+  width: auto;
+  min-width: 124px;
+  max-width: min(160px, 70vw);
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+  padding: 5px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 1200;
+}
+body.dark-mode .bnav-more-pop{
+  background: rgba(30, 41, 59, 0.92);
+  border-color: rgba(255,255,255,0.12);
+}
+.bnav-more-wrap.is-open .bnav-more-pop{
+  display: flex;
+}
+.bnav-more-btn{
+  height: 44px;
+  width: 100%;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: rgba(15,23,42,0.05);
+  border: 1px solid rgba(15,23,42,0.08);
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.12s;
+}
+body.dark-mode .bnav-more-btn{
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.10);
+}
+.bnav-more-btn:active{ transform: scale(0.98); opacity: 0.85; }
+.bnav-more-icon{
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.bnav-more-icon svg{
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+}
+.bnav-more-label{
+  font-size: 14px;
+  font-weight: 900;
+  color: rgba(15,23,42,0.86);
+}
+body.dark-mode .bnav-more-label{ color: rgba(255,255,255,0.86); }
 
 /* 세로 배치: 아이콘 위 / 텍스트 아래 */
 .bnav-btn {

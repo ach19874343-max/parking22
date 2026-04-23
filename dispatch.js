@@ -422,6 +422,13 @@ function applyDBData(saved, todayStr, tomorrowStr) {
   dispatchState.tomorrowNums    = toArr(saved.tomorrowNums);
   dispatchState.todayMissing    = toArr(saved.todayMissing);
   dispatchState.tomorrowMissing = toArr(saved.tomorrowMissing);
+
+  /* 순서조회(저장 데이터) 기반 자동 휴차 → 그리드 표시 동기화 */
+  try{
+    if (APP && typeof APP.setAutoRestSetForDate === 'function') {
+      APP.setAutoRestSetForDate(todayStr, dispatchState.todayMissing || []);
+    }
+  }catch{}
 }
 
 /* ── 섹션 DOM 렌더링 ────────────────────────────────────────── */
@@ -541,6 +548,13 @@ async function loadDispatchData(opts = {}) {
     dispatchState.todayMissing    = getMissingNums(dispatchState.todayNums);
     dispatchState.tomorrowMissing = getMissingNums(dispatchState.tomorrowNums);
 
+    /* 순서조회 기반 자동 휴차 → 그리드 표시 동기화 (수동 휴차와 별개) */
+    try{
+      if (APP && typeof APP.setAutoRestSetForDate === 'function') {
+        APP.setAutoRestSetForDate(todayStr, dispatchState.todayMissing || []);
+      }
+    }catch{}
+
     /* Firebase 저장 */
     await saveDispatchToDB(todayStr, {
       todayNums:       dispatchState.todayNums,
@@ -613,6 +627,13 @@ function resetDispatchState(rerender = true) {
   dispatchState.tomorrowMissing = [];
   dispatchState.todayStr        = '';
   dispatchState.tomorrowStr     = '';
+  /* 자동 휴차 표시도 제거 */
+  try{
+    const dateStr = document.getElementById('datePicker')?.value || '';
+    if (dateStr && APP && typeof APP.clearAutoRestForDate === 'function') {
+      APP.clearAutoRestForDate(dateStr);
+    }
+  }catch{}
   if (rerender) renderDispatchSection();
 }
 
