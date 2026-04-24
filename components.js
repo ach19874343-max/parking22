@@ -201,7 +201,7 @@ function tmplBottomNav() {
       </span>
     </button>
 
-    <!-- 시뮬 (PC에서는 하단에 직접 노출, 모바일에서는 더보기로 대체) -->
+    <!-- 시뮬 (더보기에서만 노출 — 클릭 위임용으로 DOM 유지) -->
     <button class="bnav-btn bnav-desktop-only" id="parkingSimBtn" aria-label="시뮬">
       <span class="bnav-inner">
         <span class="bnav-icon" style="color:#0EA5E9">
@@ -211,7 +211,7 @@ function tmplBottomNav() {
       </span>
     </button>
 
-    <!-- 설정 (PC에서는 하단에 직접 노출, 모바일에서는 더보기로 대체) -->
+    <!-- 설정 (더보기에서만 노출 — 클릭 위임용으로 DOM 유지) -->
     <button class="bnav-btn bnav-desktop-only" id="appSettingsBtn" aria-label="설정">
       <span class="bnav-inner">
         <span class="bnav-icon" style="color:#6B7280">

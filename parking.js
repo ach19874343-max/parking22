@@ -1434,68 +1434,21 @@ async function initParking() {
   const moreBtn  = document.getElementById('moreMenuBtn');
   const morePop  = document.getElementById('morePop');
 
-  const positionMorePop = () => {
-    if (!morePop || !moreBtn) return;
-    const vw = window.innerWidth || document.documentElement.clientWidth || 360;
-    const pad = 8;
-    const r = moreBtn.getBoundingClientRect();
-    const center = r.left + r.width / 2;
-    const nav = document.getElementById('bottomNav');
-    const clampRect = nav ? nav.getBoundingClientRect() : null;
-
-    // clamp 영역 = (app-wrapper 영역) ∩ (탭바 영역) ∩ (뷰포트)
-    const wrapper = document.getElementById('app-wrapper');
-    const wr = wrapper ? wrapper.getBoundingClientRect() : null;
-    const minBound = Math.max(
-      pad,
-      wr ? Math.round(wr.left + pad) : pad,
-      clampRect ? Math.round(clampRect.left + pad) : pad
-    );
-    const maxBound = Math.min(
-      vw - pad,
-      wr ? Math.round(wr.right - pad) : (vw - pad),
-      clampRect ? Math.round(clampRect.right - pad) : (vw - pad)
-    );
-    const avail = Math.max(0, maxBound - minBound);
-
-    // 팝업 maxWidth는 "필요할 때만" (PC에선 CSS max-width를 유지해야 함)
-    // - avail이 너무 작아 팝업이 잘릴 수 있는 경우에만 인라인 maxWidth로 추가 제한
-    const PREF_MAX = 172; // style.css의 .bnav-more-pop max-width와 맞춤
-    if (avail > 0) {
-      morePop.style.maxWidth = Math.min(avail, PREF_MAX) + 'px';
-    } else {
-      morePop.style.maxWidth = PREF_MAX + 'px';
-    }
-
-    // display된 실제 폭으로 재계산
-    const bw = Math.ceil(morePop.getBoundingClientRect().width) || PREF_MAX;
-    let left = Math.round(center - bw / 2);
-
-    const maxLeft = Math.round(maxBound - bw);
-    if (avail > 0) {
-      left = Math.max(minBound, Math.min(left, maxLeft));
-    } else {
-      left = Math.max(pad, Math.min(left, vw - bw - pad));
-    }
-
-    morePop.style.left = left + 'px';
-  };
+  /* 더보기 팝 위치는 style.css에서 .bnav-more-wrap 기준 absolute (탭바 transform 때문에 fixed+px left 비추천) */
 
   const closeMorePop = () => {
     if (!moreWrap) return;
     moreWrap.classList.remove('is-open');
-    if (morePop) morePop.setAttribute('aria-hidden', 'true');
+    if (morePop) {
+      morePop.setAttribute('aria-hidden', 'true');
+      morePop.style.left = '';
+      morePop.style.maxWidth = '';
+    }
   };
   const openMorePop = () => {
     if (!moreWrap) return;
     moreWrap.classList.add('is-open');
     if (morePop) morePop.setAttribute('aria-hidden', 'false');
-    // display 전환 직후엔 폭 계산이 0일 수 있어 rAF로 1~2번 재배치
-    positionMorePop();
-    requestAnimationFrame(() => {
-      positionMorePop();
-      requestAnimationFrame(positionMorePop);
-    });
   };
   const toggleMorePop = () => {
     if (!moreWrap) return;
@@ -1534,9 +1487,6 @@ async function initParking() {
       closeMorePop();
     }, { capture: true });
     window.addEventListener('scroll', () => closeMorePop(), { passive: true });
-    window.addEventListener('resize', () => {
-      if (moreWrap.classList.contains('is-open')) positionMorePop();
-    }, { passive: true });
   }
 
   /* ── 차량 패널 이벤트 ── */

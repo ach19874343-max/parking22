@@ -913,6 +913,8 @@ body.admin-mode .slot-card.empty {
   align-items: stretch;
   z-index: 300;
   box-shadow: 0 -2px 16px rgba(100,130,180,0.16);
+  /* transform 있으면 자손 position:fixed 가 뷰포트 기준이 아님 → 더보기 팝은 absolute 사용 */
+  overflow: visible;
   /* 탭바 배경 자체가 그리드 터치를 막아 '데드존'이 되는 경우 방지 */
   pointer-events: none;
 }
@@ -925,15 +927,18 @@ body.admin-mode .slot-card.empty {
   align-items: stretch;
   justify-content: center;
   pointer-events: auto;
+  overflow: visible;
 }
 .bnav-more-pop{
-  position: fixed;
-  left: 8px; /* JS에서 열 때 보정 */
-  transform: none;
-  bottom: calc(64px + var(--safe-b) + 10px);
+  /* 탭바에 transform 이 있어 fixed+left(px) 조합이 깨짐 → 랩 기준으로 '더보기' 바로 위 */
+  position: absolute;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  bottom: calc(100% + 10px);
   width: auto;
   min-width: 124px;
-  max-width: min(160px, 70vw);
+  max-width: min(172px, calc(100vw - 16px));
   background: rgba(255,255,255,0.92);
   border: 1px solid rgba(0,0,0,0.10);
   border-radius: 16px;
@@ -989,17 +994,6 @@ body.dark-mode .bnav-more-btn{
 }
 body.dark-mode .bnav-more-label{ color: rgba(255,255,255,0.86); }
 
-/* PC에서는 설정/시뮬을 하단에 직접 노출하고, 더보기는 숨김 */
-@media (min-width: 641px) {
-  .bnav-more-wrap { display: none; }
-  .bnav-desktop-only { display: flex; }
-}
-
-/* 모바일에서는 설정/시뮬을 숨기고 더보기로만 접근 */
-@media (max-width: 640px) {
-  .bnav-desktop-only { display: none; }
-}
-
 /* 세로 배치: 아이콘 위 / 텍스트 아래 */
 .bnav-btn {
   flex: 1;
@@ -1017,6 +1011,10 @@ body.dark-mode .bnav-more-label{ color: rgba(255,255,255,0.86); }
   border-radius: 14px;
   transition: background 0.12s, opacity 0.12s, transform 0.12s;
   pointer-events: auto; /* 버튼만 터치/클릭 수신 */
+}
+/* 설정·시뮬은 더보기 메뉴에만 표시. 숨김 버튼은 parking.js에서 programmatic click() 위임용 */
+.bnav-btn.bnav-desktop-only {
+  display: none;
 }
 .bnav-btn:active { opacity: 0.55; transform: scale(0.96); }
 
