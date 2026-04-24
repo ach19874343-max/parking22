@@ -66,7 +66,7 @@ function applyAutoParking(){
   // 이전 실행에서 display:none 으로 숨겨졌을 수 있으니 항상 다시 표시
   overlay.style.display='';
   overlay.innerHTML=`
-    <div class="ap-loading-card">
+    <div class="ap-loading-card ap-loading-card--pulse">
       <div class="ap-loading-spinner"></div>
       <div class="ap-loading-title">최적 배치 탐색 중</div>
 
@@ -80,6 +80,7 @@ function applyAutoParking(){
 
       <!-- 상세 텍스트 -->
       <div id="apProgLine1" class="ap-loading-line1">준비 중…</div>
+      <div id="apProgMicro" class="ap-loading-micro" aria-hidden="true"></div>
 
       <!-- 완벽해 카운터 -->
       <div id="apProgLine2" class="ap-loading-line2">완벽해 0 / 10</div>
@@ -230,20 +231,56 @@ function applyAutoParking(){
   _resultPages=[];
   _resultPageIdx=0;
 
+  const loadStartedAt = Date.now();
+  let lastBarPct = 0;
+  let lastProgressSnap = { perfectCount: 0, perfectMax: 10, candDone: 0, candTotal: 1, phase: '' };
+  let tailRaf = null;
+  let tailPhaseTimer = null;
+  const clearTailAnim = () => {
+    if (tailRaf != null) {
+      cancelAnimationFrame(tailRaf);
+      tailRaf = null;
+    }
+    if (tailPhaseTimer != null) {
+      clearInterval(tailPhaseTimer);
+      tailPhaseTimer = null;
+    }
+  };
+
   function updateApProgress(p){
     const pct=document.getElementById('apPctNum');
     const l1=document.getElementById('apProgLine1');
     const l2=document.getElementById('apProgLine2');
     const bar=document.getElementById('apProgBar');
-    if(pct) pct.textContent=`${p.pct}%`;
-    if(l1) l1.textContent=`후보 ${p.candDone} / ${p.candTotal} · ${p.phase}`;
+    const micro = document.getElementById('apProgMicro');
+    const pc = Math.min(100, Math.max(0, Math.round(p?.pct ?? 0)));
+    lastBarPct = pc;
+    if (p) {
+      lastProgressSnap = {
+        perfectCount: p.perfectCount || 0,
+        perfectMax: p.perfectMax || 10,
+        candDone: p.candDone ?? 0,
+        candTotal: p.candTotal ?? 1,
+        phase: p.phase || '',
+      };
+    }
+    if(pct) pct.textContent=`${pc}%`;
+    if(l1) {
+      l1.textContent=`후보 ${p.candDone} / ${p.candTotal} · ${p.phase}`;
+      l1.classList.remove('ap-loading-line1--term');
+    }
+    if (micro) micro.textContent = '';
     if(l2){
       const cnt=p.perfectCount||0;
       const max=p.perfectMax||10;
       l2.textContent=cnt>0?`완벽해 ${cnt} / ${max} ✅`:`완벽해 탐색 중…`;
       l2.style.color=cnt>0?'#34D399':'#6EE7B7';
     }
-    if(bar) bar.style.width=`${p.pct}%`;
+    if(bar) {
+      bar.classList.remove('ap-loading-bar--noglitch');
+      bar.style.transition = '';
+      bar.style.width=`${pc}%`;
+    }
 
     // 탐색 중 후보(topN) 미리보기 갱신
     if(p){
@@ -253,11 +290,17 @@ function applyAutoParking(){
     }
   }
 
-  // cancelFn 받아서 취소 버튼에 연결
-  const cancelFn=computeAutoParking(function(result,top3){
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const AP_LOAD_MIN_MS = reduceMotion ? 0 : 2000;
+
+  const finishOverlay = (result, top3) => {
     document.removeEventListener('visibilitychange', _onVis, { passive: true });
     releaseWakeLock();
     overlay.style.display='none';
+    const l1 = document.getElementById('apProgLine1');
+    if (l1) l1.classList.remove('ap-loading-line1--term');
+    const micro = document.getElementById('apProgMicro');
+    if (micro) micro.textContent = '';
     if(!result){
       if(cancelled) return;
       alert('배치를 찾지 못했습니다.');
@@ -266,10 +309,80 @@ function applyAutoParking(){
     _resultPages=(top3&&top3.length>1)?top3:[result];
     _resultPageIdx=0;
     showResultModal(_resultPages[0],0,false);
+  };
+
+  const runTailProgress = (result, top3, waitMs) => {
+    const bar = document.getElementById('apProgBar');
+    const pctEl = document.getElementById('apPctNum');
+    const l1 = document.getElementById('apProgLine1');
+    const l2 = document.getElementById('apProgLine2');
+    const micro = document.getElementById('apProgMicro');
+    const startPct = Math.min(100, Math.max(0, lastBarPct));
+    const t0 = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const phases = ['제약 점검 중…', '패턴 검증 중…', '결과 정리 중…'];
+    const microHints = ['· 규칙 동기화', '· 후보 스코어 확정', '· 레이아웃 일관성'];
+    let phaseI = 0;
+    if (l1) {
+      l1.textContent = phases[0];
+      l1.classList.add('ap-loading-line1--term');
+    }
+    if (micro) micro.textContent = microHints[0];
+    if (l2) {
+      const cnt = lastProgressSnap.perfectCount || 0;
+      const max = lastProgressSnap.perfectMax || 10;
+      l2.textContent = cnt > 0 ? `완벽해 ${cnt} / ${max} ✅` : `완벽해 탐색 중…`;
+      l2.style.color = cnt > 0 ? '#34D399' : '#6EE7B7';
+    }
+    if (bar) {
+      bar.style.transition = 'none';
+      bar.classList.add('ap-loading-bar--noglitch');
+    }
+    const phaseEvery = Math.max(240, Math.floor(waitMs / 3));
+    tailPhaseTimer = setInterval(() => {
+      if (cancelled) return;
+      phaseI++;
+      if (l1) l1.textContent = phases[phaseI % phases.length];
+      if (micro) micro.textContent = microHints[phaseI % microHints.length];
+    }, phaseEvery);
+
+    const easeOut = (t) => 1 - Math.pow(1 - t, 2);
+    const step = (now) => {
+      if (cancelled) {
+        clearTailAnim();
+        return;
+      }
+      const elapsed = now - t0;
+      const u = Math.min(1, elapsed / waitMs);
+      const v = easeOut(u);
+      const disp = startPct + (100 - startPct) * v;
+      const rounded = Math.round(disp);
+      if (pctEl) pctEl.textContent = `${rounded}%`;
+      if (bar) bar.style.width = `${rounded}%`;
+      if (u < 1) {
+        tailRaf = requestAnimationFrame(step);
+      } else {
+        clearTailAnim();
+        finishOverlay(result, top3);
+      }
+    };
+    tailRaf = requestAnimationFrame(step);
+  };
+
+  // cancelFn 받아서 취소 버튼에 연결
+  const cancelFn=computeAutoParking(function(result,top3){
+    if (cancelled) return;
+    const elapsed = Date.now() - loadStartedAt;
+    const wait = Math.max(0, AP_LOAD_MIN_MS - elapsed);
+    if (wait <= 0) {
+      finishOverlay(result, top3);
+      return;
+    }
+    runTailProgress(result, top3, wait);
   },updateApProgress);
 
   document.getElementById('apCancelBtn').onclick=()=>{
     cancelled=true;
+    clearTailAnim();
     document.removeEventListener('visibilitychange', _onVis, { passive: true });
     releaseWakeLock();
     // 취소는 즉시 UI를 닫고, 백그라운드 탐색도 중단

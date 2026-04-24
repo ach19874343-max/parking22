@@ -171,7 +171,7 @@ function iterRowsBias(ar,num,tr,biasMid,earlyMax){
   for(const r of ar) if(!seen.has(r)) out.push(r);
   return out;
 }
-function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref){
+function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref,learnTmrRowAff){
   const hRow = (hintSi===0||hintSi) ? Math.floor(hintSi/3) : null;
   const hCol = (hintSi===0||hintSi) ? (hintSi%3) : null;
   const hPri = (o)=> (hRow===null ? 1 : ((o.row===hRow && o.col===hCol) ? 0 : 1));
@@ -182,11 +182,20 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref){
     if (lRow === null || lCol === null) return 0;
     return Math.abs(o.row - lRow) * 2 + Math.abs(o.col - lCol);
   };
+  const rk0 = tr[num] ?? 9999;
+  const bkt = rk0 < 3 ? 0 : rk0 < 10 ? 1 : 2;
+  let tmrPrefRow = null;
+  if (learnTmrRowAff && Array.isArray(learnTmrRowAff)) {
+    const pr = learnTmrRowAff[bkt];
+    if (pr === 0 || pr) tmrPrefRow = pr;
+  }
+  const tRowDist = (o) => (tmrPrefRow === null ? 0 : Math.abs(o.row - tmrPrefRow));
 
   if(!biasMid||(tr[num]??9999)>=earlyMax){
     opts.sort((a,b)=>
       hPri(a)-hPri(b) ||
       lDist(a)-lDist(b) ||
+      tRowDist(a)-tRowDist(b) ||
       a.pen-b.pen ||
       (a.lost||0)-(b.lost||0) ||
       (b.fallbackPrio?1:0)-(a.fallbackPrio?1:0)
@@ -199,6 +208,8 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref){
     if(hp!==0) return hp;
     const ld = lDist(a)-lDist(b);
     if(ld!==0) return ld;
+    const trd = tRowDist(a)-tRowDist(b);
+    if(trd!==0) return trd;
     const am=mid(a.row)?0:1,bm=mid(b.row)?0:1;
     if(am!==bm) return am-bm;
     if(a.col!==b.col) return a.col-b.col;
@@ -208,7 +219,7 @@ function sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref){
     return(b.fallbackPrio?1:0)-(a.fallbackPrio?1:0);
   });
 }
-function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,chainVer,allowMissing4R,rej){
+function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,chainVer,allowMissing4R,learnTmrRowAff,rej){
   const mR=tr[num]??9999,rem=eo.length-idx-1,cur=cSlots(ar,w,RC,fallback),opts=[];
   for(const row of iterRowsBias(ar,num,tr,biasMid,earlyMax)){
     // 내일 빠른 순번(1~3, tmrRank < 3)은 2R~3R(0~1행)에 배치 금지
@@ -246,11 +257,11 @@ function gOpts(num,idx,eo,ar,w,tr,fallback,RC,col0streak,enf,br,biasMid,earlyMax
   const g = (eo && eo.length) ? (hintI / eo.length) : 0;
   const gi = g < 1/3 ? 0 : g < 2/3 ? 1 : 2;
   const learnPref = (learnGroupPref && learnGroupPref[gi]) ? learnGroupPref[gi] : null;
-  sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref);
+  sortOptsBias(opts,num,tr,biasMid,earlyMax,hintSi,learnPref,learnTmrRowAff);
   return opts;
 }
 self.onmessage=function(e){
-  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,exitChainVer=2,exitChainAllowMissing4R=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3,hintSlotsByIdx=[],learnGroupPref=null,perfectOnly=false,livePreview=false,livePreviewIntervalMs=200}=e.data;
+  const{eo,tr,bv,ba,ar,RC,maxMs=30000,fallback=false,enforce2r3r1=false,exitChainVer=2,exitChainAllowMissing4R=false,bothRest=[],biasMiddleEarly=false,earlyExitRankMax=999,fastExitRankBanMax=3,hintSlotsByIdx=[],learnGroupPref=null,learnTmrRowAff=null,perfectOnly=false,livePreview=false,livePreviewIntervalMs=200}=e.data;
   // perfectOnly MRV 가 eo 를 swap 하므로, 입차 시뮬(cEntry)은 항상 "불러온 순서" 복사본으로만 계산
   const entryOrderCanonical=eo.slice();
   // gOpts 내부에서 "원래 entryOrder 인덱스" 기반 힌트를 쓰기 위한 매핑(탐색 중 swap됨)
@@ -280,6 +291,7 @@ self.onmessage=function(e){
   let nodes=0;
   let timedOut=false;
   const rej={};
+  let lastImprove=Date.now();
   let lastLiveMs=0;
   function emitLive(label, values){
     if(!livePreview) return;
@@ -311,6 +323,7 @@ self.onmessage=function(e){
     if(perfectKeys.has(key)) return;
     perfectKeys.add(key);
     perfects.push({values:{...w},active:{...ba},exitScore:es,entryScore:en,total:0});
+    lastImprove=Date.now();
   }
   let gBest=null,gBestScore=99999;
   // 그리디 초기해
@@ -340,7 +353,7 @@ self.onmessage=function(e){
   for(let i=0;i<eo.length;i++){
     // seed에서 이미 배치된 차량은 건너뜀
     if(_seedPlaced[i]) continue;
-    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,rej);if(!o.length)continue;
+    const o=gOpts(eo[i],i,eo,ar,gw,tr,fallback,RC,gStreak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,learnTmrRowAff,rej);if(!o.length)continue;
     const chosen=o[0];
     gw[chosen.row*3+chosen.col]=eo[i];
     gStreak=chosen.col===0?gStreak+1:0;
@@ -352,6 +365,7 @@ self.onmessage=function(e){
   if(gBest) emitLive('현재최고', gBest.values);
   // DFS
   const work={...bv};
+  const stallLimit=Math.min(14000,Math.max(3500,(maxMs*0.22)|0));
   function lbEntry(idx){
     // Lower bound of additional entry blocks from current partial state.
     // Optimistic assumptions:
@@ -364,22 +378,24 @@ self.onmessage=function(e){
     // If some remaining car has no feasible option even now, it will never become feasible later.
     // (placing cars only reduces free slots / accessibility)
     for(let j=idx;j<eo.length;j++){
-      const o = gOpts(eo[j], j, eo, ar, work, tr, fallback, RC, 0, enforce2r3r1, br, biasMiddleEarly, earlyExitRankMax, fastExitRankBanMax, hintSlotsByIdx, learnGroupPref, exitChainVer, exitChainAllowMissing4R, null);
+      const o = gOpts(eo[j], j, eo, ar, work, tr, fallback, RC, 0, enforce2r3r1, br, biasMiddleEarly, earlyExitRankMax, fastExitRankBanMax, hintSlotsByIdx, learnGroupPref, exitChainVer, exitChainAllowMissing4R, learnTmrRowAff, null);
       if(!o.length) lb++;
       if(gBestScore<99999 && lb*1000 >= gBestScore) break;
     }
     return lb;
   }
   function dfs(idx,streak){
+    if(timedOut)return;
     nodes++;
     if(Date.now()-t0>maxMs){ timedOut=true; return; }
+    if(nodes>10000&&Date.now()-lastImprove>stallLimit){timedOut=true;return;}
     if(perfects.length>=5) return;
     // 현재 탐색 상태 스냅샷(너무 자주 안 보냄)
     if((nodes & 1023)===0) emitLive('DFS', work);
     if(idx===eo.length){
       if(enforce2r3r1&&r23Viol(work,tr,br,true,exitChainVer,exitChainAllowMissing4R)) return;
       const es=cExit(work,tr,RC),en=cEntry(work,entryOrderCanonical,bv,RC,fallback),sc=score(es,en);
-      if(sc<gBestScore){gBestScore=sc;gBest={values:{...work},active:{...ba},exitScore:es,entryScore:en,total:sc};}
+      if(sc<gBestScore){gBestScore=sc;gBest={values:{...work},active:{...ba},exitScore:es,entryScore:en,total:sc};lastImprove=Date.now();}
       addPerfect(work,es,en);
       if(gBest) emitLive('현재최고', gBest.values);
       return;
@@ -406,7 +422,7 @@ self.onmessage=function(e){
       let bestLen = 1e9;
       let foundZero = false;
       for(let k=idx;k<eo.length;k++){
-        const o = gOpts(eo[k],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,null);
+        const o = gOpts(eo[k],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,learnTmrRowAff,null);
         const len = o.length;
         if(len===0){ pick=k; foundZero=true; break; }
         if(len<bestLen){ bestLen=len; pick=k; if(bestLen===1) break; }
@@ -420,7 +436,7 @@ self.onmessage=function(e){
       }
     }
 
-    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,rej);
+    const opts=gOpts(eo[idx],idx,eo,ar,work,tr,fallback,RC,streak,enforce2r3r1,br,biasMiddleEarly,earlyExitRankMax,fastExitRankBanMax,hintSlotsByIdx,learnGroupPref,exitChainVer,exitChainAllowMissing4R,learnTmrRowAff,rej);
     if(!opts.length){
       if(perfectOnly){
         rej.perfectNoOpts = (rej.perfectNoOpts||0) + 1;
@@ -431,6 +447,7 @@ self.onmessage=function(e){
         return;
       }
       dfs(idx+1,0);
+      if(timedOut)return;
       if(pick!==idx){
         const tmp=eo[idx]; eo[idx]=eo[pick]; eo[pick]=tmp;
         const ti=hintIdxByPos[idx]; hintIdxByPos[idx]=hintIdxByPos[pick]; hintIdxByPos[pick]=ti;
@@ -438,17 +455,21 @@ self.onmessage=function(e){
       return;
     }
     for(const{row,col}of opts){
+      if(timedOut)return;
       if(Date.now()-t0>maxMs){ timedOut=true; return; }
+      if(nodes>10000&&Date.now()-lastImprove>stallLimit){timedOut=true;return;}
       if(perfects.length>=5) return;
       work[row*3+col]=eo[idx];
       dfs(idx+1,col===0?streak+1:0);
       work[row*3+col]='';
+      if(timedOut)return;
     }
     if(pick!==idx){
       const tmp=eo[idx]; eo[idx]=eo[pick]; eo[pick]=tmp;
       const ti=hintIdxByPos[idx]; hintIdxByPos[idx]=hintIdxByPos[pick]; hintIdxByPos[pick]=ti;
     }
   }
+  lastImprove=Date.now();
   dfs(0,0);
   // 미배치 강제
   if(gBest){
@@ -523,7 +544,7 @@ window.apBanAutoParkingCandidateByValues = apBanAutoParkingCandidateByValues;
 /* ══════════════════════════════════════════════════════════════
    § 6. 메인 계산 — 휴차 후보별 순차 Worker 탐색
    ─ generateRestCandidates 로 후보 목록 생성
-   ─ 후보마다 Worker 에 투입, 패스당 긴 시간 예산으로 best 갱신
+   ─ 후보마다 Worker 투입 · 후보당 시간 상한(24s) + DFS 정체(개선 없음) 시 조기 종료 후 다음 후보
    ─ 완벽(입0·출0)은 최대 5개까지 수집 후 종료 · 입0·출1(비완벽)이면 대안 페이지 최대 3개만
    ─ 1단계: 내일 출차 빠른 차(tmrRank 상위 ~1/3)는 4R·5R·6R 행 우선·같은 행은 1→2→3칸 순 정렬
      → 완벽해 없으면 2단계: 기존 pen 기준 탐색으로 전체 재시작(출차순 제약 ON→OFF 동일)
@@ -634,7 +655,16 @@ function computeAutoParkingSingle(callback, onProgress, opts){
       return m;
     }
 
-    // (removed) debug-only rest distribution stats
+    const wantTuple = learn && learn.derivedHints && Array.isArray(learn.derivedHints.restRowTuple)
+      ? learn.derivedHints.restRowTuple
+      : null;
+    function tupleDist(c){
+      if (!wantTuple) return 0;
+      const g = _apRestRowTupleFromCandidate(c);
+      let s = 0;
+      for (let i = 0; i < 4; i++) s += Math.abs((wantTuple[i] ?? 0) - (g[i] ?? 0));
+      return s;
+    }
 
     // 휴차 후보 사전 점수 정렬 (기존 로직 유지)
     const weightByTodayRest=Math.max(1,Math.min(6,Math.floor(restVehicles.length/3)+1));
@@ -658,6 +688,8 @@ function computeAutoParkingSingle(callback, onProgress, opts){
     const allCandidatesSorted=[...candidatesGenerated].sort((a,b)=>{
       const hm = restMatchCount(b) - restMatchCount(a);
       if (hm !== 0) return hm;
+      const td = tupleDist(a) - tupleDist(b);
+      if (td !== 0) return td;
       return restPrefScore(a) - restPrefScore(b);
     });
 
@@ -745,7 +777,8 @@ function computeAutoParkingSingle(callback, onProgress, opts){
 
       const remaining=TOTAL_MS_PER_PASS-(Date.now()-t0global);
       const leftCands=(fallbackMode?candidates.length-candIdx+1:candidates.length*2-candIdx+1);
-      const perMs=Math.min(90000,Math.max(1500,Math.floor(remaining/Math.max(1,leftCands))));
+      const perMsRaw=Math.min(90000,Math.max(1500,Math.floor(remaining/Math.max(1,leftCands))));
+      const perMs=Math.min(perMsRaw,24000);
 
       const worker=getWorker({ code: oTop.workerCode || WORKER_CODE });
       worker.onmessage=function(e){
@@ -822,6 +855,9 @@ function computeAutoParkingSingle(callback, onProgress, opts){
         fastExitRankBanMax,
         hintSlotsByIdx,
         learnGroupPref: (learn && learn.derivedHints && learn.derivedHints.runGroupPref) ? learn.derivedHints.runGroupPref : null,
+        learnTmrRowAff: (learn && learn.derivedHints && learn.derivedHints.tmrBucketBestRow)
+          ? learn.derivedHints.tmrBucketBestRow
+          : null,
         livePreview: true,
         // 모바일/저사양에서 렉 방지: live 프리뷰 갱신 간격을 더 길게
         livePreviewIntervalMs: (window.matchMedia && window.matchMedia('(pointer:coarse)').matches) ? 320 : 200,
@@ -960,7 +996,8 @@ function computeAutoParking(callback, onProgress){
 /* ══════════════════════════════════════════════════════════════
    § 자동주차 학습 데이터 (Firebase)
    - v1: learnData/ap_manual_v1 (차량번호 중심, 기존 유지)
-   - v2: learnData/ap_orderpattern_v2 (entryIdx/tmrRank 패턴 중심, 우선 사용)
+   - v2: learnData/ap_orderpattern_v2 — 행별 운행 분포·내일순위 밴드·휴차 튜플·tmrBucket 행선호,
+         로드 시 상위 8건 softmax 가중 앙상블 + 현재 판 runRowHist 유사도 매칭
    ══════════════════════════════════════════════════════════════ */
 const AP_LEARN_PATH_V1 = 'learnData/ap_manual_v1';
 const AP_LEARN_PATH_V2 = 'learnData/ap_orderpattern_v2';
@@ -1012,31 +1049,68 @@ function apLearnKey(entryOrder, tmrRank) {
 }
 
 /* ── v2: 순서 패턴 기반 토큰 학습 ───────────────────────────── */
+/** 운행차(휴차칸 제외)만 행별 집계 — 현재 판과 학습 레이아웃 유사도용 */
+function _apLearnRunRowHist(values, active, RC) {
+  const rows = Math.max(1, RC | 0);
+  const h = new Array(rows).fill(0);
+  if (!values) return h;
+  const total = rows * 3;
+  for (let si = 0; si < total; si++) {
+    if (active && active[si]) continue;
+    const raw = values[si];
+    const num = (raw !== undefined && raw !== null && String(raw).trim() !== '') ? String(raw).trim() : '';
+    if (!num) continue;
+    const r = (si / 3) | 0;
+    if (r >= 0 && r < rows) h[r]++;
+  }
+  return h;
+}
+
+/** 휴차 후보와 학습 restRowTuple 비교용 (2R·3R·6R·7R 휴차 칸 수) */
+function _apRestRowTupleFromCandidate(c) {
+  const a = c && c.active ? c.active : {};
+  const cnt = (row) => {
+    let n = 0;
+    for (let col = 0; col < 3; col++) {
+      if (a[row * 3 + col]) n++;
+    }
+    return n;
+  };
+  return [cnt(0), cnt(1), cnt(4), cnt(5)];
+}
+
 function _apLearnV2Fingerprint(entryOrder, tmrRank, opts = {}) {
   const entryK = Math.max(5, Math.min(10, opts.entryK ?? 8));
-  const tmrK   = Math.max(5, Math.min(10, opts.tmrK ?? 8));
 
   const entryLen = entryOrder.length;
   const tmrLen = Object.keys(tmrRank || {}).length;
 
   const entryTopKRanks = entryOrder
     .slice(0, entryK)
-    .map(n => (tmrRank[n] ?? 9999))
+    .map(n => (tmrRank[String(n)] ?? tmrRank[n] ?? 9999))
     .sort((a, b) => a - b);
 
-  // 내일 상위 K (0..K-1) 존재 여부만 요약 (길이만 있으면 충분하므로 단순화)
-  const tmrTopK = Array.from({ length: Math.min(tmrK, tmrLen) }, (_, i) => i);
+  let bandFast = 0, bandMid = 0, bandSlow = 0;
+  for (const n of entryOrder.slice(0, entryK)) {
+    const rk = tmrRank[String(n)] ?? tmrRank[n] ?? 9999;
+    if (rk < 3) bandFast++;
+    else if (rk < 12) bandMid++;
+    else bandSlow++;
+  }
+  const tmrRankBand = [bandFast, bandMid, bandSlow];
 
   const todayRestCount = opts.restCount ?? 0;
   const bothRestCount = opts.bothRestCount ?? 0;
+  const runRowHist = Array.isArray(opts.runRowHist) ? opts.runRowHist.map(x => +x || 0) : null;
 
   return {
     entryLen,
     tmrLen,
     entryTopKRanks,
-    tmrTopK,
+    tmrRankBand,
     restCount: todayRestCount,
     bothRestCount,
+    runRowHist,
   };
 }
 
@@ -1051,6 +1125,7 @@ function _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tomorrowM
   /** derived hints */
   const runSlotByEntryIdx = {};
   const restSlots = [];
+  const rowHits = [{}, {}, {}];
 
   for (let si = 0; si < total; si++) {
     const raw = values?.[si];
@@ -1062,7 +1137,7 @@ function _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tomorrowM
       continue;
     }
 
-    const rk = (tmrRank[num] ?? 9999);
+    const rk = (tmrRank[num] ?? tmrRank[String(num)] ?? 9999);
 
     if (isRest) {
       const tomorrowRest = tomorrowMissingSet?.has(num) ? 1 : 0;
@@ -1076,6 +1151,9 @@ function _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tomorrowM
     if (entryIdx !== 9999 && runSlotByEntryIdx[entryIdx] === undefined) {
       runSlotByEntryIdx[entryIdx] = si;
     }
+    const row = (si / 3) | 0;
+    const b = rk < 3 ? 0 : rk < 10 ? 1 : 2;
+    rowHits[b][row] = (rowHits[b][row] || 0) + 1;
   }
 
   // 휴차 분배 튜플(2R/3R/6R/7R) + restSlotSet
@@ -1088,12 +1166,25 @@ function _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tomorrowM
     else if (row === 5) restRowCounts.r7++;
   });
 
+  const tmrBucketBestRow = [null, null, null].map((_, b) => {
+    const o = rowHits[b];
+    const keys = Object.keys(o);
+    if (!keys.length) return null;
+    let bestR = +keys[0], bestC = o[keys[0]];
+    keys.forEach(k => {
+      const r = +k, c = o[k];
+      if (c > bestC || (c === bestC && r < bestR)) { bestC = c; bestR = r; }
+    });
+    return bestR;
+  });
+
   return {
     layoutTokens,
     derivedHints: {
       runSlotByEntryIdx,
       restSlotSet: restSlots,
       restRowTuple: [restRowCounts.r2, restRowCounts.r3, restRowCounts.r6, restRowCounts.r7],
+      tmrBucketBestRow,
     }
   };
 }
@@ -1138,12 +1229,14 @@ async function apLearnSaveV2(dateStr) {
     } catch {}
     const bothRestCount = [...todayRestSet].filter(n => tmrMissSet.has(n)).length;
 
+    const RC = APP.rowCount || Math.ceil(Object.keys(values).length / 3) || 6;
+    const runRowHist = _apLearnRunRowHist(values, active, RC);
     const fp = _apLearnV2Fingerprint(entryOrder, tmrRank, {
       restCount: todayRestSet.size,
       bothRestCount,
+      runRowHist,
     });
 
-    const RC = APP.rowCount || Math.ceil(Object.keys(values).length / 3) || 6;
     const { layoutTokens, derivedHints } =
       _apLearnV2TokenizeLayout(values, active, entryOrder, tmrRank, tmrMissSet, RC);
 
@@ -1299,9 +1392,16 @@ async function apLearnLoad(entryOrder, tmrRank) {
           const myTmrMissSet = new Set((dispatchState.tomorrowMissing || []).map(x => String(x).trim()));
           const myBoth = [...myTodayRestSet].filter(n => myTmrMissSet.has(n)).length;
 
+          const RCm = APP.rowCount || 6;
+          const myRunRowHist = _apLearnRunRowHist(
+            APP?.parkingState?.values,
+            APP?.parkingState?.active,
+            RCm
+          );
           const myFp = _apLearnV2Fingerprint(entryOrder, tmrRank, {
             restCount: myTodayRestSet.size,
             bothRestCount: myBoth,
+            runRowHist: myRunRowHist,
           });
 
           const distSum = (a, b) => {
@@ -1310,76 +1410,114 @@ async function apLearnLoad(entryOrder, tmrRank) {
             for (let i = 0; i < n; i++) s += Math.abs((a[i] ?? 9999) - (b[i] ?? 9999));
             return s;
           };
+          const distSumL1 = (a, b) => {
+            const n = Math.max((a && a.length) || 0, (b && b.length) || 0);
+            if (!n) return 0;
+            let s = 0;
+            for (let i = 0; i < n; i++) s += Math.abs((a[i] ?? 0) - (b[i] ?? 0));
+            return s;
+          };
 
           const scored = [];
           for (const rec of v2db) {
             const fp = rec.patternFingerprint || {};
             const dEntry = Math.abs((fp.entryLen ?? 0) - myFp.entryLen);
             const dTmr = Math.abs((fp.tmrLen ?? 0) - myFp.tmrLen);
-            // entryTopKRanks 분포 차이 + 휴차 카운트 차이
             const dRanks = distSum(fp.entryTopKRanks || [], myFp.entryTopKRanks || []);
             const dRest = Math.abs((fp.restCount ?? 0) - (myFp.restCount ?? 0));
             const dBoth = Math.abs((fp.bothRestCount ?? 0) - (myFp.bothRestCount ?? 0));
+            const dBand = distSumL1(fp.tmrRankBand || [0, 0, 0], myFp.tmrRankBand || [0, 0, 0]);
+            const dHist = distSumL1(fp.runRowHist || [], myFp.runRowHist || []);
 
-            // 길이가 너무 다르면 사실상 다른 날 → 강패널티
-            const score = dEntry * 20000 + dTmr * 20000 + dRanks * 3 + dRest * 200 + dBoth * 200;
+            const score = dEntry * 20000 + dTmr * 20000 + dRanks * 3 + dRest * 200 + dBoth * 200
+              + dBand * 95 + dHist * 18;
             scored.push({ rec, score });
           }
 
           scored.sort((a, b) => a.score - b.score);
-          const topN = scored.slice(0, 3);
-          const best = topN[0]?.rec || null;
-          if (best) {
-            // (3) 앙상블: runSlotByEntryIdx 투표 + restSlotSet 빈도 기반 합성
-            const slotVotesByIdx = {};
-            const restSlotVotes = {};
-            topN.forEach(({ rec }) => {
+          const topPool = scored.slice(0, 8);
+          const bestRec = topPool[0]?.rec || null;
+          if (bestRec) {
+            const minS = topPool[0].score;
+            const tau = 5200;
+            const wts = topPool.map(x => Math.exp(-(x.score - minS) / tau));
+            const wsum = wts.reduce((a, b) => a + b, 0) || 1;
+
+            const slotW = {};
+            const restW = {};
+            topPool.forEach((hit, i) => {
+              const w = wts[i] / wsum;
+              const rec = hit.rec;
               const m = rec?.derivedHints?.runSlotByEntryIdx || {};
               Object.keys(m).forEach(k => {
                 const idx = +k;
                 const si = m[k];
                 if (!(si === 0 || si)) return;
-                if (!slotVotesByIdx[idx]) slotVotesByIdx[idx] = {};
-                slotVotesByIdx[idx][si] = (slotVotesByIdx[idx][si] || 0) + 1;
+                if (!slotW[idx]) slotW[idx] = {};
+                slotW[idx][si] = (slotW[idx][si] || 0) + w;
               });
-              const rs = rec?.derivedHints?.restSlotSet || [];
-              rs.forEach(si => {
+              (rec?.derivedHints?.restSlotSet || []).forEach(si => {
                 const s = +si;
                 if (!(s === 0 || s)) return;
-                restSlotVotes[s] = (restSlotVotes[s] || 0) + 1;
+                restW[s] = (restW[s] || 0) + w;
               });
             });
 
             const combinedRunSlotByEntryIdx = {};
-            Object.keys(slotVotesByIdx).forEach(k => {
+            Object.keys(slotW).forEach(k => {
               const idx = +k;
-              const votes = slotVotesByIdx[idx];
-              let bestSlot = null, bestCnt = -1;
-              Object.keys(votes).forEach(siKey => {
-                const cnt = votes[siKey];
-                if (cnt > bestCnt) { bestCnt = cnt; bestSlot = +siKey; }
+              const mp = slotW[idx];
+              let bestSlot = null, bestV = -1;
+              Object.keys(mp).forEach(siKey => {
+                const v = mp[siKey];
+                if (v > bestV) { bestV = v; bestSlot = +siKey; }
               });
               if (bestSlot === 0 || bestSlot) combinedRunSlotByEntryIdx[idx] = bestSlot;
             });
 
-            const combinedRestSlots = Object.keys(restSlotVotes)
-              .map(k => ({ si: +k, c: restSlotVotes[k] }))
-              .filter(x => x.c >= 2) // 3개 중 2개 이상에서 반복된 휴차 슬롯만
+            const combinedRestSlots = Object.keys(restW)
+              .map(k => ({ si: +k, c: restW[k] }))
+              .sort((a, b) => b.c - a.c)
+              .filter(x => x.c >= 0.22)
+              .slice(0, 14)
               .map(x => x.si);
 
-            // best 레코드에 합성 힌트를 덮어씌워 반환(탐색에 직접 사용)
+            const best = bestRec;
             best.derivedHints = best.derivedHints || {};
             best.derivedHints.runSlotByEntryIdx = { ...(best.derivedHints.runSlotByEntryIdx || {}), ...combinedRunSlotByEntryIdx };
             if (combinedRestSlots.length) best.derivedHints.restSlotSet = combinedRestSlots;
 
-            // soft-constraint용: entryIdx별 선호 row/col (hint가 없으면 그룹 선호)
+            const bucketRows = [{}, {}, {}];
+            topPool.forEach((hit, i) => {
+              const w = wts[i] / wsum;
+              const tbr = hit.rec?.derivedHints?.tmrBucketBestRow;
+              if (!Array.isArray(tbr)) return;
+              for (let b = 0; b < 3; b++) {
+                const r = tbr[b];
+                if (!(r === 0 || r)) continue;
+                bucketRows[b][r] = (bucketRows[b][r] || 0) + w;
+              }
+            });
+            const mergedBucket = [null, null, null].map((_, b) => {
+              const o = bucketRows[b];
+              const keys = Object.keys(o);
+              if (!keys.length) return null;
+              let br = +keys[0], bv = o[keys[0]];
+              keys.forEach(k => {
+                const r = +k, v = o[k];
+                if (v > bv || (v === bv && r < br)) { bv = v; br = r; }
+              });
+              return br;
+            });
+            best.derivedHints.tmrBucketBestRow = mergedBucket;
+
             const entryLen = myFp.entryLen || entryOrder.length;
             const groupOf = (i) => {
               if (entryLen <= 0) return 0;
               const t = i / entryLen;
               return t < 1/3 ? 0 : t < 2/3 ? 1 : 2;
             };
-            const groupVotes = [{}, {}, {}]; // group -> "row,col" vote
+            const groupVotes = [{}, {}, {}];
             Object.keys(best.derivedHints.runSlotByEntryIdx || {}).forEach(k => {
               const idx = +k;
               const si = best.derivedHints.runSlotByEntryIdx[k];
@@ -1391,7 +1529,7 @@ async function apLearnLoad(entryOrder, tmrRank) {
             });
             const groupPref = groupVotes.map(v => {
               let bestK = null, bestC = -1;
-              Object.keys(v).forEach(k => { if (v[k] > bestC) { bestC = v[k]; bestK = k; } });
+              Object.keys(v).forEach(k2 => { if (v[k2] > bestC) { bestC = v[k2]; bestK = k2; } });
               if (!bestK) return { row: null, col: null };
               const [r, c] = bestK.split(',').map(Number);
               return { row: r, col: c };

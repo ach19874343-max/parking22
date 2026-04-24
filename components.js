@@ -360,8 +360,8 @@ function tmplAppSettingsModal() {
         <div class="settings-section-title">🧠 자동주차 학습</div>
         <div class="settings-footer-group">
           <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.6">
-            현재 선택된 날짜의 주차판 배치를 학습 데이터로 저장합니다.<br>
-            수동으로 최적 배치 후 저장하면 이후 자동주차 탐색 시 유사한 패턴을 우선 탐색합니다.
+            현재 선택된 날짜의 주차판 배치를 학습합니다.<br>
+            입차 순·내일 순위·휴차 수·행별 운행 분포가 비슷한 날의 기록을 가중 합쳐 힌트로 쓰며, 자동주차 탐색에서 슬롯·휴차 후보 순서에 반영됩니다.
           </p>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <button type="button" id="apLearnSaveBtn" class="btn-secondary"
