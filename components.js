@@ -447,6 +447,9 @@ function tmplDriverLookupModal() {
         </div>
 
         <div id="driverLookupStatusMsg" style="font-size:12px;min-height:18px;color:rgba(255,255,255,0.78);margin-bottom:8px;"></div>
+        <div id="driverLookupNote" style="font-size:12px;color:rgba(255,255,255,0.72);line-height:1.6;margin:-4px 0 10px;white-space:pre-wrap;">
+          ※ 참고: 고참 순위 및 연락처는 솔루션에서 추출한 값이라 실제와 다를 수 있습니다.
+        </div>
         <div id="driverLookupErrorBox" style="display:none;background:rgba(248,113,113,0.14);border:1px solid rgba(248,113,113,0.28);border-radius:12px;padding:10px 12px;font-size:12px;color:#fecaca;white-space:pre-wrap;line-height:1.6;margin-bottom:10px;"></div>
 
         <div id="driverLookupResultArea" style="display:none;">
@@ -454,8 +457,8 @@ function tmplDriverLookupModal() {
             <div id="driverLookupTitle" style="font-size:15px;font-weight:900;color:#fff;letter-spacing:-.02em;"></div>
             <div id="driverLookupCount" style="font-size:12px;color:rgba(255,255,255,0.78);background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:2px 10px;"></div>
           </div>
-          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:14px;overflow:auto;max-height:56vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;">
-            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px;">
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:14px;overflow-y:auto;overflow-x:hidden;max-height:56vh;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;touch-action:pan-y;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:0;table-layout:fixed;">
               <thead id="driverLookupHead"></thead>
               <tbody id="driverLookupBody"></tbody>
             </table>
