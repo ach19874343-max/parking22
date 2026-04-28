@@ -46,6 +46,380 @@ function getEveningShiftTeamForDate(dateStr) {
   return (delta & 1) === 0 ? 'B' : 'A';
 }
 
+/* ══════════════════════════════════════════════════════════════
+   운전기사 조회 (더보기 메뉴) — 모달 + API 호출
+   ══════════════════════════════════════════════════════════════ */
+const DRIVER_LOOKUP_WORKER_URL = 'https://jolly-voice-134c.ach4343.workers.dev/';
+
+function driverLookupGetAutoDateRange() {
+  const toDateStr = (d) =>
+    d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const today = new Date();
+  const s = new Date(today); s.setDate(s.getDate() - 2);
+  const e = new Date(today); e.setDate(e.getDate() + 10);
+  return { start: toDateStr(s), end: toDateStr(e) };
+}
+
+function driverLookupDateRange(start, end) {
+  const dates = [];
+  let cur = new Date(start + 'T00:00:00');
+  const last = new Date(end + 'T00:00:00');
+  while (cur <= last) {
+    dates.push(cur.getFullYear() + '-' + String(cur.getMonth() + 1).padStart(2, '0') + '-' + String(cur.getDate()).padStart(2, '0'));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+
+function driverLookupBusShort(b) {
+  if (!b) return '-';
+  const m = String(b).match(/(\d+)$/);
+  if (!m) return String(b);
+  return m[1].replace(/^1/, '');
+}
+
+function driverLookupParseJson(json) {
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json?.object)) return json.object;
+  if (json?.contents) {
+    const inner = JSON.parse(json.contents);
+    if (Array.isArray(inner?.object)) return inner.object;
+  }
+  throw new Error('응답 구조 불일치');
+}
+
+async function driverLookupFetchItems(dateStr) {
+  const base = (APP?.settings?.dispatchApiBase || 'https://api.kiki-bus.com/dispatch/126')
+    .replace(/\/+$/, '');
+  const targetUrl = `${base}/${dateStr}`;
+  const enc = encodeURIComponent(targetUrl);
+
+  const go = (url) => fetch(url).then(r => {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  });
+
+  // dispatch.js와 동일한 프록시 조합 (CORS 회피)
+  const proxies = [
+    () => go(`https://api.codetabs.com/v1/proxy?quest=${enc}`),
+    () => go(`${DRIVER_LOOKUP_WORKER_URL}?url=${enc}`),
+  ];
+
+  let lastErr = null;
+  for (const fn of proxies) {
+    try {
+      const json = await fn();
+      return driverLookupParseJson(json);
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('모든 프록시 실패');
+}
+
+const driverLookupState = {
+  currentMode: '',
+  allA: [],
+  allB: [],
+  allAB: [],
+};
+
+function driverLookupGroupBadge(g) {
+  if (g === 'A') return '<span style="background:rgba(59,130,246,0.18);color:#bfdbfe;border:1px solid rgba(191,219,254,0.25);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;margin-left:6px;">A</span>';
+  if (g === 'B') return '<span style="background:rgba(245,158,11,0.18);color:#fde68a;border:1px solid rgba(253,230,138,0.25);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;margin-left:6px;">B</span>';
+  return '<span style="background:rgba(59,130,246,0.18);color:#bfdbfe;border:1px solid rgba(191,219,254,0.25);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;margin-left:6px;">A</span>' +
+         '<span style="background:rgba(245,158,11,0.18);color:#fde68a;border:1px solid rgba(253,230,138,0.25);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;margin-left:4px;">B</span>';
+}
+
+function driverLookupRenderBasic(q) {
+  const titleEl = document.getElementById('driverLookupTitle');
+  const countEl = document.getElementById('driverLookupCount');
+  const headEl = document.getElementById('driverLookupHead');
+  const bodyEl = document.getElementById('driverLookupBody');
+  if (!titleEl || !countEl || !headEl || !bodyEl) return;
+
+  const filtered = q
+    ? driverLookupState.allAB.filter(d => (d.name || '').includes(q) || String(d.id || '').includes(q))
+    : driverLookupState.allAB;
+
+  titleEl.textContent = '👥 A+B 고참순위';
+  countEl.textContent = '총 ' + filtered.length + '명';
+  headEl.innerHTML =
+    '<tr style="background:rgba(255,255,255,0.10);position:sticky;top:0;z-index:1;">' +
+      '<th style="padding:12px 10px;text-align:center;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);width:54px;">순서</th>' +
+      '<th style="padding:12px 12px;text-align:left;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);width:110px;">기사 ID</th>' +
+      '<th style="padding:12px 12px;text-align:left;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);">이름</th>' +
+    '</tr>';
+
+  let html = '';
+  filtered.forEach((d, i) => {
+    html += '<tr style="' + (i % 2 === 0 ? 'background:rgba(255,255,255,0.03);' : 'background:rgba(255,255,255,0.06);') + '">' +
+      '<td style="padding:11px 10px;text-align:center;color:rgba(255,255,255,0.82);font-size:13px;font-weight:900;border-top:1px solid rgba(255,255,255,0.08);">' + (i + 1) + '</td>' +
+      '<td style="padding:11px 12px;color:#fff;font-weight:900;border-top:1px solid rgba(255,255,255,0.08);">' + (d.id ?? '-') + '</td>' +
+      '<td style="padding:11px 12px;font-weight:1000;color:#fff;border-top:1px solid rgba(255,255,255,0.08);">' +
+        (d.name || '-') + driverLookupGroupBadge(d.group) +
+      '</td>' +
+    '</tr>';
+  });
+  bodyEl.innerHTML = html;
+}
+
+function driverLookupBuildBusMap() {
+  const busMap = new Map();
+  driverLookupState.allA.forEach(d => {
+    const key = driverLookupBusShort(d.busNumber);
+    if (!busMap.has(key)) busMap.set(key, { bus: key, A: [], B: [] });
+    busMap.get(key).A.push(d);
+  });
+  driverLookupState.allB.forEach(d => {
+    const key = driverLookupBusShort(d.busNumber);
+    if (!busMap.has(key)) busMap.set(key, { bus: key, A: [], B: [] });
+    busMap.get(key).B.push(d);
+  });
+  const buses = [];
+  busMap.forEach(v => buses.push(v));
+  buses.sort((a, b) => (parseInt(a.bus) || 99999) - (parseInt(b.bus) || 99999));
+  return buses;
+}
+
+function driverLookupRenderContact(q) {
+  const titleEl = document.getElementById('driverLookupTitle');
+  const countEl = document.getElementById('driverLookupCount');
+  const headEl = document.getElementById('driverLookupHead');
+  const bodyEl = document.getElementById('driverLookupBody');
+  if (!titleEl || !countEl || !headEl || !bodyEl) return;
+
+  const buses = driverLookupBuildBusMap();
+  const matchD = (d) =>
+    (d.name || '').includes(q) ||
+    String(d.id || '').includes(q) ||
+    driverLookupBusShort(d.busNumber).includes(q) ||
+    String(d.phone || '').includes(q);
+  const filtered = q
+    ? buses.filter(e => String(e.bus || '').includes(q) || e.A.some(matchD) || e.B.some(matchD))
+    : buses;
+
+  titleEl.textContent = '📞 A+B 차량별 연락처';
+  countEl.textContent = '총 ' + filtered.length + '대';
+  headEl.innerHTML =
+    '<tr style="background:rgba(255,255,255,0.10);position:sticky;top:0;z-index:1;">' +
+      '<th style="padding:12px 12px;text-align:left;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);width:70px;">차량</th>' +
+      '<th style="padding:12px 12px;text-align:center;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);width:52px;">조</th>' +
+      '<th style="padding:12px 12px;text-align:left;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);">이름</th>' +
+      '<th style="padding:12px 12px;text-align:left;font-weight:1000;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,0.16);">전화</th>' +
+    '</tr>';
+
+  let html = '';
+  filtered.forEach(e => {
+    const aList = e.A.length > 0 ? e.A : [null];
+    const bList = e.B.length > 0 ? e.B : [null];
+    const totalRows = aList.length + bList.length;
+    let first = true;
+
+    aList.forEach((dA, ai) => {
+      html += '<tr style="background:rgba(59,130,246,0.06);">';
+      if (first) {
+        html += '<td rowspan="' + totalRows + '" style="padding:8px 12px;font-weight:1000;font-size:15px;color:#bfdbfe;vertical-align:middle;border-top:1px solid rgba(255,255,255,0.10);">' + (e.bus || '-') + '</td>';
+        first = false;
+      }
+      html += '<td style="padding:7px 10px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">' +
+        '<span style="background:rgba(59,130,246,0.18);color:#bfdbfe;border:1px solid rgba(191,219,254,0.25);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:900;">A</span></td>' +
+        '<td style="padding:7px 12px;font-weight:900;color:#fff;border-top:1px solid rgba(255,255,255,0.06);">' + (dA ? (dA.name || '-') : '-') + '</td>' +
+        '<td style="padding:7px 12px;color:rgba(255,255,255,0.78);font-size:12px;border-top:1px solid rgba(255,255,255,0.06);">' + (dA ? (dA.phone || '-') : '-') + '</td>' +
+      '</tr>';
+    });
+    bList.forEach((dB) => {
+      html += '<tr style="background:rgba(245,158,11,0.05);">' +
+        '<td style="padding:7px 10px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);">' +
+          '<span style="background:rgba(245,158,11,0.18);color:#fde68a;border:1px solid rgba(253,230,138,0.25);border-radius:6px;padding:2px 7px;font-size:11px;font-weight:900;">B</span></td>' +
+        '<td style="padding:7px 12px;font-weight:900;color:#fff;border-top:1px solid rgba(255,255,255,0.06);">' + (dB ? (dB.name || '-') : '-') + '</td>' +
+        '<td style="padding:7px 12px;color:rgba(255,255,255,0.78);font-size:12px;border-top:1px solid rgba(255,255,255,0.06);">' + (dB ? (dB.phone || '-') : '-') + '</td>' +
+      '</tr>';
+    });
+    html += '<tr><td colspan="4" style="padding:0;height:6px;background:rgba(255,255,255,0.06);"></td></tr>';
+  });
+  bodyEl.innerHTML = html;
+}
+
+function driverLookupRender(mode) {
+  driverLookupState.currentMode = mode;
+  if (mode === 'basic') driverLookupRenderBasic('');
+  else driverLookupRenderContact('');
+}
+
+function driverLookupOpenModal(mode) {
+  const modal = document.getElementById('driverLookupModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  document.body.classList.add('parking-sim-active'); /* overflow:hidden 재사용 */
+  const resultArea = document.getElementById('driverLookupResultArea');
+  const errorBox = document.getElementById('driverLookupErrorBox');
+  const statusMsg = document.getElementById('driverLookupStatusMsg');
+  if (resultArea) resultArea.style.display = 'none';
+  if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+  if (statusMsg) statusMsg.textContent = '';
+  if (mode) driverLookupFetchAll(mode);
+}
+
+function driverLookupCloseModal() {
+  const modal = document.getElementById('driverLookupModal');
+  if (!modal) return;
+  modal.classList.remove('active');
+  document.body.classList.remove('parking-sim-active');
+}
+
+async function driverLookupFetchAll(mode) {
+  const rankBtn = document.getElementById('driverLookupRankBtn');
+  const contactBtn = document.getElementById('driverLookupContactBtn');
+  const copyBtn = document.getElementById('driverLookupCopyBtn');
+  const statusMsg = document.getElementById('driverLookupStatusMsg');
+  const errorBox = document.getElementById('driverLookupErrorBox');
+  const resultArea = document.getElementById('driverLookupResultArea');
+
+  if (errorBox) { errorBox.style.display = 'none'; errorBox.textContent = ''; }
+  if (resultArea) resultArea.style.display = 'none';
+
+  const range = driverLookupGetAutoDateRange();
+  const dates = driverLookupDateRange(range.start, range.end);
+  if (dates.length > 60) { alert('최대 60일까지 조회 가능합니다.'); return; }
+
+  if (rankBtn) rankBtn.disabled = true;
+  if (contactBtn) contactBtn.disabled = true;
+  if (copyBtn) copyBtn.disabled = true;
+  if (rankBtn) rankBtn.textContent = '조회 중...';
+  if (contactBtn) contactBtn.textContent = '조회 중...';
+
+  // 병렬 조회(동시성 제한)로 속도 개선
+  const CONCURRENCY = 5;
+  const results = new Array(dates.length);
+  let done = 0, errorCount = 0, lastError = '';
+
+  let cursor = 0;
+  const worker = async () => {
+    while (cursor < dates.length) {
+      const idx = cursor++;
+      const date = dates[idx];
+      try {
+        const items = await driverLookupFetchItems(date);
+        results[idx] = { date, ok: true, items };
+      } catch (e) {
+        results[idx] = { date, ok: false, err: (e?.message || e) };
+      } finally {
+        done++;
+        if (statusMsg) statusMsg.textContent = `조회 중... (${done}/${dates.length})`;
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, dates.length) }, worker));
+
+  const mapA = new Map();
+  const mapB = new Map();
+  for (const r of results) {
+    if (!r) continue;
+    const grp = getEveningShiftTeamForDate(r.date);
+    const map = grp === 'A' ? mapA : mapB;
+    if (!r.ok) {
+      errorCount++;
+      lastError = r.date + ' — ' + r.err;
+      continue;
+    }
+    const items = r.items || [];
+    for (const item of items) {
+      if (!item?.driverId) continue;
+      if (!map.has(item.driverId)) {
+        map.set(item.driverId, { id: item.driverId, name: item.driverName || '', phone: item.driverPhone || '', busCount: new Map() });
+      }
+      const d = map.get(item.driverId);
+      if (item.driverName) d.name = item.driverName;
+      if (item.driverPhone) d.phone = item.driverPhone;
+      if (item.busNumber) d.busCount.set(item.busNumber, (d.busCount.get(item.busNumber) || 0) + 1);
+    }
+  }
+
+  const toArr = (map) => {
+    const arr = [];
+    map.forEach((d) => {
+      let topBus = '', topCnt = 0;
+      d.busCount.forEach((c, b) => { if (c > topCnt) { topCnt = c; topBus = b; } });
+      arr.push({ id: d.id, name: d.name, phone: d.phone, busNumber: topBus });
+    });
+    return arr;
+  };
+
+  driverLookupState.allA = toArr(mapA).sort((a, b) => a.id - b.id);
+  driverLookupState.allB = toArr(mapB).sort((a, b) => a.id - b.id);
+
+  // allAB: 중복 제거 병합 + 조 정보 유지
+  const mergedMap = new Map();
+  driverLookupState.allA.forEach((d) => {
+    if (!mergedMap.has(d.id)) mergedMap.set(d.id, { ...d, group: 'A' });
+    else {
+      const e = mergedMap.get(d.id);
+      e.group = 'A+B';
+      if (!e.phone && d.phone) e.phone = d.phone;
+    }
+  });
+  driverLookupState.allB.forEach((d) => {
+    if (!mergedMap.has(d.id)) mergedMap.set(d.id, { ...d, group: 'B' });
+    else {
+      const e = mergedMap.get(d.id);
+      e.group = e.group === 'A' ? 'A+B' : 'B';
+      if (!e.phone && d.phone) e.phone = d.phone;
+    }
+  });
+  driverLookupState.allAB = [...mergedMap.values()].sort((a, b) => a.id - b.id);
+
+  if (rankBtn) { rankBtn.disabled = false; rankBtn.textContent = '고참순위 조회'; }
+  if (contactBtn) { contactBtn.disabled = false; contactBtn.textContent = '연락처 조회'; }
+  if (copyBtn) copyBtn.disabled = false;
+
+  if (errorCount > 0 && mapA.size + mapB.size === 0) {
+    if (statusMsg) statusMsg.textContent = '';
+    if (errorBox) {
+      errorBox.style.display = 'block';
+      errorBox.textContent = `호출 실패 (${errorCount}건)\n${lastError}\n\n※ 프록시/인터넷 연결을 확인해주세요.`;
+    }
+    return;
+  }
+  if (errorCount > 0 && errorBox) {
+    errorBox.style.display = 'block';
+    errorBox.textContent = `일부 날짜 실패 (${errorCount}건): ${lastError}`;
+  }
+
+  if (statusMsg) statusMsg.textContent = `조회 완료 — A조 ${driverLookupState.allA.length}명 / B조 ${driverLookupState.allB.length}명`;
+  driverLookupRender(mode);
+  if (resultArea) resultArea.style.display = 'block';
+}
+
+function driverLookupCopy() {
+  const q = '';
+  let text = '';
+  if (driverLookupState.currentMode === 'basic') {
+    const filtered = q
+      ? driverLookupState.allAB.filter(d => (d.name || '').includes(q) || String(d.id || '').includes(q))
+      : driverLookupState.allAB;
+    text = filtered.map((d, i) => `${i + 1}\t${d.id}\t${d.name}\t${d.group}`).join('\n');
+  } else {
+    const buses = driverLookupBuildBusMap();
+    const matchD = (d) =>
+      (d.name || '').includes(q) ||
+      String(d.id || '').includes(q) ||
+      driverLookupBusShort(d.busNumber).includes(q) ||
+      String(d.phone || '').includes(q);
+    const filtered = q ? buses.filter(e => String(e.bus || '').includes(q) || e.A.some(matchD) || e.B.some(matchD)) : buses;
+    const lines = [];
+    filtered.forEach(e => {
+      lines.push(String(e.bus || ''));
+      (e.A.length > 0 ? e.A : [null]).forEach(d => lines.push('A  ' + (d ? d.name : '-') + '  ' + (d ? (d.phone || '-') : '-')));
+      (e.B.length > 0 ? e.B : [null]).forEach(d => lines.push('B  ' + (d ? d.name : '-') + '  ' + (d ? (d.phone || '-') : '-')));
+      lines.push('');
+    });
+    text = lines.join('\n');
+  }
+  navigator.clipboard.writeText(text)
+    .then(() => alert('복사 완료'))
+    .catch(() => alert('복사 실패'));
+}
+
 /* ── Firebase 에서 차량 목록 로드 ───────────────────────── */
 async function loadBusListFromDB() {
   const DEFAULT = ['714','750','751','752','753','754','755','756','757',
@@ -1464,13 +1838,15 @@ async function initParking() {
     });
 
     /* 팝오버 내부 버튼 클릭 시 자동 닫기 (기능 실행은 각 모듈 바인딩이 담당) */
-    moreWrap.querySelectorAll('#moreSettingsBtn,#moreSimBtn').forEach(el => {
+    moreWrap.querySelectorAll('#moreSettingsBtn,#moreSimBtn,#moreDriverRankBtn,#moreDriverContactBtn').forEach(el => {
       el.addEventListener('click', () => setTimeout(closeMorePop, 0));
     });
 
     // 더보기 팝업 버튼 → 실제 기능 버튼 클릭 위임
     const moreSettingsBtn = document.getElementById('moreSettingsBtn');
     const moreSimBtn = document.getElementById('moreSimBtn');
+    const moreDriverRankBtn = document.getElementById('moreDriverRankBtn');
+    const moreDriverContactBtn = document.getElementById('moreDriverContactBtn');
     const appSettingsBtn = document.getElementById('appSettingsBtn');
     const parkingSimBtn = document.getElementById('parkingSimBtn');
     if (moreSettingsBtn && appSettingsBtn) {
@@ -1479,6 +1855,8 @@ async function initParking() {
     if (moreSimBtn && parkingSimBtn) {
       moreSimBtn.addEventListener('click', () => parkingSimBtn.click());
     }
+    if (moreDriverRankBtn) moreDriverRankBtn.addEventListener('click', () => driverLookupOpenModal('basic'));
+    if (moreDriverContactBtn) moreDriverContactBtn.addEventListener('click', () => driverLookupOpenModal('contact'));
 
     /* 바깥 클릭/스크롤 시 닫기 */
     document.addEventListener('click', (e) => {
@@ -1488,6 +1866,23 @@ async function initParking() {
     }, { capture: true });
     window.addEventListener('scroll', () => closeMorePop(), { passive: true });
   }
+
+  /* ── 운전기사 조회 모달 바인딩 ── */
+  const driverLookupModal = document.getElementById('driverLookupModal');
+  const driverLookupClose = document.getElementById('driverLookupClose');
+  const driverLookupRankBtn = document.getElementById('driverLookupRankBtn');
+  const driverLookupContactBtn = document.getElementById('driverLookupContactBtn');
+  const driverLookupCopyBtn = document.getElementById('driverLookupCopyBtn');
+  if (driverLookupClose) driverLookupClose.addEventListener('click', driverLookupCloseModal);
+  if (driverLookupModal) {
+    driverLookupModal.addEventListener('click', (e) => {
+      // 오버레이(바깥) 클릭만 닫기
+      if (e.target === driverLookupModal) driverLookupCloseModal();
+    });
+  }
+  if (driverLookupRankBtn) driverLookupRankBtn.addEventListener('click', () => driverLookupFetchAll('basic'));
+  if (driverLookupContactBtn) driverLookupContactBtn.addEventListener('click', () => driverLookupFetchAll('contact'));
+  if (driverLookupCopyBtn) driverLookupCopyBtn.addEventListener('click', driverLookupCopy);
 
   /* ── 차량 패널 이벤트 ── */
   /* ── 차량·행 버튼: 클릭마다 차량모드 → 행모드 → 종료 순환 ── */

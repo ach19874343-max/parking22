@@ -259,6 +259,31 @@ function tmplBottomNav() {
           </span>
           <span class="bnav-more-label">시뮬</span>
         </button>
+
+        <button class="bnav-more-btn" id="moreDriverRankBtn" aria-label="고참순위 조회">
+          <span class="bnav-more-icon" style="color:#2563EB">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M8 6h13"/>
+              <path d="M8 12h13"/>
+              <path d="M8 18h13"/>
+              <path d="M3 6h.01"/>
+              <path d="M3 12h.01"/>
+              <path d="M3 18h.01"/>
+            </svg>
+          </span>
+          <span class="bnav-more-label">고참순위</span>
+        </button>
+
+        <button class="bnav-more-btn" id="moreDriverContactBtn" aria-label="연락처 조회">
+          <span class="bnav-more-icon" style="color:#059669">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </span>
+          <span class="bnav-more-label">연락처</span>
+        </button>
       </div>
     </div>
 
@@ -398,6 +423,49 @@ function tmplAppSettingsModal() {
 </div>`;
 }
 
+/* ── 운전기사 조회 모달 (더보기 메뉴) ───────────────────────── */
+function tmplDriverLookupModal() {
+  return `
+  <div class="ap-sheet-modal" id="driverLookupModal">
+    <div class="ap-sheet settings settings-modal-box" style="max-height:90vh">
+      <div class="ap-sheet-grabber"></div>
+      <div class="ap-sheet-header">
+        <div class="ap-sheet-title">🚌 운전기사 조회</div>
+        <button class="ap-sheet-close" id="driverLookupClose" aria-label="닫기">&#10005;</button>
+      </div>
+      <div class="settings-scroll-body ap-sheet-body">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+          <button id="driverLookupRankBtn" type="button" class="btn-secondary" style="flex:1;min-width:140px;border:2px solid #2563eb;background:#eff6ff;color:#2563eb;font-weight:900;">
+            고참순위 조회
+          </button>
+          <button id="driverLookupContactBtn" type="button" class="btn-secondary" style="flex:1;min-width:140px;border:2px solid #059669;background:#ecfdf5;color:#059669;font-weight:900;">
+            연락처 조회
+          </button>
+          <button id="driverLookupCopyBtn" type="button" class="btn-secondary" style="flex:1;min-width:110px;border:2px solid #7c3aed;background:#f5f3ff;color:#7c3aed;font-weight:900;">
+            📋 복사
+          </button>
+        </div>
+
+        <div id="driverLookupStatusMsg" style="font-size:12px;min-height:18px;color:rgba(255,255,255,0.78);margin-bottom:8px;"></div>
+        <div id="driverLookupErrorBox" style="display:none;background:rgba(248,113,113,0.14);border:1px solid rgba(248,113,113,0.28);border-radius:12px;padding:10px 12px;font-size:12px;color:#fecaca;white-space:pre-wrap;line-height:1.6;margin-bottom:10px;"></div>
+
+        <div id="driverLookupResultArea" style="display:none;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <div id="driverLookupTitle" style="font-size:15px;font-weight:900;color:#fff;letter-spacing:-.02em;"></div>
+            <div id="driverLookupCount" style="font-size:12px;color:rgba(255,255,255,0.78);background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:2px 10px;"></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:14px;overflow:auto;max-height:56vh;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:520px;">
+              <thead id="driverLookupHead"></thead>
+              <tbody id="driverLookupBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 /* ── 관리자 로그인 모달 ─────────────────────────────────────── */
 // (removed unused empty templates: admin login modal)
 
@@ -443,6 +511,7 @@ function tmplDragGhost() {
   const extras = document.createElement('div');
   extras.innerHTML =
     tmplAppSettingsModal() +
+    tmplDriverLookupModal() +
     tmplDragGhost();
 
   /* ── FAB 토글 로직 제거됨 — 하단 탭바로 교체 ── */
