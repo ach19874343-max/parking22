@@ -578,13 +578,6 @@ function computeAutoParkingSingle(callback, onProgress, opts){
   const fastExitRankBanMax=Math.min(3,tomorrowList.length);
 
   const todayRestSet=new Set(dispatchState.todayMissing||[]);
-  /* 수동 휴차(그리드 노란색)도 휴차 후보에 포함 */
-  try{
-    const manual = (APP && typeof APP.getManualRestSetForCurrentDate==='function')
-      ? APP.getManualRestSetForCurrentDate()
-      : new Set();
-    manual.forEach(n=>todayRestSet.add(String(n).trim()));
-  }catch{}
   /* 정비소 제외 차량은 휴차 배치에서도 제외 */
   const dateStr=document.getElementById('datePicker')?.value||'';
   // 제외(취소선) 차량은 휴차 후보에서도 제외
@@ -1221,12 +1214,6 @@ async function apLearnSaveV2(dateStr) {
 
     // 휴차 카운트(오늘 휴차: todayMissing + 수동휴차 포함) — 기존 AutoPark와 동일한 입력 기반
     const todayRestSet = new Set((dispatchState.todayMissing || []).map(x => String(x).trim()));
-    try {
-      const manual = (APP && typeof APP.getManualRestSetForCurrentDate === 'function')
-        ? APP.getManualRestSetForCurrentDate()
-        : new Set();
-      manual.forEach(n => todayRestSet.add(String(n).trim()));
-    } catch {}
     const bothRestCount = [...todayRestSet].filter(n => tmrMissSet.has(n)).length;
 
     const RC = APP.rowCount || Math.ceil(Object.keys(values).length / 3) || 6;
@@ -1383,12 +1370,6 @@ async function apLearnLoad(entryOrder, tmrRank) {
         v2db = v2db.filter(x => x && (x.v === 2 || x.layoutTokens || x.derivedHints));
         if (v2db.length) {
           const myTodayRestSet = new Set((dispatchState.todayMissing || []).map(x => String(x).trim()));
-          try {
-            const manual = (APP && typeof APP.getManualRestSetForCurrentDate === 'function')
-              ? APP.getManualRestSetForCurrentDate()
-              : new Set();
-            manual.forEach(n => myTodayRestSet.add(String(n).trim()));
-          } catch {}
           const myTmrMissSet = new Set((dispatchState.tomorrowMissing || []).map(x => String(x).trim()));
           const myBoth = [...myTodayRestSet].filter(n => myTmrMissSet.has(n)).length;
 

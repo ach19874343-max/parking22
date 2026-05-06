@@ -372,7 +372,7 @@ function _restoreAbsentToGrid(num, dateStr) {
   }
   if (targetSlot !== null) {
     APP.parkingState.values[targetSlot] = num;
-    APP.parkingState.active[targetSlot] = true; /* 휴차 상태(rest) */
+    APP.parkingState.active[targetSlot] = false;
   }
   /* 원위치 기억 삭제 */
   if (APP.excludedSlotMap?.[dateStr]) {
@@ -470,13 +470,6 @@ function renderDispatchSection() {
 
   if (todayEl) {
     const miss = new Set(dispatchState.todayMissing || []);
-    // 수동 휴차(그리드 노란색)
-    try{
-      const manual = (APP && typeof APP.getManualRestSetForCurrentDate==='function')
-        ? APP.getManualRestSetForCurrentDate()
-        : new Set();
-      manual.forEach(n => miss.add(String(n).trim()));
-    }catch{}
     // 오늘 전용 제외(취소선)도 오늘 휴차 칩 영역에 포함
     exToday.forEach(n => miss.add(String(n).trim()));
     todayEl.innerHTML = buildChipsHTML(dispatchState.todayNums, [...miss], 'todayEntry', 'today');

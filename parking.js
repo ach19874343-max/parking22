@@ -1015,51 +1015,14 @@ function swapSlots(srcIdx, dstIdx) {
 
 /* ── 슬롯 상태 토글 (운행 ↔ 휴차) ─────────────────────── */
 function toggleCardState(slotIdx) {
-  if (!APP.parkingState.values[slotIdx]) return;
-  APP.parkingState.active[slotIdx] = !APP.parkingState.active[slotIdx];
-  renderCards();
-  saveData();
-  /* 수동 휴차가 오늘 입차/AutoPark 휴차 후보에 반영되도록 배차 섹션도 갱신 */
-  if (typeof renderDispatchSection === 'function') renderDispatchSection();
-}
-
-/* ── 수동 휴차(노란색) 차량 Set (현재 선택 날짜 기준) ────────── */
-function getManualRestSetForCurrentDate() {
-  const set = new Set();
-  const values = APP?.parkingState?.values || {};
-  const active = APP?.parkingState?.active || {};
-  const totalSlots = (APP.rowCount || 0) * 3;
-  for (let i = 0; i < totalSlots; i++) {
-    if (!active[i]) continue;
-    const v = values[i];
-    if (v !== undefined && v !== null && String(v).trim() !== '') set.add(String(v).trim());
-  }
-  return set;
+  // (deprecated) 수동 휴차 토글 기능 제거됨.
+  // 휴차 표시는 "순서조회(todayMissing)" 결과 기반으로만 렌더링한다.
+  return;
 }
 
 /* ── 카드 터치/드래그 이벤트 설정 ──────────────────────── */
 function setupCardEvents(card, slotIdx) {
-  /* ── PC: 클릭 = 탭-투-스왑 / 꾹클릭(500ms) = 휴차토글 ── */
-  let mouseTimer = null, mouseLong = false;
-
-  card.addEventListener('mousedown', () => {
-    mouseLong  = false;
-    mouseTimer = setTimeout(() => {
-      mouseLong = true;
-      toggleCardState(slotIdx);
-      /* 첫 탭 선택 중이었으면 취소 */
-      if (tapFirstSlot !== null || tapConfirmSlot !== null) {
-        clearTapState();
-      }
-    }, 500);
-  });
-
-  card.addEventListener('mouseup',    () => clearTimeout(mouseTimer));
-  card.addEventListener('mouseleave', () => clearTimeout(mouseTimer));
-
   card.addEventListener('click', () => {
-    if (mouseLong) return;
-
     /* ── 파란(확인) 상태일 때 ── */
     if (tapConfirmSlot !== null) {
       if (slotIdx === tapConfirmSlot) {
@@ -1099,50 +1062,22 @@ function setupCardEvents(card, slotIdx) {
     highlightMatchingChips(APP.parkingState.values[slotIdx]);
   });
 
-  /* ── 모바일: 롱프레스 → 휴차토글 / 탭 → 탭-투-스왑 ── */
-  let startX, startY, startScrollY, touchMoved = false, longPressed = false;
-  let cardTouchTimer = null;
-
+  /* ── 모바일: 탭 → 탭-투-스왑 ── */
+  let touchMoved = false;
+  let startX, startY;
   card.addEventListener('touchstart', e => {
     startX      = e.touches[0].clientX;
     startY      = e.touches[0].clientY;
-    startScrollY = window.scrollY || 0;
     touchMoved  = false;
-    longPressed = false;
-
-    /* 롱프레스 타이머:
-       - 모바일 스크롤 중(또는 손가락이 조금이라도 움직이면) 휴차 토글이 되지 않게 보수적으로 판정 */
-    clearTimeout(cardTouchTimer);
-    cardTouchTimer = setTimeout(() => {
-      const curScrollY = window.scrollY || 0;
-      if (touchMoved) return;
-      if (Math.abs(curScrollY - (startScrollY || 0)) > 2) return; /* 스크롤 발생 */
-      longPressed = true;
-      toggleCardState(slotIdx);
-      if (navigator.vibrate) navigator.vibrate(35);
-
-      /* 첫 탭 선택 중이었으면 취소 */
-      if (tapFirstSlot !== null || tapConfirmSlot !== null) {
-        clearTapState();
-      }
-    }, 650);
   }, { passive: true });
-
   card.addEventListener('touchmove', e => {
     const dx = Math.abs(e.touches[0].clientX - startX);
     const dy = Math.abs(e.touches[0].clientY - startY);
-    if (dx > 6 || dy > 6) {
-      touchMoved = true;
-      clearTimeout(cardTouchTimer);
-    }
+    if (dx > 6 || dy > 6) touchMoved = true;
   }, { passive: true });
-
   card.addEventListener('touchend', e => {
-    clearTimeout(cardTouchTimer);
-    if (touchMoved || longPressed) return; /* 스크롤 or 롱프레스 → 무시 */
-
-    e.preventDefault(); /* 탭 처리 */
-
+    if (touchMoved) return;
+    e.preventDefault();
     if (tapConfirmSlot !== null) {
       /* ── 파란 확인 중 ── */
       if (slotIdx === tapConfirmSlot) {
@@ -1180,11 +1115,7 @@ function setupCardEvents(card, slotIdx) {
     highlightMatchingChips(APP.parkingState.values[slotIdx]);
   }, { passive: false });
 
-  card.addEventListener('touchcancel', () => {
-    clearTimeout(cardTouchTimer);
-    touchMoved  = false;
-    longPressed = false;
-  });
+  card.addEventListener('touchcancel', () => { touchMoved = false; }, { passive: true });
 }
 
 /* ── 빈 슬롯 드롭 이벤트 (항상 설정, admin 모드 체크는 drop 시) ── */
@@ -1283,11 +1214,10 @@ function renderCards() {
     for (let col = 0; col < 3; col++) {
       const slotIdx = rowIdx * 3 + col;
       const vehicle = APP.parkingState.values[slotIdx] || '';
-      const manualRest  = APP.parkingState.active[slotIdx] || false;
       const dateStrNow = document.getElementById('datePicker')?.value || '';
       const autoRestSet = APP.autoRestByDate?.[dateStrNow];
       const autoRest = !!(vehicle && autoRestSet && autoRestSet.has(String(vehicle).trim()));
-      const isRest = manualRest || autoRest;
+      const isRest = autoRest;
 
       const card = document.createElement('div');
       card.dataset.slot = slotIdx;
@@ -1742,7 +1672,6 @@ async function initParking() {
   APP.loadData                   = loadData;
   APP.renderCards                = renderCards;
   APP.saveData                   = saveData;
-  APP.getManualRestSetForCurrentDate = getManualRestSetForCurrentDate;
   /* 자동 휴차(순서조회 기반) 표시용 — 저장하지 않고 렌더링에만 합산 */
   if (!APP.autoRestByDate) APP.autoRestByDate = {}; /* { [dateStr]: Set<num> } */
   APP.setAutoRestSetForDate = function(dateStr, nums){
