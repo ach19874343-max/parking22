@@ -104,13 +104,10 @@ function extractTodayNums(items) {
     }
   }
   const sortedOrders = Object.keys(groups).sort((a, b) => +a - +b);
-  const seen   = new Set();
   const raw    = [];
   for (const key of sortedOrders) {
     const g     = groups[key];
     const last3 = String(g.busNumber).slice(-3);
-    if (seen.has(last3)) continue;
-    seen.add(last3);
     /* busRound===4 → 조기, busRound===5 → 일반, 그 외 → null(보정 필요) */
     const knownEarly = g.busRound === 4 ? true : g.busRound === 5 ? false : null;
     raw.push({ num: last3, isEarly: knownEarly, startOrder: +key });
@@ -167,38 +164,70 @@ function getMissingNums(numsArr) {
   return (APP.currentBusList || []).filter(n => !set.has(n));
 }
 
+/* ── 운행 칩 목록(중복 번호 포함) ───────────────────────────── */
+function buildOperatingChipList(numsArr, missingSet, orderMode) {
+  const so = (n) => (typeof n.startOrder === 'number' ? n.startOrder : 9999);
+  const entryKey = (n) => `${n.num ?? n}|${typeof n.startOrder === 'number' ? n.startOrder : ''}`;
+  const entries = (numsArr || []).filter(n => !missingSet.has(n.num ?? n));
+
+  if (orderMode === 'todayEntry' && typeof getTodayRunningOrderedEntries === 'function') {
+    const ordered = getTodayRunningOrderedEntries();
+    const shown = new Set(ordered.map(entryKey));
+    const tail = entries
+      .filter(n => !shown.has(entryKey(n)))
+      .sort((a, b) => so(a) - so(b));
+    return [...ordered, ...tail];
+  }
+
+  const early  = entries.filter(n => n.isEarly).sort((a, b) => so(a) - so(b));
+  const normal = entries.filter(n => !n.isEarly).sort((a, b) => so(a) - so(b));
+  return [...early, ...normal];
+}
+
+/* ── 2회 이상 나온 번호 집합(휴차 제외) ─────────────────────── */
+function getDuplicateNumSet(entries) {
+  const counts = new Map();
+  for (const e of entries) {
+    const num = e.num ?? e;
+    counts.set(num, (counts.get(num) || 0) + 1);
+  }
+  const dups = new Set();
+  counts.forEach((c, num) => { if (c >= 2) dups.add(num); });
+  return dups;
+}
+
+const DC_CHIP_DUP_ICON =
+  '<span class="dc-chip-dup" title="중복 번호" aria-label="중복">' +
+  '<svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true">' +
+  '<rect x="0.5" y="2.5" width="5.5" height="5.5" rx="0.8" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
+  '<rect x="3.5" y="0.5" width="5.5" height="5.5" rx="0.8" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
+  '</svg></span>';
+
+function makeOperatingChipHTML({ num, isEarly }, isDup) {
+  const cls = [
+    'dc-chip',
+    isEarly ? 'dc-chip--early' : '',
+    isDup ? 'dc-chip--duplicate' : '',
+  ].filter(Boolean).join(' ');
+  const inner = isDup
+    ? `<span class="dc-chip-label">${num}</span>${DC_CHIP_DUP_ICON}`
+    : num;
+  return `<span class="${cls}" data-num="${num}" style="cursor:pointer">${inner}</span>`;
+}
+
 /* ── 칩 HTML 생성 ─────────────────────────────────────────────
    @param {'todayEntry'|undefined} orderMode — 오늘만 'todayEntry' 로 자동주차 입차 순열과 동일 정렬
 ────────────────────────────────────────────────────────────── */
 function buildChipsHTML(numsArr, missing, orderMode, dayKey) {
   const parts = [];
-  const so = (n) => (typeof n.startOrder === 'number' ? n.startOrder : 9999);
   const missingSet = new Set(missing);
-  const inNums = new Set((numsArr || []).map(n => n.num ?? n));
+  const operating = buildOperatingChipList(numsArr, missingSet, orderMode);
+  const dupNums = getDuplicateNumSet(operating);
 
-  /** 오늘 입차: 엔진과 동일(전체 startOrder 정렬 후 조기 최소에서 원형). 내일 칩은 기존 조기+일반 묶음 유지 */
-  let runningOrdered = [];
-  if (orderMode === 'todayEntry' && typeof getTodayRunningOrderedEntries === 'function') {
-    runningOrdered = getTodayRunningOrderedEntries().filter(b => inNums.has(b.num ?? b));
-  } else {
-    const early = numsArr.filter((n) => n.isEarly).sort((a, b) => so(a) - so(b));
-    const normal = numsArr.filter((n) => !n.isEarly).sort((a, b) => so(a) - so(b));
-    runningOrdered = [...early, ...normal];
-  }
-  const used = new Set();
-  runningOrdered.forEach(({ num, isEarly }) => {
-    if (missingSet.has(num)) return;
-    used.add(num);
-    parts.push(`<span class="dc-chip${isEarly ? ' dc-chip--early' : ''}" data-num="${num}" style="cursor:pointer">${num}</span>`);
+  operating.forEach((entry) => {
+    const num = entry.num ?? entry;
+    parts.push(makeOperatingChipHTML(entry, dupNums.has(num)));
   });
-  /* 엔진에서 제외(정비소 등)됐지만 todayNums 에 남아 있는 운행 칩 — 뒤에 startOrder 순 */
-  (numsArr || [])
-    .filter(n => !missingSet.has(n.num ?? n) && !used.has(n.num ?? n))
-    .sort((a, b) => so(a) - so(b))
-    .forEach(({ num, isEarly }) => {
-      used.add(num);
-      parts.push(`<span class="dc-chip${isEarly ? ' dc-chip--early' : ''}" data-num="${num}" style="cursor:pointer">${num}</span>`);
-    });
 
   /* 휴차 칩 — 제외 여부에 따라 스타일 분기 */
   const dateStr = document.getElementById('datePicker')?.value || '';
