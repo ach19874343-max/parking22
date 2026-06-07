@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>배차 조회</title>
+
+<style>
+*{box-sizing:border-box;}
+
+body{
+margin:0;
+background:#f3f4f6;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+color:#111827;
+}
+
+.header{
+position:sticky;
+top:0;
+z-index:10;
+background:#fff;
+padding:15px;
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+
+.date-wrap{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:15px;
+}
+
+.nav-btn{
+width:42px;
+height:42px;
+border:none;
+border-radius:10px;
+background:#2563eb;
+color:#fff;
+font-size:18px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.date-text{
+font-size:20px;
+font-weight:800;
+}
+
+.container{
+padding:15px;
+max-width:800px;
+margin:auto;
+}
+
+.card{
+background:#fff;
+border-radius:14px;
+padding:16px;
+margin-bottom:12px;
+box-shadow:0 1px 6px rgba(0,0,0,.08);
+}
+
+.driver{
+font-size:20px;
+font-weight:800;
+margin-bottom:10px;
+}
+
+.route{
+color:#2563eb;
+}
+
+.period{
+color:#16a34a;
+}
+
+.off{
+color:#dc2626;
+}
+
+.round{
+padding:4px 0;
+font-size:15px;
+}
+
+.loading{
+padding:60px;
+text-align:center;
+font-size:18px;
+}
+
+.error{
+padding:60px;
+text-align:center;
+color:red;
+font-size:18px;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="date-wrap">
+<button class="nav-btn" onclick="changeDate(-1)">◀</button>
+<div id="dateText" class="date-text"></div>
+<button class="nav-btn" onclick="changeDate(1)">▶</button>
+</div>
+</div>
+
+<div id="content" class="container">
+<div class="loading">조회중...</div>
+</div>
+
+<script>
+
+const WORKER='https://jolly-voice-134c.ach4343.workers.dev/';
+
+const ROUTES={
+'917':'https://api.kiki-bus.com/dispatch/123',
+'3030':'https://api.kiki-bus.com/dispatch/130',
+'5-2':'https://api.kiki-bus.com/dispatch/083'
+};
+
+const TARGET_DRIVERS=[
+{name:'장재열',route:'5-2'},
+{name:'김동성',route:'5-2'},
+{name:'최창순',route:'917'},
+{name:'안창해',route:'3030'}
+];
+
+let currentDate=new Date();
+
+function formatDate(d){
+return d.getFullYear()+'-'+
+String(d.getMonth()+1).padStart(2,'0')+'-'+
+String(d.getDate()).padStart(2,'0');
+}
+
+function formatHeader(d){
+const w=['일','월','화','수','목','금','토'];
+return `${d.getFullYear()}년 ${String(d.getMonth()+1).padStart(2,'0')}월 ${String(d.getDate()).padStart(2,'0')}일(${w[d.getDay()]})`;
+}
+
+function changeDate(diff){
+currentDate.setDate(currentDate.getDate()+diff);
+loadAll();
+}
+
+function getPeriod(time){
+
+if(!time) return '휴무';
+
+const hour=parseInt(time.split(':')[0]);
+
+return hour < 12 ? '오전' : '오후';
+}
+
+async function fetchRoute(route,date){
+
+const key=`dispatch_${route}_${date}`;
+
+const cached=localStorage.getItem(key);
+
+if(cached){
+return JSON.parse(cached);
+}
+
+const target=
+ROUTES[route]+'/'+date;
+
+const url=
+WORKER+
+'?url='+
+encodeURIComponent(target);
+
+const res=await fetch(url);
+
+if(!res.ok){
+throw new Error(route);
+}
+
+const json=await res.json();
+
+localStorage.setItem(
+key,
+JSON.stringify(json)
+);
+
+return json;
+}
+
+async function loadAll(){
+
+const content=document.getElementById('content');
+
+content.innerHTML=
+'<div class="loading">조회중...</div>';
+
+document.getElementById('dateText').textContent=
+formatHeader(currentDate);
+
+const date=formatDate(currentDate);
+
+try{
+
+const [r917,r3030,r52]=await Promise.all([
+fetchRoute('917',date),
+fetchRoute('3030',date),
+fetchRoute('5-2',date)
+]);
+
+const drivers={};
+
+[
+{route:'917',data:r917},
+{route:'3030',data:r3030},
+{route:'5-2',data:r52}
+].forEach(routeData=>{
+
+if(!routeData.data.object) return;
+
+routeData.data.object.forEach(item=>{
+
+const name=item.driverName;
+
+const target=
+TARGET_DRIVERS.find(
+d=>d.name===name
+);
+
+if(!target) return;
+
+if(!drivers[name]){
+drivers[name]={
+route:routeData.route,
+rounds:[]
+};
+}
+
+drivers[name].rounds.push({
+round:Number(item.busRound),
+time:item.startTime
+});
+
+});
+
+});
+
+let html='';
+
+TARGET_DRIVERS.forEach(driver=>{
+
+const data=drivers[driver.name];
+
+if(!data){
+
+html+=`
+<div class="card">
+<div class="driver">
+${driver.name}
+-
+<span class="route">${driver.route}</span>
+-
+<span class="off">휴무</span>
+</div>
+
+<div class="round">
+배차 없음
+</div>
+</div>
+`;
+
+return;
+}
+
+data.rounds.sort(
+(a,b)=>a.round-b.round
+);
+
+const period=
+getPeriod(
+data.rounds[0].time
+);
+
+html+=`
+<div class="card">
+<div class="driver">
+${driver.name}
+-
+<span class="route">${driver.route}</span>
+-
+<span class="period">${period}</span>
+</div>
+`;
+
+data.rounds.forEach(r=>{
+
+html+=`
+<div class="round">
+${r.round+1}회차 - ${r.time}
+</div>
+`;
+
+});
+
+html+='</div>';
+
+});
+
+content.innerHTML=html;
+
+}
+catch(e){
+
+content.innerHTML=
+'<div class="error">데이터 조회 실패</div>';
+
+console.error(e);
+}
+
+}
+
+loadAll();
+
+</script>
+</body>
+</html>
