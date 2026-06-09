@@ -224,39 +224,36 @@ flex-shrink:0;
 display:flex;
 align-items:center;
 flex-wrap:nowrap;
-gap:clamp(3px,2cqw,6px);
+gap:clamp(2px,1.5cqw,5px);
 width:100%;
-overflow:hidden;
+min-width:0;
 }
 
 .driver-name{
-font-size:clamp(13px,26cqh,20px);
+font-size:clamp(12px,24cqh,18px);
 font-weight:800;
 letter-spacing:-.03em;
 white-space:nowrap;
-flex-shrink:0;
-}
-
-.driver-id{
-font-size:clamp(8px,15cqh,11px);
-font-weight:600;
-color:var(--text-muted);
-background:var(--slate-soft);
-padding:1px 5px;
-border-radius:4px;
-flex-shrink:0;
+flex-shrink:1;
+min-width:2.4em;
+overflow:hidden;
+text-overflow:ellipsis;
 }
 
 .badge{
 display:inline-flex;
 align-items:center;
-padding:clamp(2px,2cqh,4px) clamp(5px,3.5cqw,9px);
+justify-content:center;
+box-sizing:border-box;
+width:2.75em;
+padding:clamp(2px,2cqh,4px) 0;
 border-radius:6px;
 font-size:clamp(9px,17cqh,12px);
 font-weight:700;
 color:#fff;
 flex-shrink:0;
 box-shadow:0 1px 3px rgba(0,0,0,.12);
+text-align:center;
 }
 
 .badge-5-2{background:var(--green);}
@@ -268,12 +265,23 @@ box-shadow:0 1px 3px rgba(0,0,0,.12);
 .tag{
 display:inline-flex;
 align-items:center;
-padding:clamp(2px,2cqh,3px) clamp(5px,3cqw,8px);
+justify-content:center;
+padding:clamp(2px,2cqh,3px) clamp(4px,2.5cqw,7px);
 border-radius:6px;
-font-size:clamp(9px,16cqh,12px);
+font-size:clamp(8px,15cqh,11px);
 font-weight:600;
-flex-shrink:0;
+flex-shrink:1;
+min-width:2.3em;
 border:1px solid transparent;
+text-align:center;
+white-space:nowrap;
+}
+
+.tag-지원,.tag-지원오전,.tag-지원오후{
+min-width:0;
+max-width:5.8em;
+overflow:hidden;
+text-overflow:ellipsis;
 }
 
 .tag-오전{background:#fef9c3;color:#92400e;}
@@ -285,12 +293,12 @@ border:1px solid transparent;
 
 .month-btn{
 margin-left:auto;
-padding:clamp(2px,2cqh,4px) clamp(6px,3.5cqw,10px);
+padding:clamp(2px,2cqh,4px) clamp(4px,2.5cqw,8px);
 border:1px solid var(--border);
 border-radius:6px;
 background:rgba(255,255,255,.8);
 color:var(--text-sub);
-font-size:clamp(8px,15cqh,11px);
+font-size:clamp(7px,14cqh,10px);
 font-weight:600;
 cursor:pointer;
 -webkit-tap-highlight-color:transparent;
@@ -298,18 +306,40 @@ white-space:nowrap;
 flex-shrink:0;
 box-shadow:0 1px 2px rgba(15,23,42,.04);
 }
+
+.month-txt-short{display:none;}
+
 .month-btn:active{transform:scale(.96);}
 
 .status-pill{
 display:inline-flex;
 align-items:center;
-gap:4px;
-padding:clamp(2px,2cqh,4px) clamp(6px,3.5cqw,9px);
+justify-content:center;
+gap:3px;
+padding:clamp(2px,2cqh,4px) clamp(4px,2.5cqw,7px);
 border-radius:999px;
-font-size:clamp(9px,16cqh,12px);
+font-size:clamp(8px,15cqh,11px);
 font-weight:700;
-flex-shrink:0;
+flex-shrink:1;
+min-width:2.8em;
 border:1px solid transparent;
+white-space:nowrap;
+}
+
+@container card (max-width:340px){
+.card-header-row{gap:2px;}
+.driver-name{font-size:clamp(11px,22cqh,15px);min-width:2.2em;}
+.badge{width:2.65em;font-size:clamp(8px,15cqh,10px);}
+.tag{font-size:clamp(7px,13cqh,9px);padding:1px 3px;min-width:2em;}
+.status-pill{font-size:clamp(7px,13cqh,9px);min-width:2.6em;padding:1px 4px;gap:2px;}
+.status-pill::before{width:4px;height:4px;}
+.month-btn{font-size:clamp(6px,12cqh,9px);padding:1px 4px;}
+.month-txt-full{display:none;}
+.month-txt-short{display:inline;}
+}
+
+@media (max-width:380px){
+.card-header{padding-left:clamp(4px,3cqw,8px);padding-right:clamp(4px,3cqw,8px);}
 }
 
 .status-pill::before{
@@ -710,8 +740,8 @@ function formatStartCountdown(totalSec){
 if(totalSec<=0) return '';
 const min=Math.floor(totalSec/60);
 const sec=totalSec%60;
-if(min>0) return `${min}분 ${sec}초후 근무 시작`;
-return `${sec}초후 근무 시작`;
+if(min>0) return `${min}분 ${sec}초후 운행 시작`;
+return `${sec}초후 운행 시작`;
 }
 
 function getBusNo(busNumber){
@@ -730,10 +760,17 @@ for(let i=0;i<name.length;i++) h+=name.charCodeAt(i);
 return BADGE_COLORS[h%BADGE_COLORS.length];
 }
 
-function normalizeRouteName(name){
+function displayRouteLabel(name){
 if(!name) return '';
 const s=String(name).trim().replace(/\s+/g,'');
-if(s==='5-2'||s==='중형5-2'||s.includes('중형5-2')) return '5-2';
+const stripped=s.replace(/^[\uAC00-\uD7A3]+(?=[\d0-9])/, '');
+return stripped||s;
+}
+
+function normalizeRouteName(name){
+if(!name) return '';
+const s=displayRouteLabel(name);
+if(s==='5-2'||s.includes('5-2')) return '5-2';
 if(s==='917'||s.startsWith('917')) return '917';
 if(s==='3030'||s.startsWith('3030')) return '3030';
 return s;
@@ -1125,7 +1162,7 @@ return getRegularOffInfo(dayMap,year,month).text;
 
 function buildBadgeHtml(displayRoute,driver,isSupport){
 if(isSupport){
-return `<span class="badge badge-지원">${displayRoute}</span>`;
+return `<span class="badge badge-지원">${displayRouteLabel(displayRoute)}</span>`;
 }
 return `<span class="badge badge-${routeBadge(driver.route)}">${driver.route}</span>`;
 }
@@ -1405,7 +1442,6 @@ html+=`<div class="card card-accent-${accent}" data-idx="${order}">`;
 html+=`<div class="card-header">`;
 html+=`<div class="card-header-row">`;
 html+=`<span class="driver-name">${driver.name}</span>`;
-html+=`<span class="driver-id">${driver.id}</span>`;
 html+=buildBadgeHtml(displayRoute,driver,isSupport);
 
 if(schedule){
@@ -1413,7 +1449,7 @@ html+=`<span class="tag tag-${schedule.cls}">${schedule.label}</span>`;
 }
 
 html+=`<span class="status-pill pill-${workStatus.cls}">${workStatus.label}</span>`;
-html+=`<button class="month-btn" onclick="openMonthModal(${order})">월간조회</button>`;
+html+=`<button class="month-btn" onclick="openMonthModal(${order})" aria-label="월간조회"><span class="month-txt-full">월간조회</span><span class="month-txt-short">월간</span></button>`;
 html+=`</div>`;
 html+=`</div>`;
 
