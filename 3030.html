@@ -947,11 +947,6 @@ return{label:'휴무',cls:'휴무'};
 return getWorkStatus(rounds,route,viewDate,useExtended);
 }
 
-function isScheduledWork(schedule){
-return schedule?.cls==='오전'||schedule?.cls==='오후'||
-schedule?.cls==='지원'||schedule?.cls==='지원오전'||schedule?.cls==='지원오후';
-}
-
 function startOfDay(d){
 return new Date(d.getFullYear(),d.getMonth(),d.getDate());
 }
@@ -1454,16 +1449,7 @@ html+=`</div>`;
 html+=`</div>`;
 
 if(!hasData){
-if(isScheduledWork(schedule)){
-html+=`<div class="card-body">`;
-padRoundRows([]).forEach(()=>{
-html+=`<div class="round-row round-row-empty" aria-hidden="true"></div>`;
-});
-html+=`</div>`;
 html+=`<div class="off-msg">배차 없음</div>`;
-}else{
-html+=`<div class="off-msg">배차 없음</div>`;
-}
 }else{
 
 const roundStatuses=padRoundRows(getRoundStatus(rounds,workStatus.cls),isSupport);
