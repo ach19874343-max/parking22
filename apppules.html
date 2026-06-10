@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>안창해·조합비·공제회비 관리</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f8fc;
+  --bg-accent: #eef1fb;
+  --surface: #ffffff;
+  --text: #111827;
+  --text-sub: #6b7280;
+  --text-muted: #9ca3af;
+  --border: #e5e7ef;
+  --shadow: 0 1px 2px rgba(17, 24, 39, 0.05), 0 2px 8px rgba(17, 24, 39, 0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --deduct: #f43f5e;
+  --deduct-bg: #fff1f3;
+  --union: #3b82f6;
+  --union-bg: #eff6ff;
+  --total: #8b5cf6;
+  --total-bg: #f5f3ff;
+  --bonus: #0d9488;
+  --bonus-bg: #f0fdfa;
+  --current-bg: #f8faff;
+  --current-border: #6366f1;
+}
+body.dark {
+  --bg: #0c0e14;
+  --bg-accent: #141824;
+  --surface: #181b26;
+  --text: #f9fafb;
+  --text-sub: #9ca3af;
+  --text-muted: #6b7280;
+  --border: #2a2f3d;
+  --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.2);
+  --deduct-bg: #2a1520;
+  --union-bg: #152030;
+  --total-bg: #1f1a30;
+  --bonus-bg: #0f2926;
+  --current-bg: #1a1f35;
+  --current-border: #818cf8;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top, 0);
+}
+body.dark .app-header { background: rgba(24, 27, 38, 0.92); }
+.header-inner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.header-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.header-title em {
+  font-style: normal;
+  color: var(--text-sub);
+  font-weight: 400;
+}
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.save-badge {
+  font-size: 0.6875rem;
+  color: var(--bonus);
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.save-badge.show { opacity: 1; }
+.sync-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.sync-badge.cloud { color: var(--bonus); }
+.sync-badge.err { color: var(--deduct); }
+.theme-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  transition: border-color 0.15s;
+}
+.theme-btn:hover { border-color: var(--current-border); }
+.theme-btn:disabled { opacity: 0.5; cursor: wait; }
+.shot-btn {
+  width: auto;
+  padding: 0 10px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-sub);
+}
+#shotArea {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 10px 12px calc(16px + env(safe-area-inset-bottom, 0));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Stats ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.stat-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  min-width: 0;
+}
+.stat-deduct { border-left-color: var(--deduct); }
+.stat-union { border-left-color: var(--union); }
+.stat-all { border-left-color: var(--total); }
+.stat-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stat-value {
+  font-size: clamp(0.8125rem, 3.2vw, 1rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-deduct .stat-value { color: var(--deduct); }
+.stat-union .stat-value { color: var(--union); }
+.stat-all .stat-value { color: var(--total); }
+.stat-avg {
+  margin-top: 3px;
+  font-size: clamp(0.5625rem, 2.2vw, 0.6875rem);
+  font-weight: 500;
+  color: var(--text-sub);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stat-deduct .stat-avg { color: #f472b6; }
+.stat-union .stat-avg { color: #60a5fa; }
+.stat-all .stat-avg { color: #a78bfa; }
+body.dark .stat-deduct .stat-avg { color: #fb7185; }
+body.dark .stat-union .stat-avg { color: #93c5fd; }
+body.dark .stat-all .stat-avg { color: #c4b5fd; }
+
+/* ── Bonus (compact) ── */
+.bonus-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+}
+.bonus-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.bonus-title {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--bonus);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.bonus-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  flex: 1;
+  min-width: 0;
+  font-size: clamp(0.75rem, 2.8vw, 0.8125rem);
+}
+.bf {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.bf.medium { color: var(--union); }
+.bf.medium em { font-style: normal; font-weight: 700; }
+.bf.large { color: var(--bonus); }
+.bf.large em { font-style: normal; font-weight: 700; }
+.bo {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.75rem;
+  user-select: none;
+}
+.members-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  color: var(--deduct);
+}
+.members-input {
+  width: 2.8em;
+  min-width: 28px;
+  max-width: 56px;
+  text-align: center;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--deduct);
+  border: none;
+  border-bottom: 1px dashed var(--deduct);
+  background: transparent;
+  font-family: inherit;
+  outline: none;
+  padding: 0 2px;
+}
+.members-input::placeholder { color: var(--text-muted); font-weight: 500; }
+.bf.result {
+  color: var(--bonus);
+  font-weight: 700;
+  font-size: clamp(0.8125rem, 3vw, 0.9375rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+.bf.result.empty {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* ── List ── */
+.list-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.list-header {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.list-header h2 {
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+.year-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid var(--border);
+}
+.year-nav button {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+.year-nav button:hover { background: var(--surface); color: var(--text); }
+.year-display {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  min-width: 40px;
+  text-align: center;
+  padding: 0 2px;
+}
+.current-hint {
+  font-size: 0.6875rem;
+  color: var(--text-sub);
+  padding: 6px 12px 8px;
+  line-height: 1.4;
+}
+.current-hint strong { color: var(--current-border); font-weight: 600; }
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.month-table {
+  width: 100%;
+  min-width: 340px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.month-table col.col-month { width: 28%; }
+.month-table col.col-amt { width: 26%; }
+.month-table col.col-sum { width: 20%; }
+.month-table thead th {
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+.month-table thead th:nth-child(n+2) { text-align: right; }
+.month-table tbody tr {
+  border-bottom: 1px solid var(--border);
+}
+.month-table tbody tr:last-child { border-bottom: none; }
+.month-table tbody tr.current-month {
+  background: var(--current-bg);
+  box-shadow: inset 2px 0 0 var(--current-border);
+}
+.month-table td {
+  padding: 6px 8px;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.month-table td:nth-child(n+2) { text-align: right; }
+.month-label {
+  font-weight: 600;
+  font-size: clamp(0.6875rem, 2.6vw, 0.8125rem);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.month-label .badge {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  color: var(--current-border);
+  background: rgba(99, 102, 241, 0.1);
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.amount-input {
+  width: 100%;
+  padding: 5px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: clamp(0.6875rem, 2.5vw, 0.75rem);
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--text);
+  text-align: right;
+  min-width: 0;
+}
+.amount-input:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--current-border);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+}
+.amount-input.formatted { font-weight: 600; }
+.amount-input.union-field:focus { border-color: var(--union); }
+.amount-input.deduct-field:focus { border-color: var(--deduct); }
+.amount-input::placeholder { color: var(--text-muted); }
+.sum-display {
+  font-weight: 600;
+  font-size: clamp(0.6875rem, 2.5vw, 0.75rem);
+  display: block;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sum-display.empty { color: var(--text-muted); font-weight: 400; }
+
+.toast {
+  position: fixed;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0));
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  background: var(--text);
+  color: var(--surface);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease;
+  z-index: 100;
+  pointer-events: none;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.error { background: var(--deduct); color: #fff; }
+
+@media (max-width: 400px) {
+  .stats-row { grid-template-columns: 1fr; gap: 6px; }
+  .bonus-inner { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .bonus-row { width: 100%; }
+}
+
+@media (min-width: 721px) {
+  .wrap { padding: 14px 16px 24px; gap: 12px; }
+  .stat-value { font-size: 1.0625rem; }
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-title">안창해 <em>·</em> 조합비 <em>·</em> 공제회비</div>
+    <div class="header-actions">
+      <span class="sync-badge" id="syncBadge" title="동기화 대기">☁ …</span>
+      <span class="save-badge" id="saveBadge">✓ 저장됨</span>
+      <button class="theme-btn shot-btn" id="shotBtn" onclick="saveScreenshot()" title="통계·전별금 스샷 저장" aria-label="통계와 예상 전별금 스크린샷 저장">스샷</button>
+      <button class="theme-btn" onclick="toggleDark()" title="다크모드" aria-label="다크모드">◐</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="shotArea">
+  <div class="stats-row" id="stats"></div>
+
+  <section class="bonus-section">
+    <div class="bonus-inner">
+      <span class="bonus-title">예상 전별금</span>
+      <div class="bonus-row">
+        <span class="bf medium">중형 <em>225</em>×<span id="mediumCount">0</span></span>
+        <span class="bo">+</span>
+        <span class="bf large">대형 <em>450</em>×<span id="largeCount">0</span></span>
+        <span class="bo">×</span>
+        <span class="bf members-wrap">
+          <input type="text" inputmode="numeric" class="members-input" id="membersInput"
+            placeholder="0" oninput="onMembersInput()" aria-label="조합원 수">명
+        </span>
+        <span class="bo">=</span>
+        <span class="bf result empty" id="bonusResult">조합원 입력</span>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <section class="list-section">
+    <div class="list-header">
+      <h2>월별 내역</h2>
+      <div class="year-nav">
+        <button onclick="changeYear(-1)" aria-label="이전 연도">‹</button>
+        <span class="year-display" id="yearDisplay"></span>
+        <button onclick="changeYear(1)" aria-label="다음 연도">›</button>
+      </div>
+    </div>
+    <p class="current-hint" id="currentHint"></p>
+    <div class="table-scroll">
+      <table class="month-table">
+        <colgroup>
+          <col class="col-month"><col class="col-amt"><col class="col-amt"><col class="col-sum">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>년월</th>
+            <th>조합비</th>
+            <th>공제회비</th>
+            <th>합계</th>
+          </tr>
+        </thead>
+        <tbody id="monthList"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="union-fee-firebase-886.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+const STORAGE_KEY = 'unionFeeData';
+const MEMBERS_KEY = 'unionMembers';
+const RATE_MEDIUM = 225;
+const RATE_LARGE = 450;
+const LARGE_FROM_Y = 2025;
+const LARGE_FROM_M = 12;
+const SEED_DATA = [
+  { y: 2025, m: 4,  u: 79792,  mu: 30000  },
+  { y: 2025, m: 5,  u: 83034,  mu: 57200  },
+  { y: 2025, m: 6,  u: 80699,  mu: 52425  },
+  { y: 2025, m: 7,  u: 74772,  mu: 75635  },
+  { y: 2025, m: 8,  u: 83784,  mu: 7475   },
+  { y: 2025, m: 9,  u: 74772,  mu: 44700  },
+  { y: 2025, m: 10, u: 88440,  mu: 33350  },
+  { y: 2025, m: 11, u: 84148,  mu: 23870  },
+  { y: 2025, m: 12, u: 149775, mu: 324180 },
+  { y: 2026, m: 1,  u: 86384,  mu: 200400 },
+  { y: 2026, m: 2,  u: 93232,  mu: 254650 },
+  { y: 2026, m: 3,  u: 90996,  mu: 419450 },
+  { y: 2026, m: 4,  u: 88933,  mu: 577000 }
+];
+const now = new Date();
+
+function getInputTarget() {
+  let y = now.getFullYear();
+  let m = now.getMonth();
+  if (m === 0) { m = 12; y--; }
+  return { y, m };
+}
+
+let viewYear = getInputTarget().y;
+let saveTimers = {};
+let fbSaveTimer = null;
+let data = [];
+
+function getSeedData() {
+  return SEED_DATA.map(r => ({
+    ...r,
+    ts: new Date(r.y, r.m - 1, 1).toLocaleString('ko-KR')
+  }));
+}
+
+function loadLocalData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.length > 0) return parsed;
+    }
+    const legacy = localStorage.getItem('d');
+    if (legacy) {
+      const parsed = JSON.parse(legacy);
+      if (parsed.length > 0) {
+        localStorage.setItem(STORAGE_KEY, legacy);
+        return parsed;
+      }
+    }
+  } catch (e) { /* ignore */ }
+  return [];
+}
+
+function setSyncStatus(state, title) {
+  const el = document.getElementById('syncBadge');
+  if (!el) return;
+  el.className = 'sync-badge' + (state === 'cloud' ? ' cloud' : state === 'err' ? ' err' : '');
+  if (state === 'cloud') {
+    el.textContent = '☁ 동기화';
+    el.title = title || 'Firebase에 저장됨';
+  } else if (state === 'err') {
+    el.textContent = '☁ 오류';
+    el.title = title || 'Firebase 저장 실패 (로컬만 저장됨)';
+  } else if (state === 'wait') {
+    el.textContent = '☁ …';
+    el.title = title || 'Firebase 연결 중';
+  } else {
+    el.textContent = '☁ 로컬';
+    el.title = title || '오프라인 — 로컬만 저장';
+  }
+}
+
+function getMembers() {
+  return parseInt(localStorage.getItem(MEMBERS_KEY) || '0', 10) || 0;
+}
+
+function saveMembers(n) {
+  localStorage.setItem(MEMBERS_KEY, String(n));
+  scheduleFirebaseSave();
+}
+
+function hasPayment(r) {
+  return (r.u || 0) > 0 || (r.mu || 0) > 0;
+}
+
+function isLargeMonth(y, m) {
+  return y > LARGE_FROM_Y || (y === LARGE_FROM_Y && m >= LARGE_FROM_M);
+}
+
+function getBonusMonthCounts() {
+  let medium = 0, large = 0;
+  data.forEach(r => {
+    if (!hasPayment(r)) return;
+    if (isLargeMonth(r.y, r.m)) large++;
+    else medium++;
+  });
+  return { medium, large };
+}
+
+function calcBonusUnit() {
+  const { medium, large } = getBonusMonthCounts();
+  return RATE_MEDIUM * medium + RATE_LARGE * large;
+}
+
+function calcBonus() {
+  return calcBonusUnit() * getMembers();
+}
+
+function getPaymentMonthCount() {
+  const { medium, large } = getBonusMonthCounts();
+  return medium + large;
+}
+
+function fmtStatAvg(total, months) {
+  if (!months) return '<div class="stat-avg">(입력 없음)</div>';
+  const avg = Math.round(total / months);
+  const text = `(${months}개월·월 ${avg.toLocaleString('ko-KR')}원)`;
+  return `<div class="stat-avg" title="${text}">${text}</div>`;
+}
+
+function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  showSaveBadge();
+  scheduleFirebaseSave();
+}
+
+function scheduleFirebaseSave() {
+  clearTimeout(fbSaveTimer);
+  fbSaveTimer = setTimeout(pushToFirebase, 800);
+}
+
+async function pushToFirebase() {
+  if (!window.UnionFB?.ready) {
+    setSyncStatus('local', 'Firebase 미연결 — 로컬만 저장');
+    return;
+  }
+  const res = await saveUnionDataToFirebase(data, getMembers());
+  if (res.ok) {
+    setSyncStatus('cloud');
+  } else {
+    setSyncStatus('err', res.reason || '저장 실패');
+  }
+}
+
+async function boot() {
+  setSyncStatus('wait');
+  await initUnionFirebase();
+
+  const fb = await loadUnionDataFromFirebase();
+  const local = loadLocalData();
+  const fbRecords = Array.isArray(fb?.records) ? fb.records : [];
+
+  if (fbRecords.length > 0) {
+    data = fbRecords;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if (fb.members != null) {
+      localStorage.setItem(MEMBERS_KEY, String(fb.members));
+    }
+    setSyncStatus('cloud', fb.lastSaved ? 'Firebase 불러옴 · ' + fb.lastSaved : 'Firebase 불러옴');
+  } else if (local.length > 0) {
+    data = local;
+    setSyncStatus(UnionFB.ready ? 'wait' : 'local');
+    scheduleFirebaseSave();
+  } else {
+    data = getSeedData();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    setSyncStatus(UnionFB.ready ? 'wait' : 'local');
+    scheduleFirebaseSave();
+  }
+
+  initMembers();
+  render();
+}
+
+function showSaveBadge() {
+  const badge = document.getElementById('saveBadge');
+  badge.classList.add('show');
+  clearTimeout(showSaveBadge._t);
+  showSaveBadge._t = setTimeout(() => badge.classList.remove('show'), 2000);
+}
+
+function fmt(n) {
+  return (n || 0).toLocaleString('ko-KR') + '원';
+}
+
+function parseAmount(val) {
+  if (!val && val !== 0) return 0;
+  const n = parseInt(String(val).replace(/[^\d]/g, ''), 10);
+  return isNaN(n) ? 0 : n;
+}
+
+function fmtInput(n) {
+  return n ? fmt(n) : '';
+}
+
+function onAmountFocus(el) {
+  el.classList.remove('formatted');
+  const n = parseAmount(el.value);
+  el.value = n || '';
+  el.select();
+}
+
+function onAmountBlur(el, m) {
+  const n = parseAmount(el.value);
+  el.value = fmtInput(n);
+  if (n) el.classList.add('formatted');
+  else el.classList.remove('formatted');
+  clearTimeout(saveTimers[m]);
+  delete saveTimers[m];
+  autoSaveMonth(m, true);
+}
+
+function fmtMonth(y, m) {
+  return `${y}년-${String(m).padStart(2, '0')}월`;
+}
+
+function findIndex(y, m) {
+  return data.findIndex(r => r.y === y && r.m === m);
+}
+
+function getRecord(y, m) {
+  const i = findIndex(y, m);
+  return i >= 0 ? data[i] : null;
+}
+
+function toast(msg, isError) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (isError ? ' error' : '');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+function flushPendingSaves() {
+  Object.keys(saveTimers).forEach(m => {
+    clearTimeout(saveTimers[m]);
+    autoSaveMonth(+m, true);
+  });
+}
+
+function changeYear(delta) {
+  flushPendingSaves();
+  viewYear += delta;
+  render();
+}
+
+function scheduleAutoSave(m) {
+  clearTimeout(saveTimers[m]);
+  saveTimers[m] = setTimeout(() => autoSaveMonth(m), 500);
+}
+
+function autoSaveMonth(m, silent) {
+  delete saveTimers[m];
+  const uEl = document.getElementById(`u-${m}`);
+  const muEl = document.getElementById(`mu-${m}`);
+  if (!uEl || !muEl) return;
+
+  const u = parseAmount(uEl.value);
+  const mu = parseAmount(muEl.value);
+  const idx = findIndex(viewYear, m);
+
+  if (u === 0 && mu === 0) {
+    if (idx >= 0) {
+      data.splice(idx, 1);
+      persist();
+      renderStats();
+      renderBonus();
+    }
+    return;
+  }
+
+  const record = {
+    y: viewYear,
+    m: m,
+    u: u,
+    mu: mu,
+    ts: new Date().toLocaleString('ko-KR')
+  };
+
+  if (idx >= 0) {
+    data[idx] = record;
+  } else if (data.some(r => r.y === viewYear && r.m === m)) {
+    if (!silent) toast('이미 등록된 월입니다.', true);
+    return;
+  } else {
+    data.push(record);
+  }
+
+  persist();
+  renderStats();
+  renderBonus();
+}
+
+function onAmountInput(m) {
+  updateSum(m);
+  scheduleAutoSave(m);
+}
+
+function onMembersInput() {
+  const el = document.getElementById('membersInput');
+  const n = parseAmount(el.value);
+  el.value = n || '';
+  saveMembers(n);
+  renderBonus();
+}
+
+function updateSum(m) {
+  const u = parseAmount(document.getElementById(`u-${m}`).value);
+  const mu = parseAmount(document.getElementById(`mu-${m}`).value);
+  const el = document.getElementById(`sum-${m}`);
+  const total = u + mu;
+  if (total > 0) {
+    el.textContent = fmt(total);
+    el.classList.remove('empty');
+  } else {
+    el.textContent = '—';
+    el.classList.add('empty');
+  }
+}
+
+function renderStats() {
+  let totalAll = 0, unionTotal = 0, deductTotal = 0;
+
+  data.forEach(r => {
+    totalAll += (r.u || 0) + (r.mu || 0);
+    unionTotal += r.u || 0;
+    deductTotal += r.mu || 0;
+  });
+
+  const months = getPaymentMonthCount();
+  const d = fmt(deductTotal), u = fmt(unionTotal), t = fmt(totalAll);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card stat-deduct">
+      <div class="stat-label">공제회비 누적</div>
+      <div class="stat-value" title="${d}">${d}</div>
+      ${fmtStatAvg(deductTotal, months)}
+    </div>
+    <div class="stat-card stat-union">
+      <div class="stat-label">조합비 누적</div>
+      <div class="stat-value" title="${u}">${u}</div>
+      ${fmtStatAvg(unionTotal, months)}
+    </div>
+    <div class="stat-card stat-all">
+      <div class="stat-label">전체 누적</div>
+      <div class="stat-value" title="${t}">${t}</div>
+      ${fmtStatAvg(totalAll, months)}
+    </div>`;
+}
+
+function renderBonus() {
+  const { medium, large } = getBonusMonthCounts();
+  const members = getMembers();
+  const unit = calcBonusUnit();
+  const bonus = unit * members;
+
+  document.getElementById('mediumCount').textContent = medium;
+  document.getElementById('largeCount').textContent = large;
+
+  const resultEl = document.getElementById('bonusResult');
+  const detail = `(225×${medium} + 450×${large}) × ${members}명`;
+  if (members > 0) {
+    resultEl.textContent = fmt(bonus);
+    resultEl.classList.remove('empty');
+    resultEl.title = detail + ' = ' + fmt(bonus);
+  } else {
+    resultEl.textContent = '조합원 입력';
+    resultEl.classList.add('empty');
+    resultEl.title = `중형 ${medium}개월 · 대형 ${large}개월 (12월~)`;
+  }
+}
+
+function renderList() {
+  document.getElementById('yearDisplay').textContent = viewYear;
+  const target = getInputTarget();
+  const isTargetYear = viewYear === target.y;
+  document.getElementById('currentHint').innerHTML = isTargetYear
+    ? `입력 <strong>${fmtMonth(target.y, target.m)}</strong> (전월) · 자동저장`
+    : `${viewYear}년 · ‹› 연도변경`;
+
+  let html = '';
+  for (let m = 12; m >= 1; m--) {
+    const rec = getRecord(viewYear, m);
+    const u = rec ? rec.u : 0;
+    const mu = rec ? rec.mu : 0;
+    const sum = u + mu;
+    const isInputMonth = isTargetYear && m === target.m;
+
+    html += `<tr class="${isInputMonth ? 'current-month' : ''}">
+      <td>
+        <span class="month-label">${fmtMonth(viewYear, m)}${isInputMonth ? '<span class="badge">입력월</span>' : ''}</span>
+      </td>
+      <td>
+        <input type="text" inputmode="numeric" class="amount-input union-field${u ? ' formatted' : ''}" id="u-${m}"
+          value="${fmtInput(u)}" placeholder="0원"
+          onfocus="onAmountFocus(this)" onblur="onAmountBlur(this,${m})"
+          oninput="onAmountInput(${m})" ${isInputMonth ? 'autofocus' : ''}>
+      </td>
+      <td>
+        <input type="text" inputmode="numeric" class="amount-input deduct-field${mu ? ' formatted' : ''}" id="mu-${m}"
+          value="${fmtInput(mu)}" placeholder="0원"
+          onfocus="onAmountFocus(this)" onblur="onAmountBlur(this,${m})"
+          oninput="onAmountInput(${m})">
+      </td>
+      <td>
+        <span class="sum-display ${sum ? '' : 'empty'}" id="sum-${m}">${sum ? fmt(sum) : '—'}</span>
+      </td>
+    </tr>`;
+  }
+  document.getElementById('monthList').innerHTML = html;
+}
+
+function render() {
+  renderStats();
+  renderBonus();
+  renderList();
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+}
+
+async function saveScreenshot() {
+  flushPendingSaves();
+  const btn = document.getElementById('shotBtn');
+  if (typeof html2canvas === 'undefined') {
+    toast('스샷 기능을 불러오지 못했습니다', true);
+    return;
+  }
+  btn.disabled = true;
+  toast('캡처 중…');
+  await new Promise(r => setTimeout(r, 80));
+
+  const root = document.getElementById('shotArea');
+  const bg = getComputedStyle(document.body).backgroundColor;
+
+  try {
+    const canvas = await html2canvas(root, {
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      backgroundColor: bg,
+      width: root.scrollWidth,
+      height: root.scrollHeight,
+      windowWidth: root.scrollWidth,
+      windowHeight: root.scrollHeight,
+      useCORS: true,
+      logging: false
+    });
+    const d = new Date();
+    const fname = `통계_전별금_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.png`;
+    const link = document.createElement('a');
+    link.download = fname;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    toast('스크린샷 저장됨');
+  } catch (e) {
+    toast('스크린샷 저장 실패', true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function initMembers() {
+  const el = document.getElementById('membersInput');
+  const n = getMembers();
+  if (n) el.value = n;
+}
+
+if (localStorage.getItem('darkMode') === 'true') {
+  document.body.classList.add('dark');
+}
+
+boot();
+
+window.addEventListener('beforeunload', () => {
+  flushPendingSaves();
+  clearTimeout(fbSaveTimer);
+  if (window.UnionFB?.ready) {
+    saveUnionDataToFirebase(data, getMembers());
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    flushPendingSaves();
+    pushToFirebase();
+  }
+});
+</script>
+</body>
+</html>
