@@ -205,6 +205,8 @@ transition:box-shadow .2s;
 .card-accent-퇴근전{border-left:3px solid #38bdf8;box-shadow:var(--shadow-sm),-3px 0 10px -2px rgba(56,189,248,.2);}
 .card-accent-퇴근{border-left:3px solid #64748b;}
 .card-accent-휴무{border-left:3px solid #cbd5e1;opacity:.92;}
+.card-accent-연차{border-left:3px solid #14b8a6;opacity:.95;}
+.card-accent-중도귀가{border-left:3px solid #f59e0b;opacity:.95;}
 .card-accent-지원{
 border-left:3px solid #f472b6;
 background:linear-gradient(135deg,#fff 0%,#fff7fb 100%);
@@ -287,9 +289,13 @@ text-overflow:ellipsis;
 .tag-오전{background:#fef9c3;color:#92400e;}
 .tag-오후{background:#e0e7ff;color:#3730a3;}
 .tag-휴무{background:#f5f5f5;color:#737373;}
+.tag-연차{background:#ccfbf1;color:#0f766e;}
+.tag-중도귀가{background:#fffbeb;color:#b45309;}
 .tag-지원{background:#ffedd5;color:#c2410c;font-weight:700;}
 .tag-지원오전{background:#ffedd5;color:#c2410c;font-weight:700;}
 .tag-지원오후{background:#ffe4e6;color:#be123c;font-weight:700;}
+.tag-추가오전{background:#fff1f2;color:#be123c;font-weight:700;min-width:3.2em;}
+.tag-추가오후{background:#ffe4e6;color:#9f1239;font-weight:700;min-width:3.2em;}
 
 .month-btn{
 margin-left:auto;
@@ -367,6 +373,12 @@ flex-shrink:0;
 
 .pill-휴무{background:#fafafa;color:#737373;border-color:#e5e5e5;}
 .pill-휴무::before{background:#d4d4d4;}
+
+.pill-연차{background:#f0fdfa;color:#0f766e;border-color:#99f6e4;}
+.pill-연차::before{background:#14b8a6;box-shadow:0 0 5px rgba(20,184,166,.45);}
+
+.pill-중도귀가{background:#fffbeb;color:#b45309;border-color:#fde68a;}
+.pill-중도귀가::before{background:#f59e0b;box-shadow:0 0 5px rgba(245,158,11,.45);}
 
 .modal{
 display:none;
@@ -487,9 +499,13 @@ border-radius:4px;
 .cal-status-오전{background:#dcfce7;color:#15803d;}
 .cal-status-오후{background:#dbeafe;color:#1d4ed8;}
 .cal-status-휴무{background:#fee2e2;color:#dc2626;}
+.cal-status-연차{background:#ccfbf1;color:#0f766e;}
 .cal-status-지원{background:#ffedd5;color:#ea580c;}
 .cal-status-지원오전{background:#ffedd5;color:#c2410c;}
 .cal-status-지원오후{background:#ffe4e6;color:#be123c;}
+.cal-status-중도귀가{background:#fffbeb;color:#b45309;}
+.cal-status-추가오전{background:#fff1f2;color:#be123c;}
+.cal-status-추가오후{background:#ffe4e6;color:#9f1239;}
 
 .cal-weekday.regular-off{color:#dc2626;}
 .cal-cell.regular-off-day .cal-day{color:#dc2626;font-weight:800;}
@@ -692,7 +708,7 @@ const ROUTE_END={
 };
 
 const STATUS_ORDER={
-'근무중':0,'출근중':0,'퇴근전':1,'출근전':2,'퇴근':3,'휴무':4
+'근무중':0,'출근중':0,'퇴근전':1,'출근전':2,'퇴근':3,'휴무':4,'연차':4,'중도귀가':4
 };
 
 const BADGE_COLORS=['#38bdf8','#a78bfa','#4ade80','#fbbf24','#fb7185','#2dd4bf'];
@@ -702,6 +718,7 @@ const DOW_ORDER=[1,2,3,4,5,6,0];
 let currentDate=new Date();
 let liveState=null;
 let liveSecondInterval=null;
+let monthRegularOffCache={};
 
 function formatDate(d){
 return d.getFullYear()+'-'+
@@ -819,7 +836,7 @@ return{label:'지원근무',cls:'지원'};
 
 function resolveSchedule(work,homeRoute,rounds){
 if(!work) return null;
-if(work.schedule?.cls==='휴무') return work.schedule;
+if(work.schedule?.cls==='휴무'||work.schedule?.cls==='중도귀가') return work.schedule;
 
 if(!isSupportWork(work,homeRoute)){
 if(work.status==='WORK_SUPPORT_AM') return{label:'오전',cls:'오전'};
@@ -845,6 +862,8 @@ const routeName=obj.routeName||'';
 
 let schedule=null;
 if(status==='LEAVE') schedule={label:'휴무',cls:'휴무'};
+else if(status==='ANNUAL') schedule={label:'휴무',cls:'휴무'};
+else if(status==='LEAVE_EARLY') schedule={label:'중도귀가',cls:'중도귀가'};
 else if(status==='WORK_AM') schedule={label:'오전',cls:'오전'};
 else if(status==='WORK_PM') schedule={label:'오후',cls:'오후'};
 else if(status==='WORK_SUPPORT_AM') schedule={label:'지원근무 오전',cls:'지원오전'};
@@ -858,16 +877,34 @@ function parseWorkStatus(json){
 return parseWorkApi(json)?.schedule||null;
 }
 
-function isHomeRoute(driverRoute,routeId){
-if(!routeId) return true;
-return normalizeRouteId(routeId)===normalizeRouteId(HOME_ROUTE_IDS[driverRoute]);
+function getHomeRouteIdSet(driverRoute){
+const set=new Set();
+const dispatchId=normalizeRouteId(HOME_ROUTE_IDS[driverRoute]);
+if(dispatchId) set.add(dispatchId);
+if(driverRoute==='3030') set.add('3030');
+if(driverRoute==='917') set.add('917');
+if(driverRoute==='5-2'){
+set.add('83');
+set.add('5-2');
+}
+return set;
 }
 
-function extractDriverRounds(dispatchData,driverName){
+function isHomeRoute(driverRoute,routeId){
+if(!routeId) return true;
+return getHomeRouteIdSet(driverRoute).has(normalizeRouteId(routeId));
+}
+
+function extractDriverRounds(dispatchData,driverName,driverId){
 if(!dispatchData?.object) return [];
 const list=Array.isArray(dispatchData.object)?dispatchData.object:[];
 return list
-.filter(item=>(item.driverName||'').trim()===driverName)
+.filter(item=>{
+if(driverId!=null&&item.driverId!=null){
+return String(item.driverId)===String(driverId);
+}
+return(item.driverName||'').trim()===driverName;
+})
 .map(item=>({
 round:Number(item.busRound??item.round??0),
 time:item.startTime||item.time||'',
@@ -931,7 +968,17 @@ if(nowMin<=endMin) return{label:'퇴근전',cls:'퇴근전'};
 return{label:'퇴근',cls:'퇴근'};
 }
 
-function resolveWorkStatus(rounds,route,viewDate,schedule,useExtended){
+function isOffStat(cls){
+return cls==='휴무'||cls==='연차'||cls==='중도귀가';
+}
+
+function resolveWorkStatus(rounds,route,viewDate,schedule,useExtended,apiStatus){
+if(apiStatus==='ANNUAL'){
+return{label:'연차',cls:'연차'};
+}
+if(apiStatus==='LEAVE_EARLY'||schedule?.cls==='중도귀가'){
+return{label:'중도귀가',cls:'중도귀가'};
+}
 if(schedule?.cls==='휴무'){
 return{label:'휴무',cls:'휴무'};
 }
@@ -1059,10 +1106,10 @@ let endCount=0;
 liveState.cards.forEach(card=>{
 
 const workStatus=resolveWorkStatus(
-card.rounds,card.route,currentDate,card.schedule,card.useExtended
+card.rounds,card.route,currentDate,card.schedule,card.useExtended,card.apiStatus
 );
 
-if(workStatus.cls==='휴무') offCount++;
+if(isOffStat(workStatus.cls)) offCount++;
 else if(workStatus.cls==='퇴근') endCount++;
 else workCount++;
 
@@ -1155,6 +1202,71 @@ function getRegularOffDays(dayMap,year,month){
 return getRegularOffInfo(dayMap,year,month).text;
 }
 
+function clearMonthRegularOffCache(){
+monthRegularOffCache={};
+}
+
+function getMonthDates(year,month){
+const lastDay=new Date(year,month+1,0).getDate();
+const dates=[];
+for(let d=1;d<=lastDay;d++){
+dates.push(formatDate(new Date(year,month,d)));
+}
+return dates;
+}
+
+function isWorkingDay(work){
+if(!work?.status) return false;
+return work.status!=='LEAVE'&&work.status!=='ANNUAL'&&work.status!=='LEAVE_EARLY';
+}
+
+function inferWorkPeriod(work,schedule,rounds){
+if(schedule?.cls==='오전'||schedule?.cls==='지원오전') return 'am';
+if(schedule?.cls==='오후'||schedule?.cls==='지원오후') return 'pm';
+const s=work?.status;
+if(s==='WORK_AM'||s==='WORK_SUPPORT_AM') return 'am';
+if(s==='WORK_PM'||s==='WORK_SUPPORT_PM') return 'pm';
+if(rounds?.length>=1){
+const sorted=[...rounds].sort((a,b)=>a.round-b.round);
+const hour=parseInt(sorted[0].time.split(':')[0],10);
+return hour<12?'am':'pm';
+}
+return 'am';
+}
+
+function toExtraWorkSchedule(period){
+return period==='pm'
+?{label:'추가오후',cls:'추가오후'}
+:{label:'추가오전',cls:'추가오전'};
+}
+
+function applyExtraWorkSchedule(schedule,work,dow,regularOffDows,rounds){
+if(!schedule||!work||!regularOffDows?.length) return schedule;
+if(!regularOffDows.includes(dow)) return schedule;
+if(!isWorkingDay(work)) return schedule;
+return toExtraWorkSchedule(inferWorkPeriod(work,schedule,rounds));
+}
+
+async function getDriverRegularOffDows(driverId,year,month){
+const cacheKey=`${driverId}_${year}_${month}`;
+if(monthRegularOffCache[cacheKey]) return monthRegularOffCache[cacheKey];
+
+const dates=getMonthDates(year,month);
+const results=await Promise.all(
+dates.map(date=>fetchWorkDriver(driverId,date).catch(()=>null))
+);
+const dayMap={};
+dates.forEach((date,i)=>{
+if(parseWorkApi(results[i])?.status==='LEAVE'){
+dayMap[date]={label:'휴무',cls:'휴무'};
+}
+});
+
+const dows=getRegularOffInfo(dayMap,year,month).dows;
+monthRegularOffCache[cacheKey]=dows;
+return dows;
+}
+
 function buildBadgeHtml(displayRoute,driver,isSupport){
 if(isSupport){
 return `<span class="badge badge-지원">${displayRouteLabel(displayRoute)}</span>`;
@@ -1202,6 +1314,7 @@ if(key.startsWith('dispatch_id_')&&key.endsWith('_'+date)){
 localStorage.removeItem(key);
 }
 });
+clearMonthRegularOffCache();
 }
 
 function closeMonthModal(){
@@ -1232,12 +1345,30 @@ dates.map(date=>fetchWorkDriver(driver.id,date).catch(()=>null))
 );
 
 const dayMap={};
+const workByDate={};
 dates.forEach((date,i)=>{
 const work=parseWorkApi(results[i]);
+workByDate[date]=work;
+if(work?.status==='ANNUAL'){
+dayMap[date]={label:'연차',cls:'연차'};
+}else if(work?.status==='LEAVE_EARLY'){
+dayMap[date]={label:'중도귀가',cls:'중도귀가'};
+}else{
 dayMap[date]=resolveSchedule(work,driver.route,null);
+}
 });
 
 const regularOff=getRegularOffInfo(dayMap,year,month);
+
+dates.forEach(date=>{
+const dow=new Date(date).getDay();
+const work=workByDate[date];
+if(regularOff.dows.includes(dow)&&isWorkingDay(work)){
+dayMap[date]=toExtraWorkSchedule(
+inferWorkPeriod(work,dayMap[date],null)
+);
+}
+});
 document.getElementById('modalTitle').innerHTML=
 `${driver.name} · ${year}년 ${month+1}월`+
 (regularOff.text?` · 정기휴무 <span class="regular-off-text">${regularOff.text}</span>`:'');
@@ -1376,6 +1507,12 @@ await Promise.all([...supportIds].map(async id=>{
 supportDispatch[id]=await fetchDispatchById(id,date).catch(()=>null);
 }));
 
+const year=currentDate.getFullYear();
+const month=currentDate.getMonth();
+const regularOffDowsByDriver=await Promise.all(
+TARGET_DRIVERS.map(d=>getDriverRegularOffDows(d.id,year,month))
+);
+
 let workCount=0;
 let offCount=0;
 let endCount=0;
@@ -1392,15 +1529,24 @@ const altData=supportDispatch[work.routeId];
 if(altData) dispatchData=altData;
 }
 
-const rounds=extractDriverRounds(dispatchData,driver.name);
-const schedule=resolveSchedule(work,driver.route,rounds);
+let rounds=extractDriverRounds(dispatchData,driver.name,driver.id);
+if(!rounds.length){
+const homeRounds=extractDriverRounds(
+homeDispatch[driver.route],driver.name,driver.id
+);
+if(homeRounds.length) rounds=homeRounds;
+}
+let schedule=resolveSchedule(work,driver.route,rounds);
+schedule=applyExtraWorkSchedule(
+schedule,work,currentDate.getDay(),regularOffDowsByDriver[idx],rounds
+);
 const hasData=rounds.length>0;
 const displayRoute=isSupport&&work?.routeName
 ?work.routeName
 :driver.route;
 
 const workStatus=resolveWorkStatus(
-rounds,driver.route,currentDate,schedule,useExtended
+rounds,driver.route,currentDate,schedule,useExtended,work?.status
 );
 
 return{
@@ -1427,7 +1573,7 @@ driver,rounds,displayRoute,hasData,workStatus,
 schedule,isSupport,order
 })=>{
 
-if(workStatus.cls==='휴무') offCount++;
+if(isOffStat(workStatus.cls)) offCount++;
 else if(workStatus.cls==='퇴근') endCount++;
 else workCount++;
 
@@ -1474,7 +1620,8 @@ rounds:c.rounds,
 route:c.route,
 schedule:c.schedule,
 useExtended:c.useExtended,
-isSupport:c.isSupport
+isSupport:c.isSupport,
+apiStatus:c.work?.status||''
 }))
 };
 
