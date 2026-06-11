@@ -196,9 +196,11 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   border: 1px solid var(--border);
-  padding: 10px 12px;
+  padding: 10px 0 0;
+  overflow: hidden;
 }
 .bonus-inner {
+  padding: 0 12px 10px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -304,8 +306,8 @@ body {
   font-size: 0.625rem;
   font-weight: 500;
   color: var(--text-muted);
-  margin-top: 6px;
   line-height: 1.4;
+  padding: 0 12px 8px;
 }
 
 /* ── List ── */
@@ -515,8 +517,8 @@ body {
         <span class="bo">=</span>
         <span class="bf result empty" id="bonusResult">조합원 입력</span>
       </div>
-      <div class="bonus-note">총인원수에 대형85% 중형10% 똑버스 5% 로 대략 예상한 계산 결과</div>
     </div>
+    <div class="bonus-note">총인원수에 대형85% 중형10% 똑버스 5% 로 대략 예상한 계산 결과</div>
   </section>
 
   <section class="bonus-section">
@@ -543,15 +545,15 @@ body {
           <span class="bf-label">원금+이자</span>
         </span>
       </div>
-      <div class="bonus-note" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;">
-        <span>조합비 공제액</span>
-        <span class="members-wrap">
-          <input type="text" inputmode="numeric" class="members-input" id="deductInput"
-            style="width:4.5em;color:var(--union);border-bottom-color:var(--union);"
-            placeholder="40,000" oninput="onDeductInput()" aria-label="조합비 공제액">원
-        </span>
-        <span style="color:var(--text-muted);font-size:0.625rem;">(매월 조합비에서 차감)</span>
-      </div>
+    </div>
+    <div class="bonus-note" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <span>조합비 공제액</span>
+      <span class="members-wrap">
+        <input type="text" inputmode="numeric" class="members-input" id="deductInput"
+          style="width:4.5em;color:var(--union);border-bottom-color:var(--union);"
+          placeholder="40,000" oninput="onDeductInput()" aria-label="조합비 공제액">원
+      </span>
+      <span style="color:var(--text-muted);font-size:0.625rem;">(매월 조합비에서 차감)</span>
     </div>
   </section>
   </div>
@@ -1119,7 +1121,7 @@ function renderList() {
     : `${viewYear}년 · ‹› 연도변경`;
 
   const totalMonths = data.filter(r => r.u || r.mu).length;
-  document.getElementById('totalMonths').textContent = `(총 ${totalMonths}개월)`;
+  document.getElementById('totalMonths').textContent = `(총 ${totalMonths}개월 근무)`;
 
   let html = '';
   for (let m = 12; m >= 1; m--) {
