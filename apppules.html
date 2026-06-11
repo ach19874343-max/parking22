@@ -202,16 +202,14 @@ body {
 .bonus-inner {
   padding: 0 12px 10px;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 6px;
 }
 .bonus-title {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--bonus);
   white-space: nowrap;
-  flex-shrink: 0;
 }
 .bonus-row {
   display: flex;
@@ -367,13 +365,6 @@ body {
   text-align: center;
   padding: 0 2px;
 }
-.current-hint {
-  font-size: 0.6875rem;
-  color: var(--text-sub);
-  padding: 6px 12px 8px;
-  line-height: 1.4;
-}
-.current-hint strong { color: var(--current-border); font-weight: 600; }
 
 .table-scroll {
   overflow-x: auto;
@@ -486,7 +477,6 @@ body {
 
 @media (max-width: 400px) {
   .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .bonus-inner { flex-direction: column; align-items: flex-start; gap: 6px; }
   .bonus-row { width: 100%; }
 }
 
@@ -518,7 +508,18 @@ body {
         <span class="bf result empty" id="bonusResult">조합원 입력</span>
       </div>
     </div>
-    <div class="bonus-note">총인원수에 대형85% 중형10% 똑버스 5% 로 대략 예상한 계산 결과</div>
+    <div class="bonus-note" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+      <span>총인원수에 대형</span>
+      <input type="text" inputmode="numeric" class="rate-input" id="rateLarge"
+        value="85" style="width:2.4em;" oninput="onRatioInput()" aria-label="대형 비율">%
+      <span>중형</span>
+      <input type="text" inputmode="numeric" class="rate-input" id="rateMedium"
+        value="10" style="width:2.4em;" oninput="onRatioInput()" aria-label="중형 비율">%
+      <span>똑버스</span>
+      <input type="text" inputmode="numeric" class="rate-input" id="rateSmall"
+        value="5" style="width:2.4em;" oninput="onRatioInput()" aria-label="똑버스 비율">%
+      <span>로 예상한 계산 결과</span>
+    </div>
   </section>
 
   <section class="bonus-section">
@@ -547,16 +548,15 @@ body {
       </div>
     </div>
     <div class="bonus-note" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <span>조합비 공제액</span>
+      <span>매월 예상 조합비</span>
       <span class="members-wrap">
         <input type="text" inputmode="numeric" class="members-input" id="deductInput"
           style="width:4.5em;color:var(--union);border-bottom-color:var(--union);"
           placeholder="40,000" oninput="onDeductInput()" aria-label="조합비 공제액">원
       </span>
-      <span style="color:var(--text-muted);font-size:0.625rem;">(매월 조합비에서 차감)</span>
+      <span style="color:var(--text-muted);font-size:0.625rem;">이 라고 가정할때,</span>
     </div>
   </section>
-  </div>
 
   <section class="list-section">
     <div class="list-header">
@@ -567,10 +567,7 @@ body {
         <button onclick="changeYear(1)" aria-label="다음 연도">›</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px 8px;">
-      <p class="current-hint" id="currentHint" style="padding:0;"></p>
-      <span class="sync-badge" id="syncBadge" title="동기화 대기">☁ …</span>
-    </div>
+
     <div class="table-scroll">
       <table class="month-table">
         <colgroup>
@@ -613,6 +610,7 @@ const STORAGE_KEY = 'unionFeeData';
 const MEMBERS_KEY = 'unionMembers';
 const RATE_KEY = 'interestRate';
 const DEDUCT_KEY = 'deductUnionAmt';
+const RATIOS_KEY = 'bonusRatios';
 const RATE_MEDIUM = 225;
 const RATE_LARGE = 450;
 const LARGE_FROM_Y = 2025;
@@ -636,8 +634,9 @@ const now = new Date();
 
 function getInputTarget() {
   let y = now.getFullYear();
-  let m = now.getMonth();
+  let m = now.getDate() >= 21 ? now.getMonth() + 1 : now.getMonth();
   if (m === 0) { m = 12; y--; }
+  if (m === 13) { m = 1; y++; }
   return { y, m };
 }
 
@@ -756,19 +755,48 @@ function calcBonusUnit() {
   return RATE_MEDIUM * medium + RATE_LARGE * large;
 }
 
+function getRatios() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(RATIOS_KEY));
+    if (saved) return saved;
+  } catch(e) {}
+  return { large: 85, medium: 10, small: 5 };
+}
+
+function saveRatios(ratios) {
+  localStorage.setItem(RATIOS_KEY, JSON.stringify(ratios));
+  scheduleFirebaseSave();
+}
+
+function initRatios() {
+  const r = getRatios();
+  const el = document.getElementById('rateLarge');  if (el) el.value = r.large;
+  const em = document.getElementById('rateMedium'); if (em) em.value = r.medium;
+  const es = document.getElementById('rateSmall');  if (es) es.value = r.small;
+}
+
+function onRatioInput() {
+  const large  = Math.min(100, Math.max(0, parseFloat(document.getElementById('rateLarge').value)  || 85));
+  const medium = Math.min(100, Math.max(0, parseFloat(document.getElementById('rateMedium').value) || 10));
+  const small  = Math.min(100, Math.max(0, parseFloat(document.getElementById('rateSmall').value)  || 5));
+  saveRatios({ large, medium, small });
+  renderBonus();
+}
+
 function calcBonus() {
-  const { medium, large } = getBonusMonthCounts();
+  const { medium: mc, large: lc } = getBonusMonthCounts();
   const members = getMembers();
+  const { large: rL, medium: rM, small: rS } = getRatios();
 
-  const fullRateUnit = RATE_MEDIUM * medium + RATE_LARGE * large;
-  const halfRateUnit = 120 * medium + 225 * large;
-  const smallRateUnit = 60 * medium + 120 * large;
+  const fullRateUnit  = RATE_MEDIUM * mc + RATE_LARGE * lc;
+  const halfRateUnit  = 120 * mc + 225 * lc;
+  const smallRateUnit = 60  * mc + 120 * lc;
 
-  const fullRateAmount = fullRateUnit * members * 0.85;
-  const halfRateAmount = halfRateUnit * members * 0.10;
-  const smallRateAmount = smallRateUnit * members * 0.05;
-
-  return Math.round(fullRateAmount + halfRateAmount + smallRateAmount);
+  return Math.round(
+    fullRateUnit  * members * (rL / 100) +
+    halfRateUnit  * members * (rM / 100) +
+    smallRateUnit * members * (rS / 100)
+  );
 }
 
 function getPaymentMonthCount() {
@@ -805,6 +833,7 @@ async function pushToFirebase() {
   const settings = {
     rate: getInterestRate(),
     deductAmt: getDeductAmount(),
+    ratios: getRatios(),
   };
   const res = await saveUnionDataToFirebase(data, getMembers(), settings);
   isSaving = false;
@@ -821,7 +850,7 @@ async function boot() {
   // 로컬 캐시로 즉시 렌더 (빈 화면 방지)
   const local = loadLocalData();
   data = local.length > 0 ? local : getSeedData();
-  initMembers(); initRate(); initDeductAmount();
+  initMembers(); initRate(); initDeductAmount(); initRatios();
   render();
 
   // Firebase 초기화
@@ -840,12 +869,13 @@ async function boot() {
 
     data = fbRecords;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    if (fb.members  != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
-    if (fb.rate     != null) localStorage.setItem(RATE_KEY,    String(fb.rate));
-    if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
+    if (fb.members   != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
+    if (fb.rate      != null) localStorage.setItem(RATE_KEY,    String(fb.rate));
+    if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY,  String(fb.deductAmt));
+    if (fb.ratios    != null) localStorage.setItem(RATIOS_KEY,  JSON.stringify(fb.ratios));
 
     setSyncStatus('cloud', fb.lastSaved ? '동기화 · ' + new Date(fb.lastSaved).toLocaleString('ko-KR') : '동기화');
-    initMembers(); initRate(); initDeductAmount();
+    initMembers(); initRate(); initDeductAmount(); initRatios();
     render();
   });
 }
@@ -1048,14 +1078,14 @@ function renderBonus() {
   document.getElementById('largeCount').textContent = large;
 
   const resultEl = document.getElementById('bonusResult');
+  const { large: rL, medium: rM, small: rS } = getRatios();
   const fullRateUnit = RATE_MEDIUM * medium + RATE_LARGE * large;
   const halfRateUnit = 120 * medium + 225 * large;
   const smallRateUnit = 60 * medium + 120 * large;
-  const fullRateAmount = Math.round(fullRateUnit * members * 0.85);
-  const halfRateAmount = Math.round(halfRateUnit * members * 0.10);
-  const smallRateAmount = Math.round(smallRateUnit * members * 0.05);
-  const detail = `(225×${medium}+450×${large})×${members}명×85% + (120×${medium}+225×${large})×${members}명×10% + (60×${medium}+120×${large})×${members}명×5%`;
-  const breakdown = `85%: ${fmt(fullRateAmount)} + 10%: ${fmt(halfRateAmount)} + 5%: ${fmt(smallRateAmount)}`;
+  const fullRateAmount  = Math.round(fullRateUnit  * members * (rL / 100));
+  const halfRateAmount  = Math.round(halfRateUnit  * members * (rM / 100));
+  const smallRateAmount = Math.round(smallRateUnit * members * (rS / 100));
+  const breakdown = `대형${rL}%: ${fmt(fullRateAmount)} + 중형${rM}%: ${fmt(halfRateAmount)} + 똑버스${rS}%: ${fmt(smallRateAmount)}`;
   if (members > 0) {
     resultEl.textContent = fmt(bonus);
     resultEl.classList.remove('empty');
@@ -1116,15 +1146,17 @@ function renderList() {
   document.getElementById('yearDisplay').textContent = viewYear;
   const target = getInputTarget();
   const isTargetYear = viewYear === target.y;
-  document.getElementById('currentHint').innerHTML = isTargetYear
-    ? `입력 <strong>${fmtMonth(target.y, target.m)}</strong> (전월) · 자동저장`
-    : `${viewYear}년 · ‹› 연도변경`;
 
   const totalMonths = data.filter(r => r.u || r.mu).length;
-  document.getElementById('totalMonths').textContent = `(총 ${totalMonths}개월 근무)`;
+  const years = Math.floor(totalMonths / 12);
+  const rem = totalMonths % 12;
+  const monthsLabel = years > 0
+    ? `(총 ${years}년 ${String(rem).padStart(2,'0')}개월 근무)`
+    : `(총 ${String(totalMonths).padStart(2,'0')}개월 근무)`;
+  document.getElementById('totalMonths').textContent = monthsLabel;
 
   let html = '';
-  for (let m = 12; m >= 1; m--) {
+  for (let m = 1; m <= 12; m++) {
     const rec = getRecord(viewYear, m);
     const u = rec ? rec.u : 0;
     const mu = rec ? rec.mu : 0;
@@ -1133,7 +1165,7 @@ function renderList() {
 
     html += `<tr class="${isInputMonth ? 'current-month' : ''}">
       <td>
-        <span class="month-label">${fmtMonth(viewYear, m)}${isInputMonth ? '<span class="badge">입력월</span>' : ''}</span>
+        <span class="month-label">${fmtMonth(viewYear, m)}${isInputMonth ? '<span class="badge">이번달</span>' : ''}</span>
       </td>
       <td>
         <input type="text" inputmode="numeric" class="amount-input union-field${u ? ' formatted' : ''}" id="u-${m}"
@@ -1195,11 +1227,12 @@ window.addEventListener('pageshow', (e) => {
       if (fbRecords.length === 0) return;
       data = fbRecords;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      if (fb.members  != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
-      if (fb.rate     != null) localStorage.setItem(RATE_KEY,    String(fb.rate));
-      if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
+      if (fb.members   != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
+      if (fb.rate      != null) localStorage.setItem(RATE_KEY,    String(fb.rate));
+      if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY,  String(fb.deductAmt));
+      if (fb.ratios    != null) localStorage.setItem(RATIOS_KEY,  JSON.stringify(fb.ratios));
       setSyncStatus('cloud', '동기화');
-      initMembers(); initRate(); initDeductAmount();
+      initMembers(); initRate(); initDeductAmount(); initRatios();
       render();
     });
   }

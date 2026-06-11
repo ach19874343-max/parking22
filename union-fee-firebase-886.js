@@ -74,8 +74,9 @@ async function saveUnionDataToFirebase(records, members, settings) {
     await UnionFB.set(UnionFB.ref(UnionFB.db, UnionFB.PATH), {
       records:    records || [],
       members:    members || 0,
-      rate:       (settings && settings.rate    != null) ? settings.rate    : 3,
+      rate:       (settings && settings.rate      != null) ? settings.rate      : 3,
       deductAmt:  (settings && settings.deductAmt != null) ? settings.deductAmt : 40000,
+      ratios:     (settings && settings.ratios    != null) ? settings.ratios    : { large: 85, medium: 10, small: 5 },
       lastSaved:  new Date().toISOString(),
     });
     return { ok: true };
