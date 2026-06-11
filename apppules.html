@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
 <title>안창해·조합비·공제회비 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -29,23 +29,7 @@
   --current-bg: #f8faff;
   --current-border: #6366f1;
 }
-body.dark {
-  --bg: #0c0e14;
-  --bg-accent: #141824;
-  --surface: #181b26;
-  --text: #f9fafb;
-  --text-sub: #9ca3af;
-  --text-muted: #6b7280;
-  --border: #2a2f3d;
-  --shadow: 0 1px 2px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.2);
-  --deduct-bg: #2a1520;
-  --union-bg: #152030;
-  --total-bg: #1f1a30;
-  --bonus-bg: #0f2926;
-  --current-bg: #1a1f35;
-  --current-border: #818cf8;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; word-break: keep-all; overflow-wrap: break-word; }
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   background: var(--bg);
@@ -53,6 +37,7 @@ body {
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 .app-header {
   position: sticky;
@@ -63,7 +48,6 @@ body {
   border-bottom: 1px solid var(--border);
   padding-top: env(safe-area-inset-top, 0);
 }
-body.dark .app-header { background: rgba(24, 27, 38, 0.92); }
 .header-inner {
   max-width: 720px;
   margin: 0 auto;
@@ -84,11 +68,21 @@ body.dark .app-header { background: rgba(24, 27, 38, 0.92); }
 }
 .header-actions { display: flex; align-items: center; gap: 8px; }
 .save-badge {
+  position: fixed;
+  top: calc(8px + env(safe-area-inset-top, 0));
+  right: 12px;
+  z-index: 30;
   font-size: 0.6875rem;
   color: var(--bonus);
   font-weight: 600;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(8px);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
   opacity: 0;
   transition: opacity 0.3s;
+  pointer-events: none;
 }
 .save-badge.show { opacity: 1; }
 .sync-badge {
@@ -139,6 +133,8 @@ body.dark .app-header { background: rgba(24, 27, 38, 0.92); }
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* ── Stats ── */
@@ -193,9 +189,6 @@ body.dark .app-header { background: rgba(24, 27, 38, 0.92); }
 .stat-deduct .stat-avg { color: #f472b6; }
 .stat-union .stat-avg { color: #60a5fa; }
 .stat-all .stat-avg { color: #a78bfa; }
-body.dark .stat-deduct .stat-avg { color: #fb7185; }
-body.dark .stat-union .stat-avg { color: #93c5fd; }
-body.dark .stat-all .stat-avg { color: #c4b5fd; }
 
 /* ── Bonus (compact) ── */
 .bonus-section {
@@ -226,6 +219,8 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
   flex: 1;
   min-width: 0;
   font-size: clamp(0.75rem, 2.8vw, 0.8125rem);
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .bf {
   font-weight: 600;
@@ -305,6 +300,13 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
   color: var(--bonus);
   opacity: 0.8;
 }
+.bonus-note {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 6px;
+  line-height: 1.4;
+}
 
 /* ── List ── */
 .list-section {
@@ -325,6 +327,12 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
 .list-header h2 {
   font-size: 0.8125rem;
   font-weight: 700;
+}
+.total-months {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--text-sub);
+  margin-left: 6px;
 }
 .year-nav {
   display: flex;
@@ -487,20 +495,9 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
 </style>
 </head>
 <body>
-<header class="app-header">
-  <div class="header-inner">
-    <div class="header-title">안창해 <em>·</em> 조합비 <em>·</em> 공제회비</div>
-    <div class="header-actions">
-      <span class="sync-badge" id="syncBadge" title="동기화 대기">☁ …</span>
-      <span class="save-badge" id="saveBadge">✓ 저장됨</span>
-      <button class="theme-btn shot-btn" id="shotBtn" onclick="saveScreenshot()" title="통계·전별금 스샷 저장" aria-label="통계와 예상 전별금 스크린샷 저장">스샷</button>
-      <button class="theme-btn" onclick="toggleDark()" title="다크모드" aria-label="다크모드">◐</button>
-    </div>
-  </div>
-</header>
+<span class="save-badge" id="saveBadge">✓ 저장됨</span>
 
 <div class="wrap">
-  <div id="shotArea">
   <div class="stats-row" id="stats"></div>
 
   <section class="bonus-section">
@@ -518,6 +515,7 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
         <span class="bo">=</span>
         <span class="bf result empty" id="bonusResult">조합원 입력</span>
       </div>
+      <div class="bonus-note">총인원수에 대형85% 중형10% 똑버스 5% 로 대략 예상한 계산 결과</div>
     </div>
   </section>
 
@@ -527,12 +525,10 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
       <div class="bonus-row">
         <span class="bf">
           <em id="union50Amount">0</em>
-          <span class="bf-label">조합비50%</span>
         </span>
         <span class="bo">+</span>
         <span class="bf">
           <em id="deduct100Amount">0</em>
-          <span class="bf-label">공제회비100%</span>
         </span>
         <span class="bo">+</span>
         <span class="bf">
@@ -547,20 +543,32 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
           <span class="bf-label">원금+이자</span>
         </span>
       </div>
+      <div class="bonus-note" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <span>조합비 공제액</span>
+        <span class="members-wrap">
+          <input type="text" inputmode="numeric" class="members-input" id="deductInput"
+            style="width:4.5em;color:var(--union);border-bottom-color:var(--union);"
+            placeholder="40,000" oninput="onDeductInput()" aria-label="조합비 공제액">원
+        </span>
+        <span style="color:var(--text-muted);font-size:0.625rem;">(매월 조합비에서 차감)</span>
+      </div>
     </div>
   </section>
   </div>
 
   <section class="list-section">
     <div class="list-header">
-      <h2>월별 내역</h2>
+      <h2>월별 내역 <span class="total-months" id="totalMonths"></span></h2>
       <div class="year-nav">
         <button onclick="changeYear(-1)" aria-label="이전 연도">‹</button>
         <span class="year-display" id="yearDisplay"></span>
         <button onclick="changeYear(1)" aria-label="다음 연도">›</button>
       </div>
     </div>
-    <p class="current-hint" id="currentHint"></p>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px 8px;">
+      <p class="current-hint" id="currentHint" style="padding:0;"></p>
+      <span class="sync-badge" id="syncBadge" title="동기화 대기">☁ …</span>
+    </div>
     <div class="table-scroll">
       <table class="month-table">
         <colgroup>
@@ -583,11 +591,26 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
 <div class="toast" id="toast"></div>
 
 <script src="union-fee-firebase-886.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+/* Firebase 스크립트가 없을 때 폴백 */
+if (typeof window.UnionFB === 'undefined') {
+  window.UnionFB = { ready: false };
+}
+if (typeof initUnionFirebase === 'undefined') {
+  window.initUnionFirebase = async () => {};
+}
+if (typeof loadUnionDataFromFirebase === 'undefined') {
+  window.loadUnionDataFromFirebase = async () => ({ records: [], members: null });
+}
+if (typeof saveUnionDataToFirebase === 'undefined') {
+  window.saveUnionDataToFirebase = async () => ({ ok: false, reason: 'Firebase 미연결' });
+}
+</script>
 <script>
 const STORAGE_KEY = 'unionFeeData';
 const MEMBERS_KEY = 'unionMembers';
 const RATE_KEY = 'interestRate';
+const DEDUCT_KEY = 'deductUnionAmt';
 const RATE_MEDIUM = 225;
 const RATE_LARGE = 450;
 const LARGE_FROM_Y = 2025;
@@ -682,6 +705,29 @@ function getInterestRate() {
 function saveInterestRate(rate) {
   localStorage.setItem(RATE_KEY, String(rate));
   scheduleFirebaseSave();
+}
+
+function getDeductAmount() {
+  const v = parseInt(localStorage.getItem(DEDUCT_KEY), 10);
+  return isNaN(v) ? 40000 : v;
+}
+
+function saveDeductAmount(n) {
+  localStorage.setItem(DEDUCT_KEY, String(n));
+}
+
+function onDeductInput() {
+  const el = document.getElementById('deductInput');
+  const n = parseAmount(el.value);
+  saveDeductAmount(isNaN(n) || n === 0 ? 40000 : n);
+  renderSavingsInterest();
+}
+
+function initDeductAmount() {
+  const el = document.getElementById('deductInput');
+  if (!el) return;
+  const n = getDeductAmount();
+  el.value = n.toLocaleString('ko-KR');
 }
 
 function hasPayment(r) {
@@ -786,6 +832,7 @@ async function boot() {
 
   initMembers();
   initRate();
+  initDeductAmount();
   render();
 }
 
@@ -946,30 +993,35 @@ function updateSum(m) {
 
 function renderStats() {
   let totalAll = 0, unionTotal = 0, deductTotal = 0;
+  let count = 0;
 
   data.forEach(r => {
     totalAll += (r.u || 0) + (r.mu || 0);
     unionTotal += r.u || 0;
     deductTotal += r.mu || 0;
+    if ((r.u || 0) > 0 || (r.mu || 0) > 0) count++;
   });
 
-  const months = getPaymentMonthCount();
   const d = fmt(deductTotal), u = fmt(unionTotal), t = fmt(totalAll);
+  const dAvg = count > 0 ? `<div class="stat-avg">월평균 ${fmt(Math.round(deductTotal / count))}</div>` : '';
+  const uAvg = count > 0 ? `<div class="stat-avg">월평균 ${fmt(Math.round(unionTotal / count))}</div>` : '';
+  const tAvg = count > 0 ? `<div class="stat-avg">월평균 ${fmt(Math.round(totalAll / count))}</div>` : '';
+
   document.getElementById('stats').innerHTML = `
     <div class="stat-card stat-deduct">
       <div class="stat-label">공제회비 누적</div>
       <div class="stat-value" title="${d}">${d}</div>
-      ${fmtStatAvg(deductTotal, months)}
+      ${dAvg}
     </div>
     <div class="stat-card stat-union">
       <div class="stat-label">조합비 누적</div>
       <div class="stat-value" title="${u}">${u}</div>
-      ${fmtStatAvg(unionTotal, months)}
+      ${uAvg}
     </div>
     <div class="stat-card stat-all">
       <div class="stat-label">전체 누적</div>
       <div class="stat-value" title="${t}">${t}</div>
-      ${fmtStatAvg(totalAll, months)}
+      ${tAvg}
     </div>`;
 }
 
@@ -1004,23 +1056,22 @@ function renderBonus() {
 }
 
 function renderSavingsInterest() {
-  let totalUnion = 0, totalDeduct = 0;
+  let totalUnionAdjusted = 0, totalDeduct = 0;
   let count = 0;
+  const deductAmt = getDeductAmount();
 
   data.forEach(r => {
     if (r.u || r.mu) {
-      totalUnion += r.u || 0;
+      totalUnionAdjusted += Math.max(0, (r.u || 0) - deductAmt);
       totalDeduct += r.mu || 0;
       count++;
     }
   });
 
   const months = count;
-  const avgUnion = months > 0 ? Math.round(totalUnion / months) : 0;
+  const avgUnionAdj = months > 0 ? Math.round(totalUnionAdjusted / months) : 0;
   const avgDeduct = months > 0 ? Math.round(totalDeduct / months) : 0;
-  const union50 = Math.round(avgUnion * 0.5);
-  const deduct100 = avgDeduct;
-  const monthlyPayment = union50 + deduct100;
+  const monthlyPayment = avgUnionAdj + avgDeduct;
   const annualRate = getInterestRate();
   const monthlyRate = (annualRate / 100) / 12;
 
@@ -1031,15 +1082,14 @@ function renderSavingsInterest() {
   } else {
     futureValue = principal;
   }
-  const interest = Math.round(futureValue - principal);
   const total = Math.round(futureValue);
 
-  document.getElementById('union50Amount').textContent = fmt(union50);
-  document.getElementById('deduct100Amount').textContent = fmt(deduct100);
+  document.getElementById('union50Amount').textContent = fmt(avgUnionAdj);
+  document.getElementById('deduct100Amount').textContent = fmt(avgDeduct);
   document.getElementById('monthCount').textContent = months;
 
   const totalEl = document.getElementById('savingsTotal');
-  if (months > 0 && (union50 > 0 || deduct100 > 0)) {
+  if (months > 0 && monthlyPayment > 0) {
     totalEl.textContent = fmt(total);
     totalEl.classList.remove('empty');
   } else {
@@ -1055,6 +1105,9 @@ function renderList() {
   document.getElementById('currentHint').innerHTML = isTargetYear
     ? `입력 <strong>${fmtMonth(target.y, target.m)}</strong> (전월) · 자동저장`
     : `${viewYear}년 · ‹› 연도변경`;
+
+  const totalMonths = data.filter(r => r.u || r.mu).length;
+  document.getElementById('totalMonths').textContent = `(총 ${totalMonths}개월)`;
 
   let html = '';
   for (let m = 12; m >= 1; m--) {
@@ -1072,7 +1125,7 @@ function renderList() {
         <input type="text" inputmode="numeric" class="amount-input union-field${u ? ' formatted' : ''}" id="u-${m}"
           value="${fmtInput(u)}" placeholder="0원"
           onfocus="onAmountFocus(this)" onblur="onAmountBlur(this,${m})"
-          oninput="onAmountInput(${m})" ${isInputMonth ? 'autofocus' : ''}>
+          oninput="onAmountInput(${m})">
       </td>
       <td>
         <input type="text" inputmode="numeric" class="amount-input deduct-field${mu ? ' formatted' : ''}" id="mu-${m}"
@@ -1094,50 +1147,6 @@ function render() {
   renderList();
 }
 
-function toggleDark() {
-  document.body.classList.toggle('dark');
-  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
-}
-
-async function saveScreenshot() {
-  flushPendingSaves();
-  const btn = document.getElementById('shotBtn');
-  if (typeof html2canvas === 'undefined') {
-    toast('스샷 기능을 불러오지 못했습니다', true);
-    return;
-  }
-  btn.disabled = true;
-  toast('캡처 중…');
-  await new Promise(r => setTimeout(r, 80));
-
-  const root = document.getElementById('shotArea');
-  const bg = getComputedStyle(document.body).backgroundColor;
-
-  try {
-    const canvas = await html2canvas(root, {
-      scale: Math.min(window.devicePixelRatio || 1, 2),
-      backgroundColor: bg,
-      width: root.scrollWidth,
-      height: root.scrollHeight,
-      windowWidth: root.scrollWidth,
-      windowHeight: root.scrollHeight,
-      useCORS: true,
-      logging: false
-    });
-    const d = new Date();
-    const fname = `통계_전별금_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.png`;
-    const link = document.createElement('a');
-    link.download = fname;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    toast('스크린샷 저장됨');
-  } catch (e) {
-    toast('스크린샷 저장 실패', true);
-  } finally {
-    btn.disabled = false;
-  }
-}
-
 function initMembers() {
   const el = document.getElementById('membersInput');
   const n = getMembers();
@@ -1148,10 +1157,6 @@ function initRate() {
   const el = document.getElementById('rateInput');
   const rate = getInterestRate();
   if (rate) el.value = rate;
-}
-
-if (localStorage.getItem('darkMode') === 'true') {
-  document.body.classList.add('dark');
 }
 
 boot();
