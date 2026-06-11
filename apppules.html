@@ -792,16 +792,20 @@ function scheduleFirebaseSave() {
   fbSaveTimer = setTimeout(pushToFirebase, 800);
 }
 
+let isSaving = false; // 내가 저장 중일 때 리스너 에코 무시
+
 async function pushToFirebase() {
   if (!window.UnionFB?.ready) {
     setSyncStatus('local', 'Firebase 미연결 — 로컬만 저장');
     return;
   }
+  isSaving = true;
   const settings = {
     rate: getInterestRate(),
     deductAmt: getDeductAmount(),
   };
   const res = await saveUnionDataToFirebase(data, getMembers(), settings);
+  isSaving = false;
   if (res.ok) {
     setSyncStatus('cloud');
   } else {
@@ -811,41 +815,37 @@ async function pushToFirebase() {
 
 async function boot() {
   setSyncStatus('wait');
+
+  // 로컬 캐시로 즉시 렌더 (빈 화면 방지)
+  const local = loadLocalData();
+  data = local.length > 0 ? local : getSeedData();
+  initMembers(); initRate(); initDeductAmount();
+  render();
+
+  // Firebase 초기화
   await initUnionFirebase();
 
-  // Firebase 로드 (모바일 느린 네트워크 대비 재시도)
-  let fb = await loadUnionDataFromFirebase();
-  if (!fb && UnionFB.ready) {
-    await new Promise(r => setTimeout(r, 1200));
-    fb = await loadUnionDataFromFirebase();
+  if (!window.UnionFB?.ready) {
+    setSyncStatus('local', '오프라인 — 로컬만 저장');
+    return;
   }
 
-  const local = loadLocalData();
-  const fbRecords = Array.isArray(fb?.records) ? fb.records : [];
+  // 실시간 리스너 등록 — Firebase 데이터 변경 시 즉시 반영
+  startFirebaseSync((fb) => {
+    if (isSaving) return; // 내 저장 에코는 무시
+    const fbRecords = Array.isArray(fb?.records) ? fb.records : [];
+    if (fbRecords.length === 0) return;
 
-  if (fbRecords.length > 0) {
-    // Firebase 데이터 항상 우선 (모바일 캐시 무시)
     data = fbRecords;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    if (fb.members != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
-    if (fb.rate != null)     localStorage.setItem(RATE_KEY, String(fb.rate));
+    if (fb.members  != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
+    if (fb.rate     != null) localStorage.setItem(RATE_KEY,    String(fb.rate));
     if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
-    setSyncStatus('cloud', fb.lastSaved ? 'Firebase 불러옴 · ' + fb.lastSaved : 'Firebase 불러옴');
-  } else if (local.length > 0) {
-    data = local;
-    setSyncStatus(UnionFB.ready ? 'wait' : 'local');
-    scheduleFirebaseSave();
-  } else {
-    data = getSeedData();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    setSyncStatus(UnionFB.ready ? 'wait' : 'local');
-    scheduleFirebaseSave();
-  }
 
-  initMembers();
-  initRate();
-  initDeductAmount();
-  render();
+    setSyncStatus('cloud', fb.lastSaved ? '동기화 · ' + new Date(fb.lastSaved).toLocaleString('ko-KR') : '동기화');
+    initMembers(); initRate(); initDeductAmount();
+    render();
+  });
 }
 
 function showSaveBadge() {
@@ -1175,15 +1175,31 @@ boot();
 
 window.addEventListener('beforeunload', () => {
   flushPendingSaves();
-  clearTimeout(fbSaveTimer);
-  if (window.UnionFB?.ready) {
-    saveUnionDataToFirebase(data, getMembers());
-  }
+  stopFirebaseSync();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     flushPendingSaves();
     pushToFirebase();
+  }
+});
+// 모바일 bfcache 복원 시 재동기화
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted && window.UnionFB?.ready) {
+    stopFirebaseSync();
+    startFirebaseSync((fb) => {
+      if (isSaving) return;
+      const fbRecords = Array.isArray(fb?.records) ? fb.records : [];
+      if (fbRecords.length === 0) return;
+      data = fbRecords;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if (fb.members  != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
+      if (fb.rate     != null) localStorage.setItem(RATE_KEY,    String(fb.rate));
+      if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
+      setSyncStatus('cloud', '동기화');
+      initMembers(); initRate(); initDeductAmount();
+      render();
+    });
   }
 });
 </script>

@@ -8,9 +8,9 @@ window.UnionFB = {
   db: null,
   ref: null,
   set: null,
-  get: null,
   ready: false,
   PATH: 'unionFee',
+  _unsubscribe: null,
 };
 
 const FIREBASE_CONFIG = {
@@ -20,16 +20,24 @@ const FIREBASE_CONFIG = {
 
 async function initUnionFirebase() {
   try {
-    const [{ initializeApp, getApps, getApp }, { getDatabase, ref, set, get }] = await Promise.all([
-      import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js'),
-      import('https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js'),
-    ]);
-    const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApp();
-    UnionFB.db = getDatabase(app);
-    UnionFB.ref = ref;
-    UnionFB.set = set;
-    UnionFB.get = get;
-    UnionFB.ready = true;
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js');
+    const { getDatabase, ref, set, onValue, off } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js');
+
+    let app;
+    try {
+      app = initializeApp(FIREBASE_CONFIG);
+    } catch (e) {
+      // 앱 중복 초기화 — 기존 인스턴스 재사용
+      const { getApp } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js');
+      app = getApp();
+    }
+
+    UnionFB.db       = getDatabase(app);
+    UnionFB.ref      = ref;
+    UnionFB.set      = set;
+    UnionFB.onValue  = onValue;
+    UnionFB.off      = off;
+    UnionFB.ready    = true;
     return true;
   } catch (err) {
     console.error('Firebase 초기화 실패:', err);
@@ -38,14 +46,25 @@ async function initUnionFirebase() {
   }
 }
 
-async function loadUnionDataFromFirebase() {
-  if (!UnionFB.ready) return null;
-  try {
-    const snap = await UnionFB.get(UnionFB.ref(UnionFB.db, UnionFB.PATH));
-    return snap.exists() ? snap.val() : null;
-  } catch (err) {
-    console.error('Firebase 로드 실패:', err);
-    return null;
+/* 실시간 리스너 — Firebase 데이터가 바뀌면 callback(data) 즉시 호출 */
+function startFirebaseSync(callback) {
+  if (!UnionFB.ready) return;
+  if (UnionFB._unsubscribe) {
+    UnionFB._unsubscribe();
+    UnionFB._unsubscribe = null;
+  }
+  const dbRef = UnionFB.ref(UnionFB.db, UnionFB.PATH);
+  UnionFB._unsubscribe = UnionFB.onValue(dbRef, (snap) => {
+    callback(snap.exists() ? snap.val() : null);
+  }, (err) => {
+    console.error('Firebase 리스너 오류:', err);
+  });
+}
+
+function stopFirebaseSync() {
+  if (UnionFB._unsubscribe) {
+    UnionFB._unsubscribe();
+    UnionFB._unsubscribe = null;
   }
 }
 
@@ -53,15 +72,20 @@ async function saveUnionDataToFirebase(records, members, settings) {
   if (!UnionFB.ready) return { ok: false, reason: 'offline' };
   try {
     await UnionFB.set(UnionFB.ref(UnionFB.db, UnionFB.PATH), {
-      records: records || [],
-      members: members || 0,
-      rate: (settings && settings.rate != null) ? settings.rate : 3,
-      deductAmt: (settings && settings.deductAmt != null) ? settings.deductAmt : 40000,
-      lastSaved: new Date().toISOString(),
+      records:    records || [],
+      members:    members || 0,
+      rate:       (settings && settings.rate    != null) ? settings.rate    : 3,
+      deductAmt:  (settings && settings.deductAmt != null) ? settings.deductAmt : 40000,
+      lastSaved:  new Date().toISOString(),
     });
     return { ok: true };
   } catch (err) {
     console.error('Firebase 저장 실패:', err);
     return { ok: false, reason: err.message };
   }
+}
+
+/* 하위호환 — 기존 코드에서 loadUnionDataFromFirebase 호출 시 안전하게 처리 */
+async function loadUnionDataFromFirebase() {
+  return null; // boot()에서 더 이상 사용 안 함 (startFirebaseSync로 대체)
 }
