@@ -813,22 +813,23 @@ async function boot() {
   setSyncStatus('wait');
   await initUnionFirebase();
 
-  const fb = await loadUnionDataFromFirebase();
+  // Firebase 로드 (모바일 느린 네트워크 대비 재시도)
+  let fb = await loadUnionDataFromFirebase();
+  if (!fb && UnionFB.ready) {
+    await new Promise(r => setTimeout(r, 1200));
+    fb = await loadUnionDataFromFirebase();
+  }
+
   const local = loadLocalData();
   const fbRecords = Array.isArray(fb?.records) ? fb.records : [];
 
   if (fbRecords.length > 0) {
+    // Firebase 데이터 항상 우선 (모바일 캐시 무시)
     data = fbRecords;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    if (fb.members != null) {
-      localStorage.setItem(MEMBERS_KEY, String(fb.members));
-    }
-    if (fb.rate != null) {
-      localStorage.setItem(RATE_KEY, String(fb.rate));
-    }
-    if (fb.deductAmt != null) {
-      localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
-    }
+    if (fb.members != null) localStorage.setItem(MEMBERS_KEY, String(fb.members));
+    if (fb.rate != null)     localStorage.setItem(RATE_KEY, String(fb.rate));
+    if (fb.deductAmt != null) localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
     setSyncStatus('cloud', fb.lastSaved ? 'Firebase 불러옴 · ' + fb.lastSaved : 'Firebase 불러옴');
   } else if (local.length > 0) {
     data = local;

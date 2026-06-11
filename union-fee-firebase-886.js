@@ -20,9 +20,11 @@ const FIREBASE_CONFIG = {
 
 async function initUnionFirebase() {
   try {
-    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js');
-    const { getDatabase, ref, set, get } = await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js');
-    const app = initializeApp(FIREBASE_CONFIG);
+    const [{ initializeApp, getApps, getApp }, { getDatabase, ref, set, get }] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js'),
+    ]);
+    const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApp();
     UnionFB.db = getDatabase(app);
     UnionFB.ref = ref;
     UnionFB.set = set;
