@@ -47,12 +47,14 @@ async function loadUnionDataFromFirebase() {
   }
 }
 
-async function saveUnionDataToFirebase(records, members) {
+async function saveUnionDataToFirebase(records, members, settings) {
   if (!UnionFB.ready) return { ok: false, reason: 'offline' };
   try {
     await UnionFB.set(UnionFB.ref(UnionFB.db, UnionFB.PATH), {
       records: records || [],
       members: members || 0,
+      rate: (settings && settings.rate != null) ? settings.rate : 3,
+      deductAmt: (settings && settings.deductAmt != null) ? settings.deductAmt : 40000,
       lastSaved: new Date().toISOString(),
     });
     return { ok: true };

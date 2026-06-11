@@ -714,6 +714,7 @@ function getDeductAmount() {
 
 function saveDeductAmount(n) {
   localStorage.setItem(DEDUCT_KEY, String(n));
+  scheduleFirebaseSave();
 }
 
 function onDeductInput() {
@@ -796,7 +797,11 @@ async function pushToFirebase() {
     setSyncStatus('local', 'Firebase 미연결 — 로컬만 저장');
     return;
   }
-  const res = await saveUnionDataToFirebase(data, getMembers());
+  const settings = {
+    rate: getInterestRate(),
+    deductAmt: getDeductAmount(),
+  };
+  const res = await saveUnionDataToFirebase(data, getMembers(), settings);
   if (res.ok) {
     setSyncStatus('cloud');
   } else {
@@ -817,6 +822,12 @@ async function boot() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     if (fb.members != null) {
       localStorage.setItem(MEMBERS_KEY, String(fb.members));
+    }
+    if (fb.rate != null) {
+      localStorage.setItem(RATE_KEY, String(fb.rate));
+    }
+    if (fb.deductAmt != null) {
+      localStorage.setItem(DEDUCT_KEY, String(fb.deductAmt));
     }
     setSyncStatus('cloud', fb.lastSaved ? 'Firebase 불러옴 · ' + fb.lastSaved : 'Firebase 불러옴');
   } else if (local.length > 0) {
