@@ -293,6 +293,18 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
   font-weight: 500;
   font-size: 0.75rem;
 }
+.bf-label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.bf.result .bf-label {
+  color: var(--bonus);
+  opacity: 0.8;
+}
 
 /* ── List ── */
 .list-section {
@@ -463,7 +475,7 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
 .toast.error { background: var(--deduct); color: #fff; }
 
 @media (max-width: 400px) {
-  .stats-row { grid-template-columns: 1fr; gap: 6px; }
+  .stats-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .bonus-inner { flex-direction: column; align-items: flex-start; gap: 6px; }
   .bonus-row { width: 100%; }
 }
@@ -513,9 +525,15 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
     <div class="bonus-inner">
       <span class="bonus-title">예상 적금</span>
       <div class="bonus-row">
-        <span class="bf"><em id="union50Amount">0</em></span>
+        <span class="bf">
+          <em id="union50Amount">0</em>
+          <span class="bf-label">조합비50%</span>
+        </span>
         <span class="bo">+</span>
-        <span class="bf"><em id="deduct100Amount">0</em></span>
+        <span class="bf">
+          <em id="deduct100Amount">0</em>
+          <span class="bf-label">공제회비100%</span>
+        </span>
         <span class="bo">+</span>
         <span class="bf">
           <input type="text" inputmode="decimal" class="rate-input" id="rateInput"
@@ -524,7 +542,10 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
         <span class="bo">×</span>
         <span class="bf"><span id="monthCount">0</span>개월</span>
         <span class="bo">=</span>
-        <span class="bf result empty" id="savingsTotal">0</span>
+        <span class="bf result empty" id="savingsTotal">
+          0
+          <span class="bf-label">원금+이자</span>
+        </span>
       </div>
     </div>
   </section>
