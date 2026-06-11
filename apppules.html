@@ -263,6 +263,22 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
   padding: 0 2px;
 }
 .members-input::placeholder { color: var(--text-muted); font-weight: 500; }
+.rate-input {
+  width: 2.5em;
+  min-width: 25px;
+  max-width: 50px;
+  text-align: center;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--bonus);
+  border: none;
+  border-bottom: 1px dashed var(--bonus);
+  background: transparent;
+  font-family: inherit;
+  outline: none;
+  padding: 0 2px;
+}
+.rate-input::placeholder { color: var(--text-muted); font-weight: 500; }
 .bf.result {
   color: var(--bonus);
   font-weight: 700;
@@ -492,6 +508,26 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
       </div>
     </div>
   </section>
+
+  <section class="bonus-section">
+    <div class="bonus-inner">
+      <span class="bonus-title">예상 적금</span>
+      <div class="bonus-row">
+        <span class="bf"><em id="union50Amount">0</em></span>
+        <span class="bo">+</span>
+        <span class="bf"><em id="deduct100Amount">0</em></span>
+        <span class="bo">+</span>
+        <span class="bf">
+          <input type="text" inputmode="decimal" class="rate-input" id="rateInput"
+            placeholder="3" value="3" oninput="onRateInput()" aria-label="연이율">%
+        </span>
+        <span class="bo">×</span>
+        <span class="bf"><span id="monthCount">0</span>개월</span>
+        <span class="bo">=</span>
+        <span class="bf result empty" id="savingsTotal">0</span>
+      </div>
+    </div>
+  </section>
   </div>
 
   <section class="list-section">
@@ -530,6 +566,7 @@ body.dark .stat-all .stat-avg { color: #c4b5fd; }
 <script>
 const STORAGE_KEY = 'unionFeeData';
 const MEMBERS_KEY = 'unionMembers';
+const RATE_KEY = 'interestRate';
 const RATE_MEDIUM = 225;
 const RATE_LARGE = 450;
 const LARGE_FROM_Y = 2025;
@@ -617,6 +654,15 @@ function saveMembers(n) {
   scheduleFirebaseSave();
 }
 
+function getInterestRate() {
+  return parseFloat(localStorage.getItem(RATE_KEY) || '3', 10) || 3;
+}
+
+function saveInterestRate(rate) {
+  localStorage.setItem(RATE_KEY, String(rate));
+  scheduleFirebaseSave();
+}
+
 function hasPayment(r) {
   return (r.u || 0) > 0 || (r.mu || 0) > 0;
 }
@@ -641,7 +687,18 @@ function calcBonusUnit() {
 }
 
 function calcBonus() {
-  return calcBonusUnit() * getMembers();
+  const { medium, large } = getBonusMonthCounts();
+  const members = getMembers();
+
+  const fullRateUnit = RATE_MEDIUM * medium + RATE_LARGE * large;
+  const halfRateUnit = 120 * medium + 225 * large;
+  const smallRateUnit = 60 * medium + 120 * large;
+
+  const fullRateAmount = fullRateUnit * members * 0.85;
+  const halfRateAmount = halfRateUnit * members * 0.10;
+  const smallRateAmount = smallRateUnit * members * 0.05;
+
+  return Math.round(fullRateAmount + halfRateAmount + smallRateAmount);
 }
 
 function getPaymentMonthCount() {
@@ -707,6 +764,7 @@ async function boot() {
   }
 
   initMembers();
+  initRate();
   render();
 }
 
@@ -842,6 +900,15 @@ function onMembersInput() {
   renderBonus();
 }
 
+function onRateInput() {
+  const el = document.getElementById('rateInput');
+  const rate = parseFloat(el.value);
+  if (!isNaN(rate) && rate >= 0) {
+    saveInterestRate(rate);
+    renderSavingsInterest();
+  }
+}
+
 function updateSum(m) {
   const u = parseAmount(document.getElementById(`u-${m}`).value);
   const mu = parseAmount(document.getElementById(`mu-${m}`).value);
@@ -888,22 +955,75 @@ function renderStats() {
 function renderBonus() {
   const { medium, large } = getBonusMonthCounts();
   const members = getMembers();
-  const unit = calcBonusUnit();
-  const bonus = unit * members;
+  const bonus = calcBonus();
 
   document.getElementById('mediumCount').textContent = medium;
   document.getElementById('largeCount').textContent = large;
 
   const resultEl = document.getElementById('bonusResult');
-  const detail = `(225×${medium} + 450×${large}) × ${members}명`;
+  const fullRateUnit = RATE_MEDIUM * medium + RATE_LARGE * large;
+  const halfRateUnit = 120 * medium + 225 * large;
+  const smallRateUnit = 60 * medium + 120 * large;
+  const fullRateAmount = Math.round(fullRateUnit * members * 0.85);
+  const halfRateAmount = Math.round(halfRateUnit * members * 0.10);
+  const smallRateAmount = Math.round(smallRateUnit * members * 0.05);
+  const detail = `(225×${medium}+450×${large})×${members}명×85% + (120×${medium}+225×${large})×${members}명×10% + (60×${medium}+120×${large})×${members}명×5%`;
+  const breakdown = `85%: ${fmt(fullRateAmount)} + 10%: ${fmt(halfRateAmount)} + 5%: ${fmt(smallRateAmount)}`;
   if (members > 0) {
     resultEl.textContent = fmt(bonus);
     resultEl.classList.remove('empty');
-    resultEl.title = detail + ' = ' + fmt(bonus);
+    resultEl.title = breakdown + ' = ' + fmt(bonus);
   } else {
     resultEl.textContent = '조합원 입력';
     resultEl.classList.add('empty');
     resultEl.title = `중형 ${medium}개월 · 대형 ${large}개월 (12월~)`;
+  }
+
+  renderSavingsInterest();
+}
+
+function renderSavingsInterest() {
+  let totalUnion = 0, totalDeduct = 0;
+  let count = 0;
+
+  data.forEach(r => {
+    if (r.u || r.mu) {
+      totalUnion += r.u || 0;
+      totalDeduct += r.mu || 0;
+      count++;
+    }
+  });
+
+  const months = count;
+  const avgUnion = months > 0 ? Math.round(totalUnion / months) : 0;
+  const avgDeduct = months > 0 ? Math.round(totalDeduct / months) : 0;
+  const union50 = Math.round(avgUnion * 0.5);
+  const deduct100 = avgDeduct;
+  const monthlyPayment = union50 + deduct100;
+  const annualRate = getInterestRate();
+  const monthlyRate = (annualRate / 100) / 12;
+
+  const principal = monthlyPayment * months;
+  let futureValue = 0;
+  if (monthlyRate > 0 && months > 0) {
+    futureValue = monthlyPayment * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+  } else {
+    futureValue = principal;
+  }
+  const interest = Math.round(futureValue - principal);
+  const total = Math.round(futureValue);
+
+  document.getElementById('union50Amount').textContent = fmt(union50);
+  document.getElementById('deduct100Amount').textContent = fmt(deduct100);
+  document.getElementById('monthCount').textContent = months;
+
+  const totalEl = document.getElementById('savingsTotal');
+  if (months > 0 && (union50 > 0 || deduct100 > 0)) {
+    totalEl.textContent = fmt(total);
+    totalEl.classList.remove('empty');
+  } else {
+    totalEl.textContent = '0';
+    totalEl.classList.add('empty');
   }
 }
 
@@ -1001,6 +1121,12 @@ function initMembers() {
   const el = document.getElementById('membersInput');
   const n = getMembers();
   if (n) el.value = n;
+}
+
+function initRate() {
+  const el = document.getElementById('rateInput');
+  const rate = getInterestRate();
+  if (rate) el.value = rate;
 }
 
 if (localStorage.getItem('darkMode') === 'true') {

@@ -519,6 +519,21 @@ font-size:14px;
 color:var(--text-sub);
 }
 
+.apppules-modal-box{
+max-width:min(600px,95vw);
+max-height:90dvh;
+}
+.apppules-modal-body{
+padding:0;
+overflow:hidden;
+height:calc(90dvh - 60px);
+}
+.apppules-modal-body iframe{
+width:100%;
+height:100%;
+border:none;
+}
+
 /* ── Rounds ── */
 .card-body{
 padding:0 clamp(6px,5cqw,12px) clamp(4px,6cqh,10px);
@@ -675,6 +690,18 @@ animation:spin .7s linear infinite;
 <button class="modal-close" onclick="closeMonthModal()" aria-label="닫기">×</button>
 </div>
 <div id="modalBody" class="modal-body"></div>
+</div>
+</div>
+
+<div id="apppulesModal" class="modal" onclick="closeApppulesModal()">
+<div class="modal-box apppules-modal-box" onclick="event.stopPropagation()">
+<div class="modal-head">
+<div class="modal-title">안창해 · 조합비 · 공제회비</div>
+<button class="modal-close" onclick="closeApppulesModal()" aria-label="닫기">×</button>
+</div>
+<div class="modal-body apppules-modal-body">
+<iframe id="apppulesFrame" src="apppules.html" frameborder="0" loading="lazy"></iframe>
+</div>
 </div>
 </div>
 
@@ -1321,6 +1348,14 @@ function closeMonthModal(){
 document.getElementById('monthModal').classList.remove('open');
 }
 
+function openApppulesModal(){
+document.getElementById('apppulesModal').classList.add('open');
+}
+
+function closeApppulesModal(){
+document.getElementById('apppulesModal').classList.remove('open');
+}
+
 async function openMonthModal(driverIdx){
 const driver=TARGET_DRIVERS[driverIdx];
 const year=currentDate.getFullYear();
@@ -1582,7 +1617,8 @@ const accent=getCardAccent(workStatus,isSupport);
 html+=`<div class="card card-accent-${accent}" data-idx="${order}">`;
 html+=`<div class="card-header">`;
 html+=`<div class="card-header-row">`;
-html+=`<span class="driver-name">${driver.name}</span>`;
+const nameClick = driver.name === '안창해' ? `onclick="openApppulesModal()" style="cursor:pointer;color:var(--blue);text-decoration:underline;"` : '';
+html+=`<span class="driver-name"${nameClick}>${driver.name}</span>`;
 html+=buildBadgeHtml(displayRoute,driver,isSupport);
 
 if(schedule){
