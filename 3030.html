@@ -1675,7 +1675,12 @@ const accent=getCardAccent(workStatus,isSupport);
 html+=`<div class="card card-accent-${accent}" data-idx="${order}">`;
 html+=`<div class="card-header">`;
 html+=`<div class="card-header-row">`;
-const nameClick = driver.name === '안창해' ? `onclick="openApppulesModal()" style="cursor:pointer;color:var(--blue);text-decoration:underline;"` : '';
+let nameClick = '';
+if(driver.name === '안창해'){
+nameClick = `onclick="openApppulesModal()" style="cursor:pointer;"`;
+}else{
+nameClick = `onclick="openMonthModal(${order})" style="cursor:pointer;"`;
+}
 html+=`<span class="driver-name"${nameClick}>${driver.name}</span>`;
 html+=buildBadgeHtml(displayRoute,driver,isSupport);
 
