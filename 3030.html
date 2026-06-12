@@ -585,6 +585,16 @@ flex-shrink:0;
 background:#1d4ed8;
 box-shadow:0 0 0 2px rgba(29,78,216,.35);
 }
+.dot-running{
+background:#1d4ed8;
+box-shadow:0 0 0 2px rgba(29,78,216,.35);
+animation:pulse-running 1.4s ease-in-out infinite;
+}
+@keyframes pulse-running{
+0%{box-shadow:0 0 0 0 rgba(29,78,216,.6);}
+50%{box-shadow:0 0 0 5px rgba(29,78,216,.0);}
+100%{box-shadow:0 0 0 0 rgba(29,78,216,.0);}
+}
 .dot-wait{background:#22c55e;}
 .dot-ended{background:#475569;}
 
@@ -1174,7 +1184,7 @@ rowCls='is-ended';
 dotCls='dot-ended';
 }else{
 rowCls=r.status==='active'||r.status==='running'||r.status==='leaving'?'is-active':r.status==='done'?'is-done':'';
-dotCls=r.status==='done'?'dot-done':r.status==='active'||r.status==='running'||r.status==='leaving'?'dot-active':'dot-wait';
+dotCls=r.status==='done'?'dot-done':r.status==='running'?'dot-running':r.status==='active'||r.status==='leaving'?'dot-active':'dot-wait';
 }
 
 const busNo=getBusNo(r.busNumber);
