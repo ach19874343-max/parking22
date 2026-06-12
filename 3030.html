@@ -763,21 +763,53 @@ const[h,m]=time.split(':').map(Number);
 return h*60+m;
 }
 
+/* 정렬된 회차 배열에서 자정을 넘는 시간(00:00~01:59)을 1440+ 분으로 변환.
+   앞 회차보다 시간이 작으면 다음날로 판단. */
+function normalizeRoundMinutes(sorted){
+const mins=sorted.map(r=>timeToMinutes(r.time));
+for(let i=1;i<mins.length;i++){
+if(mins[i]<mins[i-1]){
+// 앞 회차보다 작으면 자정 넘은 것 — 이후 모두 +1440
+for(let j=i;j<mins.length;j++) mins[j]+=1440;
+}
+}
+return mins;
+}
+
+/* 현재 시각을 '오늘 기준 분'으로 반환. 자정 이후(00:00~01:59)면 1440+ */
+function getNowMinutesExt(){
+const n=new Date();
+const nowMin=n.getHours()*60+n.getMinutes();
+// 자정 직후(0~119분)이고 liveState 회차 중 1440+가 있으면 1440+ 반환
+return nowMin;
+}
+
+function getNowMinutesForRounds(roundMins){
+const base=new Date();
+let nowMin=base.getHours()*60+base.getMinutes();
+// 회차 중 1440+ 분이 있고 현재 시각이 0~119분대면 1440+ 로 오프셋
+if(roundMins.some(m=>m>=1440)&&nowMin<120){
+nowMin+=1440;
+}
+return nowMin;
+}
+
 function getNowMinutes(){
 const n=new Date();
 return n.getHours()*60+n.getMinutes();
 }
 
-function getRoundDateTime(timeStr,viewDate){
+function getRoundDateTime(timeStr,viewDate,isMidnightNext){
 const[h,m]=timeStr.split(':').map(Number);
 const d=new Date(viewDate);
+if(isMidnightNext) d.setDate(d.getDate()+1);
 d.setHours(h,m,0,0);
 return d;
 }
 
-function getSecondsUntilRound(timeStr,viewDate){
+function getSecondsUntilRound(timeStr,viewDate,isMidnightNext){
 const now=new Date();
-return Math.floor((getRoundDateTime(timeStr,viewDate)-now)/1000);
+return Math.floor((getRoundDateTime(timeStr,viewDate,!!isMidnightNext)-now)/1000);
 }
 
 function formatStartCountdown(totalSec){
@@ -967,8 +999,9 @@ return{label:'휴무',cls:'휴무'};
 }
 
 const sorted=[...rounds].sort((a,b)=>a.round-b.round);
-const firstMin=timeToMinutes(sorted[0].time);
-const lastMin=timeToMinutes(sorted[sorted.length-1].time);
+const roundMins=normalizeRoundMinutes(sorted);
+const firstMin=roundMins[0];
+const lastMin=roundMins[roundMins.length-1];
 const endCfg=ROUTE_END[route]||{beforeEnd:170,end:210};
 const view=startOfDay(viewDate);
 const todayDay=startOfDay(new Date());
@@ -976,7 +1009,7 @@ const todayDay=startOfDay(new Date());
 if(view<todayDay) return{label:'퇴근',cls:'퇴근'};
 if(view>todayDay) return{label:'출근전',cls:'출근전'};
 
-const nowMin=getNowMinutes();
+const nowMin=getNowMinutesForRounds(roundMins);
 
 if(!useExtended){
 if(nowMin<firstMin) return{label:'출근전',cls:'출근전'};
@@ -1029,25 +1062,48 @@ function getRoundStatus(rounds,workStatusCls){
 if(!rounds||rounds.length===0) return [];
 
 const sorted=[...rounds].sort((a,b)=>a.round-b.round);
+/* 자정 넘는 시간 정규화 */
+const roundMins=normalizeRoundMinutes(sorted);
 
 if(workStatusCls==='퇴근'){
-return sorted.map(r=>({...r,status:'done'}));
+return sorted.map((r,i)=>({...r,normMin:roundMins[i],status:'done'}));
 }
 if(workStatusCls==='출근전'){
-return sorted.map(r=>({...r,status:'wait'}));
+return sorted.map((r,i)=>({...r,normMin:roundMins[i],status:'wait'}));
 }
 
-const nowMin=getNowMinutes();
-let lastDoneIdx=-1;
-sorted.forEach((r,i)=>{
-if(nowMin>timeToMinutes(r.time)) lastDoneIdx=i;
-});
+const nowMin=getNowMinutesForRounds(roundMins);
+
+/* ── 표시할 회차 결정 ──────────────────────────────────────────
+   규칙: 항상 1회차부터 순서대로 진행.
+   · 현재 nowMin >= 회차시간 → 완료(done) 후보
+   · 단, 마지막으로 완료 처리할 회차는 active 로 표시
+   · 다음 회차 시작 20분 전이 되면 → 다음 회차가 active, 현 회차는 done
+   ──────────────────────────────────────────────────────────── */
+
+// 1) 이미 지난 회차 (nowMin > 회차시간) 중 가장 마지막 인덱스
+let lastPassedIdx=-1;
+roundMins.forEach((m,i)=>{ if(nowMin>m) lastPassedIdx=i; });
+
+// 2) 다음 회차(lastPassedIdx+1)가 20분 이내면 그걸 active 로 올림
+let activeIdx=lastPassedIdx; // 기본: 마지막 지난 회차
+const nextIdx=lastPassedIdx+1;
+if(nextIdx<sorted.length){
+const secUntilNext=((roundMins[nextIdx]-nowMin)*60);
+if(roundMins[nextIdx]-nowMin<=20){ // 20분 이내
+activeIdx=nextIdx;
+}
+}
+
+// 3) 아직 아무 회차도 안 지났고 1회차 20분 전이면 active=0
+if(lastPassedIdx===-1&&roundMins[0]-nowMin<=20) activeIdx=0;
 
 return sorted.map((r,i)=>{
-if(nowMin>timeToMinutes(r.time)){
-return{...r,status:i===lastDoneIdx?'active':'done'};
-}
-return{...r,status:'wait'};
+let status;
+if(i<activeIdx) status='done';
+else if(i===activeIdx) status='active';
+else status='wait';
+return{...r,normMin:roundMins[i],status};
 });
 }
 
@@ -1067,8 +1123,10 @@ if(r.status==='done'){
 return{text:'완료',cls:'is-done'};
 }
 
-if(r.status==='wait'){
-const diffSec=getSecondsUntilRound(r.time,viewDate);
+if(r.status==='wait'||r.status==='active'){
+// normMin이 1440+ 이면 자정 넘은 회차
+const isMidnight=(r.normMin!=null&&r.normMin>=1440);
+const diffSec=getSecondsUntilRound(r.time,viewDate,isMidnight);
 if(diffSec>0&&diffSec<=59*60){
 return{text:formatStartCountdown(diffSec),cls:'is-soon'};
 }
@@ -1178,7 +1236,7 @@ document.getElementById('headerStats').innerHTML=
 function getFirstRoundMin(rounds){
 if(!rounds?.length) return Infinity;
 const sorted=[...rounds].sort((a,b)=>a.round-b.round);
-return timeToMinutes(sorted[0].time);
+return normalizeRoundMinutes(sorted)[0];
 }
 
 function getPeriodOrder(schedule){
