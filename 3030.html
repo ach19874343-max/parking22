@@ -580,12 +580,12 @@ border-radius:50%;
 flex-shrink:0;
 }
 
-.dot-done{background:#22c55e;}
+.dot-done{background:#94a3b8;}
 .dot-active{
 background:#1d4ed8;
 box-shadow:0 0 0 2px rgba(29,78,216,.35);
 }
-.dot-wait{background:#cbd5e1;}
+.dot-wait{background:#22c55e;}
 .dot-ended{background:#475569;}
 
 .round-label{
@@ -615,6 +615,8 @@ white-space:nowrap;
 
 .round-suffix.is-soon{color:#2563eb;}
 .round-suffix.is-done{color:var(--text-muted);}
+.round-suffix.is-running{color:#1d4ed8;font-weight:700;}
+.round-suffix.is-leaving{color:#0369a1;font-weight:700;}
 
 .round-bus{
 font-size:clamp(9px,18cqh,14px);
@@ -1002,7 +1004,9 @@ const sorted=[...rounds].sort((a,b)=>a.round-b.round);
 const roundMins=normalizeRoundMinutes(sorted);
 const firstMin=roundMins[0];
 const lastMin=roundMins[roundMins.length-1];
-const endCfg=ROUTE_END[route]||{beforeEnd:170,end:210};
+// 917·3030·5-2 외 다른 노선(지원 등)은 회차 수로 기준 결정
+// 2회차 → 917/3030 기준, 3회차 이상 → 5-2 기준
+const endCfg=ROUTE_END[route]||(rounds.length<=2?{beforeEnd:170,end:210}:{beforeEnd:120,end:150});
 const view=startOfDay(viewDate);
 const todayDay=startOfDay(new Date());
 
@@ -1068,6 +1072,13 @@ const roundMins=normalizeRoundMinutes(sorted);
 if(workStatusCls==='퇴근'){
 return sorted.map((r,i)=>({...r,normMin:roundMins[i],status:'done'}));
 }
+if(workStatusCls==='퇴근전'){
+// 마지막 회차는 퇴근임박, 나머지는 done
+return sorted.map((r,i)=>({
+...r,normMin:roundMins[i],
+status:(i===sorted.length-1)?'leaving':'done'
+}));
+}
 if(workStatusCls==='출근전'){
 return sorted.map((r,i)=>({...r,normMin:roundMins[i],status:'wait'}));
 }
@@ -1078,31 +1089,36 @@ const nowMin=getNowMinutesForRounds(roundMins);
    규칙: 항상 1회차부터 순서대로 진행.
    · 현재 nowMin >= 회차시간 → 완료(done) 후보
    · 단, 마지막으로 완료 처리할 회차는 active 로 표시
-   · 다음 회차 시작 20분 전이 되면 → 다음 회차가 active, 현 회차는 done
+   · 다음 회차 시작 30분 전이 되면 → 다음 회차가 active, 현 회차는 done
    ──────────────────────────────────────────────────────────── */
 
 // 1) 이미 지난 회차 (nowMin > 회차시간) 중 가장 마지막 인덱스
 let lastPassedIdx=-1;
 roundMins.forEach((m,i)=>{ if(nowMin>m) lastPassedIdx=i; });
 
-// 2) 다음 회차(lastPassedIdx+1)가 20분 이내면 그걸 active 로 올림
+// 2) 다음 회차(lastPassedIdx+1)가 30분 이내면 그걸 active 로 올림
 let activeIdx=lastPassedIdx; // 기본: 마지막 지난 회차
 const nextIdx=lastPassedIdx+1;
 if(nextIdx<sorted.length){
-const secUntilNext=((roundMins[nextIdx]-nowMin)*60);
-if(roundMins[nextIdx]-nowMin<=20){ // 20분 이내
+const isFirst=(nextIdx===0); // 1회차 여부
+const threshold=isFirst?59:30; // 1회차는 59분(카운트다운 시작), 나머지는 30분
+if(roundMins[nextIdx]-nowMin<=threshold){
 activeIdx=nextIdx;
 }
 }
 
-// 3) 아직 아무 회차도 안 지났고 1회차 20분 전이면 active=0
-if(lastPassedIdx===-1&&roundMins[0]-nowMin<=20) activeIdx=0;
+// 3) 아직 아무 회차도 안 지났고 1회차 59분 전이면 active=0
+if(lastPassedIdx===-1&&roundMins[0]-nowMin<=59) activeIdx=0;
 
 return sorted.map((r,i)=>{
 let status;
 if(i<activeIdx) status='done';
-else if(i===activeIdx) status='active';
-else status='wait';
+else if(i===activeIdx){
+// active 회차 중 이미 시간이 지났으면(카운트다운 끝) → 운행중
+const isMidnight=(roundMins[i]>=1440);
+const diffSec=getSecondsUntilRound(r.time,new Date(),isMidnight);
+status=(diffSec<=0)?'running':'active';
+}else status='wait';
 return{...r,normMin:roundMins[i],status};
 });
 }
@@ -1121,6 +1137,14 @@ if(view>today) return{text:'',cls:''};
 
 if(r.status==='done'){
 return{text:'완료',cls:'is-done'};
+}
+
+if(r.status==='running'){
+return{text:'운행중',cls:'is-running'};
+}
+
+if(r.status==='leaving'){
+return{text:'퇴근직전',cls:'is-leaving'};
 }
 
 if(r.status==='wait'||r.status==='active'){
@@ -1149,8 +1173,8 @@ if(isEnded){
 rowCls='is-ended';
 dotCls='dot-ended';
 }else{
-rowCls=r.status==='active'?'is-active':r.status==='done'?'is-done':'';
-dotCls=r.status==='done'?'dot-done':r.status==='active'?'dot-active':'dot-wait';
+rowCls=r.status==='active'||r.status==='running'||r.status==='leaving'?'is-active':r.status==='done'?'is-done':'';
+dotCls=r.status==='done'?'dot-done':r.status==='active'||r.status==='running'||r.status==='leaving'?'dot-active':'dot-wait';
 }
 
 const busNo=getBusNo(r.busNumber);
