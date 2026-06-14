@@ -1418,6 +1418,7 @@ return route;
 
 function changeDate(diff){
 currentDate.setDate(currentDate.getDate()+diff);
+clearCacheForDate(formatDate(currentDate));
 loadAll();
 }
 
