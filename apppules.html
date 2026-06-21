@@ -211,6 +211,12 @@ body {
   color: var(--bonus);
   white-space: nowrap;
 }
+.bonus-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0;
+}
 .bonus-row {
   display: flex;
   align-items: center;
@@ -306,6 +312,41 @@ body {
   color: var(--text-muted);
   line-height: 1.4;
   padding: 0 12px 8px;
+}
+
+/* ── 예상 적자 ── */
+.deficit-grid {
+  display: flex;
+  gap: 8px;
+}
+.deficit-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--deduct-bg);
+}
+.deficit-item.surplus { background: var(--bonus-bg); }
+.deficit-value {
+  font-size: clamp(0.9375rem, 3.4vw, 1.0625rem);
+  font-weight: 800;
+  color: var(--deduct);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.deficit-value.surplus { color: var(--bonus); }
+.deficit-sub {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 4px;
+  white-space: nowrap;
 }
 
 /* ── List ── */
@@ -494,7 +535,9 @@ body {
 
   <section class="bonus-section">
     <div class="bonus-inner">
-      <span class="bonus-title">예상 전별금</span>
+      <div class="bonus-title-row">
+        <span class="bonus-title">예상 전별금</span><span class="total-months" id="bonusMonths"></span>
+      </div>
       <div class="bonus-row">
         <span class="bf medium">중형 <em>225</em>×<span id="mediumCount">0</span></span>
         <span class="bo">+</span>
@@ -524,7 +567,9 @@ body {
 
   <section class="bonus-section">
     <div class="bonus-inner">
-      <span class="bonus-title">예상 적금</span>
+      <div class="bonus-title-row">
+        <span class="bonus-title">예상 적금</span><span class="total-months" id="savingsMonths"></span>
+      </div>
       <div class="bonus-row">
         <span class="bf">
           <em id="union50Amount">0</em>
@@ -555,6 +600,24 @@ body {
           placeholder="40,000" oninput="onDeductInput()" aria-label="조합비 공제액">원
       </span>
       <span style="color:var(--text-muted);font-size:0.625rem;">이 라고 가정할때,</span>
+    </div>
+  </section>
+
+  <section class="bonus-section">
+    <div class="bonus-inner">
+      <div class="bonus-title-row">
+        <span class="bonus-title" style="color:var(--deduct);">예상 적자</span><span class="total-months" id="deficitMonths"></span>
+      </div>
+      <div class="deficit-grid">
+        <div class="deficit-item" id="deficit1Box">
+          <span class="deficit-value" id="deficit1">0</span>
+          <span class="deficit-sub">공제회비 누적과 비교시</span>
+        </div>
+        <div class="deficit-item" id="deficit2Box">
+          <span class="deficit-value" id="deficit2">0</span>
+          <span class="deficit-sub">예상 적금과 비교시</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -615,6 +678,7 @@ const RATE_MEDIUM = 225;
 const RATE_LARGE = 450;
 const LARGE_FROM_Y = 2025;
 const LARGE_FROM_M = 12;
+let lastSavingsTotal = 0;
 const SEED_DATA = [
   { y: 2025, m: 4,  u: 79792,  mu: 30000  },
   { y: 2025, m: 5,  u: 83034,  mu: 57200  },
@@ -1097,6 +1161,7 @@ function renderBonus() {
   }
 
   renderSavingsInterest();
+  renderDeficit();
 }
 
 function renderSavingsInterest() {
@@ -1140,6 +1205,44 @@ function renderSavingsInterest() {
     totalEl.textContent = '0';
     totalEl.classList.add('empty');
   }
+
+  lastSavingsTotal = total;
+}
+
+function getTotalDeduct() {
+  let totalDeduct = 0;
+  data.forEach(r => { totalDeduct += r.mu || 0; });
+  return totalDeduct;
+}
+
+function renderDeficit() {
+  const bonus = calcBonus();
+  const totalDeduct = getTotalDeduct();
+  const savings = lastSavingsTotal;
+
+  const diff1 = bonus - totalDeduct;
+  const diff2 = bonus - savings;
+
+  const el1 = document.getElementById('deficit1');
+  const box1 = document.getElementById('deficit1Box');
+  el1.textContent = (diff1 < 0 ? '-' : '') + fmt(Math.abs(diff1));
+  box1.classList.toggle('surplus', diff1 >= 0);
+  el1.classList.toggle('surplus', diff1 >= 0);
+
+  const el2 = document.getElementById('deficit2');
+  const box2 = document.getElementById('deficit2Box');
+  el2.textContent = (diff2 < 0 ? '-' : '') + fmt(Math.abs(diff2));
+  box2.classList.toggle('surplus', diff2 >= 0);
+  el2.classList.toggle('surplus', diff2 >= 0);
+}
+
+function getMonthsLabel() {
+  const totalMonths = data.filter(r => r.u || r.mu).length;
+  const years = Math.floor(totalMonths / 12);
+  const rem = totalMonths % 12;
+  return years > 0
+    ? `(총 ${years}년 ${String(rem).padStart(2,'0')}개월 근무)`
+    : `(총 ${String(totalMonths).padStart(2,'0')}개월 근무)`;
 }
 
 function renderList() {
@@ -1147,13 +1250,11 @@ function renderList() {
   const target = getInputTarget();
   const isTargetYear = viewYear === target.y;
 
-  const totalMonths = data.filter(r => r.u || r.mu).length;
-  const years = Math.floor(totalMonths / 12);
-  const rem = totalMonths % 12;
-  const monthsLabel = years > 0
-    ? `(총 ${years}년 ${String(rem).padStart(2,'0')}개월 근무)`
-    : `(총 ${String(totalMonths).padStart(2,'0')}개월 근무)`;
+  const monthsLabel = getMonthsLabel();
   document.getElementById('totalMonths').textContent = monthsLabel;
+  document.getElementById('bonusMonths').textContent = monthsLabel;
+  document.getElementById('savingsMonths').textContent = monthsLabel;
+  document.getElementById('deficitMonths').textContent = monthsLabel;
 
   let html = '';
   for (let m = 1; m <= 12; m++) {
