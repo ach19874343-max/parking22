@@ -317,7 +317,8 @@ body {
 /* ── 예상 적자 ── */
 .deficit-grid {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  width: 100%;
 }
 .deficit-item {
   flex: 1;
@@ -326,27 +327,35 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 10px 6px 8px;
+  padding: 10px 4px 8px;
   border-radius: var(--radius-sm);
   background: var(--deduct-bg);
+  overflow: hidden;
 }
 .deficit-item.surplus { background: var(--bonus-bg); }
 .deficit-value {
-  font-size: clamp(0.9375rem, 3.4vw, 1.0625rem);
+  font-size: clamp(0.6875rem, 3vw, 1.0625rem);
   font-weight: 800;
   color: var(--deduct);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  width: 100%;
+  text-align: center;
 }
 .deficit-value.surplus { color: var(--bonus); }
 .deficit-sub {
-  font-size: 0.625rem;
+  font-size: clamp(0.5rem, 1.8vw, 0.625rem);
   font-weight: 500;
   color: var(--text-muted);
   margin-top: 4px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  width: 100%;
+  text-align: center;
 }
 
 /* ── List ── */
@@ -616,6 +625,10 @@ body {
         <div class="deficit-item" id="deficit2Box">
           <span class="deficit-value" id="deficit2">0</span>
           <span class="deficit-sub">예상 적금과 비교시</span>
+        </div>
+        <div class="deficit-item" id="deficit3Box">
+          <span class="deficit-value" id="deficit3">0</span>
+          <span class="deficit-sub">전체 누적과 비교시</span>
         </div>
       </div>
     </div>
@@ -1215,13 +1228,21 @@ function getTotalDeduct() {
   return totalDeduct;
 }
 
+function getTotalAll() {
+  let total = 0;
+  data.forEach(r => { total += (r.u || 0) + (r.mu || 0); });
+  return total;
+}
+
 function renderDeficit() {
   const bonus = calcBonus();
   const totalDeduct = getTotalDeduct();
   const savings = lastSavingsTotal;
+  const totalAll = getTotalAll();
 
   const diff1 = bonus - totalDeduct;
   const diff2 = bonus - savings;
+  const diff3 = bonus - totalAll;
 
   const el1 = document.getElementById('deficit1');
   const box1 = document.getElementById('deficit1Box');
@@ -1234,6 +1255,12 @@ function renderDeficit() {
   el2.textContent = (diff2 < 0 ? '-' : '') + fmt(Math.abs(diff2));
   box2.classList.toggle('surplus', diff2 >= 0);
   el2.classList.toggle('surplus', diff2 >= 0);
+
+  const el3 = document.getElementById('deficit3');
+  const box3 = document.getElementById('deficit3Box');
+  el3.textContent = (diff3 < 0 ? '-' : '') + fmt(Math.abs(diff3));
+  box3.classList.toggle('surplus', diff3 >= 0);
+  el3.classList.toggle('surplus', diff3 >= 0);
 }
 
 function getMonthsLabel() {
