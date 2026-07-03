@@ -587,7 +587,11 @@ justify-content:flex-start;
 gap:clamp(2px,1.8cqh,5px);
 flex:1;
 min-height:0;
+overflow-y:auto;
+scrollbar-width:none;
+-ms-overflow-style:none;
 }
+.card-body::-webkit-scrollbar{display:none;}
 
 .round-row{
 display:flex;
@@ -628,6 +632,7 @@ width:clamp(6px,min(11cqh,10px),10px);
 height:clamp(6px,min(11cqh,10px),10px);
 border-radius:50%;
 flex-shrink:0;
+margin-left:clamp(4px,2.5cqw,8px);
 }
 
 .dot-done{background:#94a3b8;}
@@ -1864,8 +1869,9 @@ else if(workStatus.cls==='퇴근') endCount++;
 else workCount++;
 
 const accent=getCardAccent(workStatus,isSupport);
+const cardWeight=Math.max(3,rounds.length)+1.2;
 
-html+=`<div class="card card-accent-${accent}" data-idx="${order}">`;
+html+=`<div class="card card-accent-${accent}" data-idx="${order}" style="flex:${cardWeight} 1 0;">`;
 html+=`<div class="card-header">`;
 html+=`<div class="card-header-row">`;
 let nameClick = '';
