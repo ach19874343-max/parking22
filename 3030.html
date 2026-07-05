@@ -272,6 +272,9 @@ flex-shrink:0;
 background:var(--blue);
 box-shadow:var(--chip-ring);
 text-align:center;
+white-space:nowrap;
+overflow:hidden;
+line-height:1.1;
 }
 
 .badge-5-2{background:var(--blue);}
@@ -847,6 +850,14 @@ let currentDate=new Date();
 let liveState=null;
 let liveSecondInterval=null;
 let monthRegularOffCache={};
+
+/* 날짜/새로고침/월간조회 연속 조작 시 API 과다호출(공격으로 오인되어 차단)
+   방지를 위한 디바운스 관련 변수 */
+let loadAllToken=0;
+let dateChangeTimer=null;
+const LOAD_DEBOUNCE_MS=1200;
+let modalChangeTimer=null;
+const MODAL_DEBOUNCE_MS=1000;
 
 /* ── iOS Safari 호환 안전 스토리지 래퍼 ──
    iOS 사파리(특히 프라이빗 모드)에서는 localStorage.setItem 이
@@ -1544,7 +1555,19 @@ return route;
 function changeDate(diff){
 currentDate.setDate(currentDate.getDate()+diff);
 clearCacheForDate(formatDate(currentDate));
-loadAll();
+scheduleLoadAll();
+}
+
+/* 날짜를 빠르게 연속으로 이동해도 그때마다 바로 API를 호출하지 않고,
+   마지막 조작 후 일정 시간(LOAD_DEBOUNCE_MS) 동안 추가 조작이 없을 때
+   딱 한 번만 실제 데이터를 불러온다. (연타 시 API 과다호출 방지) */
+function scheduleLoadAll(delay,onDone){
+if(dateChangeTimer) clearTimeout(dateChangeTimer);
+document.getElementById('dateText').textContent=formatHeader(currentDate);
+dateChangeTimer=setTimeout(()=>{
+dateChangeTimer=null;
+loadAll().finally(()=>{if(onDone) onDone();});
+},delay||LOAD_DEBOUNCE_MS);
 }
 
 function clearCacheForDate(date){
@@ -1603,7 +1626,20 @@ if(monthModalDriverIdx===null) return;
 monthModalMonth+=diff;
 if(monthModalMonth<0){monthModalMonth=11;monthModalYear--;}
 else if(monthModalMonth>11){monthModalMonth=0;monthModalYear++;}
+scheduleLoadMonthModal();
+}
+
+/* 월간조회에서 이전/다음 달을 빠르게 연타해도 그때마다 바로 불러오지 않고
+   마지막 조작 후 일정 시간(MODAL_DEBOUNCE_MS) 뒤 한 번만 불러온다 */
+function scheduleLoadMonthModal(){
+if(modalChangeTimer) clearTimeout(modalChangeTimer);
+const driver=TARGET_DRIVERS[monthModalDriverIdx];
+document.getElementById('modalTitle').textContent=
+`${driver.name} · ${monthModalMonth+1}월 근무일정`;
+modalChangeTimer=setTimeout(()=>{
+modalChangeTimer=null;
 loadMonthModal();
+},MODAL_DEBOUNCE_MS);
 }
 
 async function loadMonthModal(){
@@ -1726,7 +1762,7 @@ const btn=document.getElementById('refreshBtn');
 btn.classList.add('spinning');
 currentDate=new Date();
 clearCacheForDate(formatDate(currentDate));
-loadAll().finally(()=>btn.classList.remove('spinning'));
+scheduleLoadAll(LOAD_DEBOUNCE_MS,()=>btn.classList.remove('spinning'));
 }
 
 async function fetchRoute(route,date){
@@ -1761,6 +1797,8 @@ return json;
 }
 
 async function loadAll(){
+
+const myToken=++loadAllToken;
 
 stopLiveTimer();
 liveState=null;
@@ -1909,6 +1947,8 @@ html+=`</div>`;
 html+=`</div>`;
 });
 
+if(myToken!==loadAllToken) return; // 더 최신 요청이 있으면 이전 결과는 버린다
+
 content.innerHTML=html;
 
 liveState={
@@ -1931,6 +1971,8 @@ document.getElementById('headerStats').innerHTML=
 `<span class="stat-item stat-off">휴무 ${offCount}</span>`;
 
 }catch(e){
+
+if(myToken!==loadAllToken) return; // 더 최신 요청이 있으면 이전 에러 결과는 버린다
 
 stopLiveTimer();
 liveState=null;
