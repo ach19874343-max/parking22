@@ -23,7 +23,7 @@
 --shadow-inset:inset 3px 3px 7px var(--clay-dark),inset -3px -3px 7px var(--clay-light);
 --chip-shadow:4px 4px 10px rgba(143,155,179,.58),-3px -3px 8px rgba(255,255,255,.92);
 --chip-ring:0 0 0 1px rgba(143,155,179,.16),0 0 7px rgba(143,155,179,.1);
---name-ring:0 0 0 1px rgba(143,155,179,.14),0 0 5px rgba(143,155,179,.07);
+--name-ring:0 0 0 1px rgba(143,155,179,.32),0 0 5px rgba(143,155,179,.12);
 --green:#16a34a;
 --green-soft:#dcfce7;
 --green-text:#15803d;
@@ -105,6 +105,8 @@ font-size:clamp(14px,3.8vw,17px);
 font-weight:800;
 letter-spacing:-.03em;
 color:var(--text);
+cursor:pointer;
+-webkit-tap-highlight-color:transparent;
 }
 
 .refresh-btn{
@@ -399,6 +401,31 @@ flex-shrink:0;
 .pill-연차{background:#f0fdfa;color:#0f766e;border-color:#99f6e4;}
 .pill-연차::before{background:#14b8a6;box-shadow:0 0 5px rgba(20,184,166,.45);}
 
+.regular-off-badge{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+margin-left:auto;
+margin-right:auto;
+padding:clamp(2px,2cqh,4px) clamp(6px,2.8cqw,9px);
+border-radius:999px;
+font-size:clamp(8px,min(15cqh,.78rem),11px);
+font-weight:800;
+flex-shrink:0;
+white-space:nowrap;
+letter-spacing:.03em;
+background:#f8fafc;
+box-shadow:var(--chip-shadow);
+}
+
+.regular-off-badge .dow-default{color:#1f2937;}
+.regular-off-badge .dow-rank1{color:#dc2626;}
+.regular-off-badge .dow-rank2{color:#ea580c;}
+
+@container card (max-width:340px){
+.regular-off-badge{font-size:clamp(7px,min(13cqh,.7rem),9px);padding:1px 6px;}
+}
+
 .pill-중도귀가{background:#fffbeb;color:#b45309;border-color:#fde68a;}
 .pill-중도귀가::before{background:#f59e0b;box-shadow:0 0 5px rgba(245,158,11,.45);}
 
@@ -556,6 +583,22 @@ border-radius:4px;
 
 .cal-weekday.regular-off{color:#dc2626;}
 .cal-cell.regular-off-day .cal-day{color:#dc2626;font-weight:800;}
+
+button.cal-cell{
+font:inherit;
+margin:0;
+appearance:none;
+-webkit-appearance:none;
+-webkit-tap-highlight-color:transparent;
+}
+button.cal-cell:active{transform:scale(.95);}
+.cal-cell.selected{
+border-color:var(--blue);
+background:linear-gradient(135deg,var(--blue),#5b86ff);
+box-shadow:var(--chip-shadow);
+}
+.cal-cell.selected .cal-day{color:#fff;}
+.cal-cell.selected.today{box-shadow:var(--chip-shadow),0 0 0 2px rgba(59,108,240,.35);}
 
 .regular-off-text{color:#dc2626;font-weight:800;}
 
@@ -772,7 +815,7 @@ animation:spin .7s linear infinite;
 <div class="header-top">
 <button class="nav-btn" onclick="changeDate(-1)" aria-label="이전 날짜">◀</button>
 <div class="date-wrap">
-<div id="dateText" class="date-text"></div>
+<div id="dateText" class="date-text" onclick="openDateModal()"></div>
 </div>
 <button class="nav-btn" onclick="changeDate(1)" aria-label="다음 날짜">▶</button>
 <button class="refresh-btn" id="refreshBtn" onclick="refreshData()">
@@ -795,6 +838,18 @@ animation:spin .7s linear infinite;
 <button class="modal-close" onclick="closeMonthModal()" aria-label="닫기">×</button>
 </div>
 <div id="modalBody" class="modal-body"></div>
+</div>
+</div>
+
+<div id="dateModal" class="modal" onclick="closeDateModal()">
+<div class="modal-box" onclick="event.stopPropagation()">
+<div class="modal-head">
+<button class="modal-nav-btn" onclick="changeDateModalMonth(-1)" aria-label="이전 달">◀</button>
+<div id="dateModalTitle" class="modal-title"></div>
+<button class="modal-nav-btn" onclick="changeDateModalMonth(1)" aria-label="다음 달">▶</button>
+<button class="modal-close" onclick="closeDateModal()" aria-label="닫기">×</button>
+</div>
+<div id="dateModalBody" class="modal-body"></div>
 </div>
 </div>
 
@@ -1600,6 +1655,67 @@ function closeMonthModal(){
 document.getElementById('monthModal').classList.remove('open');
 }
 
+let dateModalYear=null;
+let dateModalMonth=null;
+
+function openDateModal(){
+dateModalYear=currentDate.getFullYear();
+dateModalMonth=currentDate.getMonth();
+document.getElementById('dateModal').classList.add('open');
+renderDateModal();
+}
+
+function closeDateModal(){
+document.getElementById('dateModal').classList.remove('open');
+}
+
+function changeDateModalMonth(diff){
+dateModalMonth+=diff;
+if(dateModalMonth<0){dateModalMonth=11;dateModalYear--;}
+else if(dateModalMonth>11){dateModalMonth=0;dateModalYear++;}
+renderDateModal();
+}
+
+function renderDateModal(){
+document.getElementById('dateModalTitle').textContent=
+`${dateModalYear}년 ${dateModalMonth+1}월`;
+document.getElementById('dateModalBody').innerHTML=
+buildDatePickerHtml(dateModalYear,dateModalMonth);
+}
+
+function buildDatePickerHtml(year,month){
+const weekdayNames=['일','월','화','수','목','금','토'];
+let html='<div class="cal-weekdays">';
+weekdayNames.forEach((w,i)=>{
+html+=`<div class="cal-weekday${i===0?' sun':''}">${w}</div>`;
+});
+html+='</div><div class="cal-grid">';
+
+const firstDow=new Date(year,month,1).getDay();
+const lastDay=new Date(year,month+1,0).getDate();
+const todayStr=formatDate(new Date());
+const selectedStr=formatDate(currentDate);
+
+for(let i=0;i<firstDow;i++) html+='<div class="cal-cell empty"></div>';
+
+for(let d=1;d<=lastDay;d++){
+const dateStr=formatDate(new Date(year,month,d));
+const isToday=dateStr===todayStr;
+const isSelected=dateStr===selectedStr;
+html+=`<button type="button" class="cal-cell${isToday?' today':''}${isSelected?' selected':''}" onclick="selectDateFromModal('${dateStr}')"><span class="cal-day">${d}</span></button>`;
+}
+
+html+='</div>';
+return html;
+}
+
+function selectDateFromModal(dateStr){
+currentDate=new Date(dateStr+'T00:00:00');
+closeDateModal();
+clearCacheForDate(dateStr);
+scheduleLoadAll(0);
+}
+
 function openApppulesModal(){
 document.getElementById('apppulesModal').classList.add('open');
 }
@@ -1881,7 +1997,8 @@ rounds,driver.route,currentDate,schedule,useExtended,work?.status
 return{
 driver,rounds,route:driver.route,displayRoute,
 hasData,workStatus,schedule,work,
-isSupport,useExtended,order:idx
+isSupport,useExtended,order:idx,
+regularOffDows:regularOffDowsByDriver[idx]
 };
 
 });
@@ -1895,11 +2012,26 @@ return compareActiveCards(a,b);
 return a.order-b.order;
 });
 
+const dowOverlapCounts=[0,0,0,0,0,0,0];
+cards.forEach(c=>{
+(c.regularOffDows||[]).forEach(d=>dowOverlapCounts[d]++);
+});
+const rankedDows=[0,1,2,3,4,5,6]
+.filter(d=>dowOverlapCounts[d]>=2)
+.sort((a,b)=>dowOverlapCounts[b]-dowOverlapCounts[a]||DOW_ORDER.indexOf(a)-DOW_ORDER.indexOf(b));
+const rank1Dow=rankedDows[0];
+const rank2Dow=rankedDows[1];
+function dowRankClass(d){
+if(rank1Dow!==undefined&&d===rank1Dow) return 'dow-rank1';
+if(rank2Dow!==undefined&&d===rank2Dow) return 'dow-rank2';
+return 'dow-default';
+}
+
 let html='';
 
 cards.forEach(({
 driver,rounds,displayRoute,hasData,workStatus,
-schedule,isSupport,order
+schedule,isSupport,order,regularOffDows
 })=>{
 
 if(isOffStat(workStatus.cls)) offCount++;
@@ -1926,6 +2058,13 @@ html+=`<span class="tag tag-${schedule.cls}">${schedule.label}</span>`;
 }
 
 html+=`<span class="status-pill pill-${workStatus.cls}">${workStatus.label}</span>`;
+if(regularOffDows?.length){
+const sortedDows=[...regularOffDows]
+.sort((a,b)=>DOW_ORDER.indexOf(a)-DOW_ORDER.indexOf(b));
+const offText=sortedDows
+.map(d=>`<span class="${dowRankClass(d)}">${DOW_NAMES[d]}</span>`).join('');
+html+=`<span class="regular-off-badge">${offText}</span>`;
+}
 html+=`<button class="month-btn" onclick="openMonthModal(${order})" aria-label="월간조회"><span class="month-txt-full">월간조회</span><span class="month-txt-short">월간</span></button>`;
 html+=`</div>`;
 html+=`</div>`;
