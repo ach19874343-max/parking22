@@ -1148,9 +1148,71 @@ return(item.driverName||'').trim()===driverName;
 .map(item=>({
 round:Number(item.busRound??item.round??0),
 time:item.startTime||item.time||'',
-busNumber:item.busNumber||''
+busNumber:item.busNumber||'',
+startOrder:Number(item.startOrder??0)
 }))
 .sort((a,b)=>a.round-b.round);
+}
+
+function timeStrToMinutes(t){
+if(!t) return null;
+const parts=t.split(':');
+const h=parseInt(parts[0],10);
+const m=parseInt(parts[1]||'0',10);
+if(isNaN(h)) return null;
+return h*60+(isNaN(m)?0:m);
+}
+
+function extractRound0List(dispatchData){
+if(!dispatchData?.object) return [];
+const list=Array.isArray(dispatchData.object)?dispatchData.object:[];
+return list
+.filter(item=>Number(item.busRound??item.round??0)===0)
+.map(item=>({
+startOrder:Number(item.startOrder??0),
+min:timeStrToMinutes(item.startTime||item.time||'')
+}))
+.filter(x=>x.min!=null)
+.sort((a,b)=>a.startOrder-b.startOrder);
+}
+
+function findPmBoundaryIndex(round0List){
+for(let i=1;i<round0List.length;i++){
+if(round0List[i].min-round0List[i-1].min>=60) return i;
+}
+return -1;
+}
+
+function getStartOrderNumber(dispatchData,startOrder,isSupport){
+if(startOrder==null||isNaN(startOrder)) return null;
+if(isSupport) return startOrder+1;
+
+const round0List=extractRound0List(dispatchData);
+const boundaryIdx=findPmBoundaryIndex(round0List);
+const myIdx=round0List.findIndex(x=>x.startOrder===startOrder);
+
+if(boundaryIdx===-1||myIdx===-1||myIdx<boundaryIdx){
+return startOrder+1;
+}
+return myIdx-boundaryIdx+1;
+}
+
+function applyStartOrderToSchedule(schedule,rounds,dispatchData,isSupport){
+if(!schedule) return schedule;
+const supportCls=schedule.cls==='지원'||schedule.cls==='지원오전'||schedule.cls==='지원오후';
+const numberableCls=supportCls||
+schedule.cls==='오전'||schedule.cls==='오후'||
+schedule.cls==='추가오전'||schedule.cls==='추가오후';
+if(!numberableCls) return schedule;
+
+const round0=rounds?.find(r=>r.round===0);
+if(!round0) return schedule;
+
+const num=getStartOrderNumber(dispatchData,round0.startOrder,supportCls);
+if(num==null) return schedule;
+
+if(supportCls) return{...schedule,label:'지원근무'+num};
+return{...schedule,label:schedule.cls+num};
 }
 
 async function fetchWorkDriver(driverId,date,skipCache){
@@ -1811,6 +1873,31 @@ inferWorkPeriod(work,dayMap[date],null)
 );
 }
 });
+
+const numberableClsSet=new Set(['오전','오후','추가오전','추가오후','지원','지원오전','지원오후']);
+const orderInfoList=await Promise.all(dates.map(async date=>{
+const schedule=dayMap[date];
+if(!schedule||!numberableClsSet.has(schedule.cls)) return null;
+const work=workByDate[date];
+const isSupport=isSupportWork(work,driver.route);
+try{
+const dispatchData=(isSupport&&work?.routeId)
+?await fetchDispatchById(work.routeId,date)
+:await fetchRoute(driver.route,date);
+const rounds=extractDriverRounds(dispatchData,driver.name,driver.id);
+return{dispatchData,rounds,isSupport};
+}catch(e){
+return null;
+}
+}));
+
+if(myToken!==monthModalToken) return;
+
+dates.forEach((date,i)=>{
+const info=orderInfoList[i];
+if(!info) return;
+dayMap[date]=applyStartOrderToSchedule(dayMap[date],info.rounds,info.dispatchData,info.isSupport);
+});
 document.getElementById('modalTitle').innerHTML=
 `${driver.name} · ${month+1}월 근무일정`+
 (regularOff.text?` · 정기휴무 <span class="regular-off-text">${regularOff.text}</span>`:'');
@@ -1859,10 +1946,7 @@ html+=`<div class="${cellCls}">`;
 html+=`<div class="cal-day">${day}</div>`;
 
 if(schedule){
-let calLabel=schedule.label;
-if(schedule.cls==='지원') calLabel='지원';
-else if(schedule.cls==='지원오전') calLabel='지원오전';
-else if(schedule.cls==='지원오후') calLabel='지원오후';
+const calLabel=schedule.label;
 html+=`<div class="cal-status cal-status-${schedule.cls}">${calLabel}</div>`;
 }
 
@@ -1985,6 +2069,7 @@ let schedule=resolveSchedule(work,driver.route,rounds);
 schedule=applyExtraWorkSchedule(
 schedule,work,currentDate.getDay(),regularOffDowsByDriver[idx],rounds
 );
+schedule=applyStartOrderToSchedule(schedule,rounds,dispatchData,isSupport);
 const hasData=rounds.length>0;
 const displayRoute=isSupport&&work?.routeName
 ?work.routeName
