@@ -351,8 +351,8 @@ body {
 .deficit-value.surplus { color: var(--bonus); }
 .deficit-sub {
   font-size: clamp(0.5rem, 1.8vw, 0.625rem);
-  font-weight: 500;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -551,9 +551,11 @@ body {
         <span class="bonus-title">예상 전별금</span><span class="total-months" id="bonusMonths"></span>
       </div>
       <div class="bonus-row">
-        <span class="bf medium">중형 <em>225</em>×<span id="mediumCount">0</span></span>
+        <span class="bo">(</span>
+        <span class="bf medium">중형<span id="mediumCount">0</span>개월</span>
         <span class="bo">+</span>
-        <span class="bf large">대형 <em>450</em>×<span id="largeCount">0</span></span>
+        <span class="bf large">대형<span id="largeCount">0</span>개월</span>
+        <span class="bo">)</span>
         <span class="bo">×</span>
         <span class="bf members-wrap">
           <input type="text" inputmode="numeric" class="members-input" id="membersInput"
@@ -564,16 +566,17 @@ body {
       </div>
     </div>
     <div class="bonus-note" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-      <span>총인원수에 대형</span>
+      <span>총인원</span>
+      <span>대형</span>
       <input type="text" inputmode="numeric" class="rate-input" id="rateLarge"
-        value="85" style="width:2.4em;" oninput="onRatioInput()" aria-label="대형 비율">%
+        value="85" style="width:2.4em;" oninput="onRatioInput()" aria-label="대형 비율">%,
       <span>중형</span>
       <input type="text" inputmode="numeric" class="rate-input" id="rateMedium"
-        value="10" style="width:2.4em;" oninput="onRatioInput()" aria-label="중형 비율">%
+        value="10" style="width:2.4em;" oninput="onRatioInput()" aria-label="중형 비율">%,
       <span>똑버스</span>
       <input type="text" inputmode="numeric" class="rate-input" id="rateSmall"
-        value="5" style="width:2.4em;" oninput="onRatioInput()" aria-label="똑버스 비율">%
-      <span>로 예상한 계산 결과</span>
+        value="5" style="width:2.4em;" oninput="onRatioInput()" aria-label="똑버스 비율">%,
+      <span>가정.</span>
     </div>
   </section>
 
@@ -583,14 +586,14 @@ body {
         <span class="bonus-title">예상 적금</span><span class="total-months" id="savingsMonths"></span>
       </div>
       <div class="bonus-row">
-        <span class="bf">
+        <span class="bf" style="display:none;">
           <em id="union50Amount">0</em>
         </span>
-        <span class="bo">+</span>
-        <span class="bf">
+        <span class="bo" style="display:none;">+</span>
+        <span class="bf" style="display:none;">
           <em id="deduct100Amount">0</em>
         </span>
-        <span class="bo">+</span>
+        <span class="bf">이자</span>
         <span class="bf">
           <input type="text" inputmode="decimal" class="rate-input" id="rateInput"
             placeholder="3" value="3" oninput="onRateInput()" aria-label="연이율">%
@@ -605,13 +608,13 @@ body {
       </div>
     </div>
     <div class="bonus-note" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <span>매월 예상 조합비</span>
+      <span>매월 조합비</span>
       <span class="members-wrap">
         <input type="text" inputmode="numeric" class="members-input" id="deductInput"
           style="width:4.5em;color:var(--union);border-bottom-color:var(--union);"
           placeholder="40,000" oninput="onDeductInput()" aria-label="조합비 공제액">원
       </span>
-      <span style="color:var(--text-muted);font-size:0.625rem;">이 라고 가정할때,</span>
+      <span style="color:var(--text-muted);font-size:0.625rem;">,그외 적금시,</span>
     </div>
   </section>
 
