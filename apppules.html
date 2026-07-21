@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>안창해·조합비·공제회비 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -337,6 +340,7 @@ body {
   font-size: clamp(0.6875rem, 3vw, 1.0625rem);
   font-weight: 800;
   color: var(--deduct);
+  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -349,7 +353,6 @@ body {
   font-size: clamp(0.5rem, 1.8vw, 0.625rem);
   font-weight: 500;
   color: var(--text-muted);
-  margin-top: 4px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -619,16 +622,12 @@ body {
       </div>
       <div class="deficit-grid">
         <div class="deficit-item" id="deficit1Box">
-          <span class="deficit-value" id="deficit1">0</span>
           <span class="deficit-sub">공제회비 누적과 비교시</span>
+          <span class="deficit-value" id="deficit1">0</span>
         </div>
         <div class="deficit-item" id="deficit2Box">
-          <span class="deficit-value" id="deficit2">0</span>
           <span class="deficit-sub">예상 적금과 비교시</span>
-        </div>
-        <div class="deficit-item" id="deficit3Box">
-          <span class="deficit-value" id="deficit3">0</span>
-          <span class="deficit-sub">전체 누적과 비교시</span>
+          <span class="deficit-value" id="deficit2">0</span>
         </div>
       </div>
     </div>
@@ -665,7 +664,7 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<script src="union-fee-firebase-886.js"></script>
+<script src="union-fee-firebase-886.js?v=20260721"></script>
 <script>
 /* Firebase 스크립트가 없을 때 폴백 */
 if (typeof window.UnionFB === 'undefined') {
@@ -1238,11 +1237,9 @@ function renderDeficit() {
   const bonus = calcBonus();
   const totalDeduct = getTotalDeduct();
   const savings = lastSavingsTotal;
-  const totalAll = getTotalAll();
 
   const diff1 = bonus - totalDeduct;
   const diff2 = bonus - savings;
-  const diff3 = bonus - totalAll;
 
   const el1 = document.getElementById('deficit1');
   const box1 = document.getElementById('deficit1Box');
@@ -1255,21 +1252,15 @@ function renderDeficit() {
   el2.textContent = (diff2 < 0 ? '-' : '') + fmt(Math.abs(diff2));
   box2.classList.toggle('surplus', diff2 >= 0);
   el2.classList.toggle('surplus', diff2 >= 0);
-
-  const el3 = document.getElementById('deficit3');
-  const box3 = document.getElementById('deficit3Box');
-  el3.textContent = (diff3 < 0 ? '-' : '') + fmt(Math.abs(diff3));
-  box3.classList.toggle('surplus', diff3 >= 0);
-  el3.classList.toggle('surplus', diff3 >= 0);
 }
 
 function getMonthsLabel() {
-  const totalMonths = data.filter(r => r.u || r.mu).length;
+  const totalMonths = data.filter(r => r.u || r.mu).length + 1;
   const years = Math.floor(totalMonths / 12);
   const rem = totalMonths % 12;
   return years > 0
-    ? `(총 ${years}년 ${String(rem).padStart(2,'0')}개월 근무)`
-    : `(총 ${String(totalMonths).padStart(2,'0')}개월 근무)`;
+    ? `(총 ${years}년 ${String(rem).padStart(2,'0')}개월째 근무중)`
+    : `(총 ${String(totalMonths).padStart(2,'0')}개월째 근무중)`;
 }
 
 function renderList() {
