@@ -164,7 +164,6 @@ td.editable:active{background:#eef2ff;}
 
 <script>
 const WORKER='https://jolly-voice-134c.ach4343.workers.dev/';
-const CACHE_KEY='dinnerFinderDriverCache_v1';
 
 // ── Firebase 설정 (apppules.html과 같은 프로젝트, 별도 경로 사용) ──
 const FIREBASE_CONFIG={
@@ -226,13 +225,19 @@ catch(e){ return iso; }
 function startDinnerFirebaseSync(){
 if(!DinnerFB.ready) return;
 
-DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/roster`),snap=>{
+// 실제 명단 데이터는 dinnerFinder/roster(배열)가 아니라 dinnerFinder/driverTable/data 밑에
+// 이름을 키로 하는 객체로 저장되어 있다. 예: driverTable/data/김도완/driverId = 6174
+DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable/data`),snap=>{
 const val=snap.exists()?snap.val():null;
-if(val&&val.data&&Array.isArray(val.data)&&val.data.length>0){
-roster=val.data;
-saveRosterCache();
+roster=TARGET_NAMES.map(t=>{
+const fb=val&&val[t.name];
+return {
+name:t.name,
+route:(fb&&fb.route!==undefined&&fb.route!==null&&fb.route!=='')?fb.route:t.route,
+driverId:(fb&&fb.driverId!==undefined&&fb.driverId!==null&&fb.driverId!=='')?fb.driverId:null
+};
+});
 renderRosterTable();
-}
 },err=>{
 log('Firebase 읽기 실패 (명단): '+err.message+' — Firebase 콘솔의 Realtime Database 규칙에서 dinnerFinder 경로 읽기/쓰기가 허용되어 있는지 확인해주세요.');
 });
@@ -264,7 +269,7 @@ DinnerFB._monthUnsub=DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/month
 responded=true;
 clearTimeout(timeoutId);
 const val=snap.exists()?snap.val():null;
-if(val&&val.overrides){ overridesCache[key]=val.overrides; saveOverridesCache(); }
+if(val&&val.overrides){ overridesCache[key]=val.overrides; }
 // 로컬에서 방금 직접 조회한 결과가 이미 화면에 떠 있으면 Firebase 스냅샷으로 덮어쓰지 않음
 if(lastRunContext && lastRunContext.year===year && lastRunContext.month===month) return;
 if(val&&val.resultRows&&val.resultRows.length>0){
@@ -301,8 +306,6 @@ const TARGET_NAMES=[
 
 const TOTAL_MEMBER_COUNT=TARGET_NAMES.length; // 전체 대상 인원 수 (미확인 포함 항상 고정된 정원)
 
-const ROSTER_KEY='dinnerFinderRoster_v2';
-const OVERRIDES_KEY='dinnerFinderOverrides_v1';
 const STATUS_CLS={available:'avail',am:'am',unavailable:'unavail',unknown:'unknown'};
 
 let roster=[]; // [{name,route,driverId}] — 이름/노선/driverId 고정 명단 (클릭으로 수정 가능)
@@ -329,28 +332,13 @@ return `${Number(m)}월 ${Number(d)}일`;
 }
 
 // ── 명단(roster): 이름/노선/driverId 고정값, 클릭으로 수정 가능 ──
-function loadRosterCache(){
-try{ const raw=localStorage.getItem(ROSTER_KEY); if(raw) return JSON.parse(raw); }catch(e){}
-return null;
-}
-function saveRosterCache(){
-try{ localStorage.setItem(ROSTER_KEY, JSON.stringify(roster)); }catch(e){ log('명단 캐시 저장 실패 (localStorage 사용 불가)'); }
-}
-// 과거 1단계 조회로 저장된 driverId 캐시(레거시)가 있으면 초기 명단에 반영
-function loadLegacyDriverCache(){
-try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); }catch(e){ return {}; }
-}
+// Firebase가 유일한 저장소다. 로컬(localStorage) 캐시는 쓰지 않는다 — 브라우저 환경에 따라
+// localStorage 자체가 막혀 있는 경우가 있고, 어차피 Firebase가 이미 모든 걸 저장/동기화하고 있어서 불필요했다.
 function defaultRoster(){
-const legacy=loadLegacyDriverCache();
-return TARGET_NAMES.map(t=>{
-const f=legacy[t.name];
-return {name:t.name, route:t.route, driverId:f?f.driverId:null};
-});
+return TARGET_NAMES.map(t=>({name:t.name, route:t.route, driverId:null}));
 }
 function initRoster(){
-const saved=loadRosterCache();
-roster=(saved&&saved.length)?saved:defaultRoster();
-if(!saved) saveRosterCache();
+roster=defaultRoster(); // Firebase 연결 전 임시 기본값. 연결되면 startDinnerFirebaseSync()가 실제 저장된 값으로 덮어씀.
 renderRosterTable();
 }
 // driverId가 작은 순으로 위에서부터 정렬 (없는/숫자가 아닌 driverId는 맨 아래로)
@@ -382,36 +370,41 @@ document.getElementById('idTable').innerHTML=html;
 }
 function editRosterField(idx,field){
 const label=field==='name'?'이름':field==='route'?'노선':'driverId';
+const oldName=roster[idx].name;
 const cur=roster[idx][field];
 const input=prompt(`${roster[idx].name} — ${label} 수정`, cur===null||cur===undefined?'':String(cur));
 if(input===null) return;
 const val=input.trim();
 roster[idx][field]=val===''?null:val;
-saveRosterCache();
-saveRosterToFirebase();
 renderRosterTable();
+saveRosterToFirebase(idx,oldName);
 }
-async function saveRosterToFirebase(){
+// 실제 저장 위치는 dinnerFinder/driverTable/data/{이름} (이름이 키인 객체) 이다.
+// route/driverId만 갱신(update)해서 그 이름 밑에 다른 앱이 저장해둔 필드가 있어도 지우지 않는다.
+// 이름 자체가 바뀐 경우에만 새 키로 옮기고 예전 키는 지운다.
+async function saveRosterToFirebase(idx,oldName){
 if(!DinnerFB.ready) return;
+const r=roster[idx];
 try{
-await DinnerFB.set(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/roster`),{data:roster, savedAt:new Date().toISOString()});
+if(oldName && oldName!==r.name){
+await DinnerFB.update(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable/data/${r.name}`),{route:r.route, driverId:r.driverId});
+await DinnerFB.set(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable/data/${oldName}`),null);
+}else{
+await DinnerFB.update(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable/data/${r.name}`),{route:r.route, driverId:r.driverId});
+}
 }catch(e){
 log('Firebase 저장 실패 (명단): '+e.message);
 }
 }
 
-// ── 수동 상태 변경(칩 꾹눌러 이동) 캐시 ──
-function loadOverridesCache(){
-try{ return JSON.parse(localStorage.getItem(OVERRIDES_KEY)||'{}'); }catch(e){ return {}; }
-}
-function saveOverridesCache(){
-try{ localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overridesCache)); }catch(e){ log('수동 상태 캐시 저장 실패 (localStorage 사용 불가)'); }
-}
+// ── 수동 상태 변경(칩 클릭으로 이동) 캐시 ──
+// 이것도 localStorage를 쓰지 않는다. Firebase의 months/{월}/overrides 경로가 이미 저장/조회를 전담하고 있고
+// (setOverride가 즉시 Firebase에 쓰고, subscribeMonthResult가 불러올 때 overridesCache에 채워 넣음),
+// 화면에 즉시 반영하기 위한 메모리상의 캐시(overridesCache)만 있으면 충분하다.
 function setOverride(mKey,dateStr,name,status){
 overridesCache[mKey]=overridesCache[mKey]||{};
 overridesCache[mKey][dateStr]=overridesCache[mKey][dateStr]||{};
 overridesCache[mKey][dateStr][name]=status;
-saveOverridesCache();
 saveOverrideToFirebase(mKey,dateStr,name,status);
 }
 async function saveOverrideToFirebase(mKey,dateStr,name,status){
@@ -483,7 +476,7 @@ document.getElementById('monthInput').value=`${now.getFullYear()}-${pad2(now.get
 }
 initMonthInput();
 updateMonthWarning();
-overridesCache=loadOverridesCache();
+overridesCache={};
 initRoster();
 setupChipInteractions();
 
