@@ -49,17 +49,28 @@ box-shadow: inset 3px 3px 5px #c7ccda, inset -3px -3px 5px #ffffff;
 .bar-fill.best{background:linear-gradient(90deg,#6366f1,#4338ca);}
 .chip-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:11.5px;}
 .chip-row .chip-label{flex-shrink:0;width:32px;font-weight:700;color:#9096ac;padding-top:4px;}
+.chip-row .chip-label.avail{color:#22c55e;}
+.chip-row .chip-label.am{color:#f59e0b;}
+.chip-row .chip-label.unavail{color:#9aa3b5;}
+.chip-row .chip-label.unknown{color:#a855f7;}
 .chip-row .chip-items{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0;}
 .chip{
 display:inline-block;padding:3px 10px 3px 8px;border-radius:7px;
 font-size:11.5px;font-weight:700;background:#fff;color:#3d4560;
 box-shadow: 2px 2px 5px #c7ccda, -2px -2px 5px #ffffff;
 border-left:2px solid #ccc;
+user-select:none;-webkit-user-select:none;touch-action:manipulation;
+transition:background-color .15s,border-color .15s,color .15s,transform .1s;
 }
+.chip:active{transform:scale(.94);}
 .chip.avail{border-left-color:#22c55e;color:#15803d;}
 .chip.am{border-left-color:#f59e0b;color:#b45309;}
 .chip.unavail{border-left-color:#9aa3b5;color:#6b7280;}
 .chip.unknown{border-left-color:#a855f7;color:#9333ea;}
+.chip.selected{box-shadow:0 0 0 2px #3b6cf0, 2px 2px 5px #c7ccda, -2px -2px 5px #ffffff;}
+.chip-row .chip-label{cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;border-radius:6px;transition:background-color .15s;}
+.chip-row .chip-label:active{background:#e0e7ff;}
+.chip-row.target-active .chip-label{background:#eef2ff;}
 #resultSavedNote{text-align:center;font-size:11.5px;color:#9aa3b5;margin:8px 0 22px;}
 
 .day-detail{margin-top:0;}
@@ -102,14 +113,15 @@ button.secondary{background:#e5e7eb;color:#1f2937;}
 button.small{min-height:32px;padding:6px 10px;font-size:12px;}
 #monthInput{min-height:38px;flex:1;min-width:130px;font-size:13px;}
 #monthWarning{font-size:11.5px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:5px 9px;display:none;width:100%;}
-#cacheNotice{font-size:11.5px;color:#3b6cf0;background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:5px 9px;display:none;width:100%;}
 #log{white-space:pre-wrap;font-size:11px;background:#fff;padding:10px;border-radius:8px;max-height:26vh;overflow:auto;margin-top:8px;border:1px solid #e5e7eb;-webkit-overflow-scrolling:touch;color:#9aa3b5;}
+#log:empty{display:none;padding:0;margin:0;border:none;}
 table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12px;background:#fff;}
 th,td{border:1px solid #e5e7eb;padding:6px;text-align:center;}
 th{background:#f1f5f9;}
 tr.missing td{color:#dc2626;}
-.hist-box{font-size:11px;color:#9aa3b5;margin-top:8px;line-height:1.7;}
-.hist-title{font-weight:700;color:#3b6cf0;margin-bottom:2px;}
+td.editable{cursor:pointer;}
+td.editable:active{background:#eef2ff;}
+
 
 @media (max-width:640px){
 #adminPanel table,#adminPanel thead,#adminPanel tbody{display:block;width:100%;}
@@ -132,12 +144,10 @@ tr.missing td{color:#dc2626;}
 <div class="row">
 대상 월: <input id="monthInput" type="month" onchange="onMonthChange()">
 <span id="monthWarning">⚠️ 이미 지난 달입니다. 지난 날짜 기준으로 조회됩니다.</span>
-<span id="cacheNotice"></span>
 </div>
 
 <div class="row">
-<button id="btnStep1" onclick="runStep1()">1단계: 기사님 ID 찾기</button>
-<button id="btnStep2" onclick="runStep2()" disabled>2단계: 스케줄 조회 & 회식 날짜 계산</button>
+<button id="btnStep2" onclick="runStep2()">스케줄 조회 & 회식 날짜 다시 계산</button>
 </div>
 <div class="row">
 <button id="btnRetryUnknown" class="secondary small" onclick="retryUnknown()" disabled>미확인만 재조회</button>
@@ -145,8 +155,6 @@ tr.missing td{color:#dc2626;}
 
 <div id="log"></div>
 <div id="idTable"></div>
-<div id="driverHistoryLog" class="hist-box"></div>
-<div id="monthHistoryLog" class="hist-box"></div>
 
 </div>
 </details>
@@ -187,25 +195,6 @@ return false;
 
 function monthKey(year,month){ return `${year}-${pad2(month+1)}`; }
 
-// 1단계 결과(이름/노선/driverId/확인된 날짜)를 Firebase에 저장 + 검색 이력 기록
-async function saveDriverTableToFirebase(){
-if(!DinnerFB.ready) return;
-const now=new Date().toISOString();
-try{
-await DinnerFB.set(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable`),{
-data:foundDrivers,
-savedAt:now
-});
-await DinnerFB.push(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverHistory`),{
-savedAt:now,
-action:'1단계 재검색',
-foundCount:Object.keys(foundDrivers).length
-});
-}catch(e){
-log('Firebase 저장 실패 (driverId 테이블): '+e.message);
-}
-}
-
 // 2단계 결과(날짜별 참여 가능 인원)를 월별로 Firebase에 저장 + 조회 이력 기록
 async function saveMonthResultToFirebase(year,month,rows,unresolvedNames,driverCount,actionLabel,maxCount){
 if(!DinnerFB.ready) return;
@@ -233,45 +222,21 @@ try{ return new Date(iso).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',
 catch(e){ return iso; }
 }
 
-function historyObjToSortedArray(historyObj){
-if(!historyObj) return [];
-return Object.values(historyObj).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
-}
-
-function renderHistoryList(elId,items,lineFn){
-const el=document.getElementById(elId);
-if(!el) return;
-if(!items||items.length===0){ el.innerHTML=''; return; }
-el.innerHTML='<div class="hist-title">최근 조회 기록</div>'+
-items.slice(0,10).map(lineFn).join('');
-}
-
 // 다른 사람이 사이트에 들어왔을 때 최신 저장 데이터를 실시간으로 반영
 function startDinnerFirebaseSync(){
 if(!DinnerFB.ready) return;
 
-DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable`),snap=>{
+DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/roster`),snap=>{
 const val=snap.exists()?snap.val():null;
-if(val&&val.data&&Object.keys(val.data).length>0){
-foundDrivers={...val.data};
-renderIdTable();
-document.getElementById('btnStep2').disabled=false;
-const notice=document.getElementById('cacheNotice');
-notice.style.display='inline-block';
-notice.textContent=`Firebase 최신 driverId ${Object.keys(val.data).length}명 (저장: ${fmtTime(val.savedAt)})`;
+if(val&&val.data&&Array.isArray(val.data)&&val.data.length>0){
+roster=val.data;
+saveRosterCache();
+renderRosterTable();
 }
 },err=>{
-log('Firebase 읽기 실패 (driverTable): '+err.message+' — Firebase 콘솔의 Realtime Database 규칙에서 dinnerFinder 경로 읽기/쓰기가 허용되어 있는지 확인해주세요.');
+log('Firebase 읽기 실패 (명단): '+err.message+' — Firebase 콘솔의 Realtime Database 규칙에서 dinnerFinder 경로 읽기/쓰기가 허용되어 있는지 확인해주세요.');
 });
 
-DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverHistory`),snap=>{
-const val=snap.exists()?snap.val():null;
-renderHistoryList('driverHistoryLog',historyObjToSortedArray(val),h=>
-`<div>${fmtTime(h.savedAt)} — ${h.action} (찾음 ${h.foundCount}명)</div>`
-);
-},err=>{
-log('Firebase 읽기 실패 (driverHistory): '+err.message);
-});
 
 subscribeMonthResult();
 }
@@ -299,15 +264,13 @@ DinnerFB._monthUnsub=DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/month
 responded=true;
 clearTimeout(timeoutId);
 const val=snap.exists()?snap.val():null;
-renderHistoryList('monthHistoryLog',historyObjToSortedArray(val&&val.history),h=>
-`<div>${fmtTime(h.savedAt)} — ${h.action}${h.maxCount!=null?` (최대 ${h.maxCount}명)`:''}</div>`
-);
+if(val&&val.overrides){ overridesCache[key]=val.overrides; saveOverridesCache(); }
 // 로컬에서 방금 직접 조회한 결과가 이미 화면에 떠 있으면 Firebase 스냅샷으로 덮어쓰지 않음
 if(lastRunContext && lastRunContext.year===year && lastRunContext.month===month) return;
 if(val&&val.resultRows&&val.resultRows.length>0){
-renderResultRowsHtml(val.resultRows,val.driverCount||0,val.unresolvedNames||[],fmtTime(val.savedAt));
+renderResultRowsHtml(val.resultRows,val.unresolvedNames||[],fmtTime(val.savedAt),key);
 }else{
-document.getElementById('resultTable').innerHTML='<div id="emptyNote">아직 저장된 조회 결과가 없습니다.<br>관리자 옵션에서 1·2단계를 실행하면 여기에 표시됩니다.</div>';
+document.getElementById('resultTable').innerHTML='<div id="emptyNote">아직 저장된 조회 결과가 없습니다.<br>관리자 옵션에서 조회를 실행하면 여기에 표시됩니다.</div>';
 document.getElementById('resultSavedNote').textContent='';
 }
 },err=>{
@@ -318,15 +281,6 @@ document.getElementById('resultSavedNote').textContent='';
 log('Firebase 읽기 실패 (months/'+key+'): '+err.message);
 });
 }
-
-const ROUTE_DISPATCH_ID={
-'917':'123',
-'3030':'130',
-'11-2':'120',
-'11-5':'121',
-'10':'090',
-'22':'126'
-};
 
 // 22번은 격일제: 특정 날짜에 WORK(근무)면 그 전날/다음날은 휴무 → 휴무일은 회식 참여 가능
 const ALTERNATING_ROUTES=new Set(['22']);
@@ -347,7 +301,13 @@ const TARGET_NAMES=[
 
 const TOTAL_MEMBER_COUNT=TARGET_NAMES.length; // 전체 대상 인원 수 (미확인 포함 항상 고정된 정원)
 
-let foundDrivers={}; // name -> {name,route,driverId,foundDate}
+const ROSTER_KEY='dinnerFinderRoster_v2';
+const OVERRIDES_KEY='dinnerFinderOverrides_v1';
+const STATUS_CLS={available:'avail',am:'am',unavailable:'unavail',unknown:'unknown'};
+
+let roster=[]; // [{name,route,driverId}] — 이름/노선/driverId 고정 명단 (클릭으로 수정 가능)
+let overridesCache={}; // {monthKey:{dateStr:{name:status}}} — 칩 꾹눌러 수동 변경한 상태
+let currentRender=null; // 결과 재렌더링용 마지막 인자 저장 {rows,unresolvedNames,savedAtLabel,monthKey}
 let lastRunContext=null; // 2단계 결과 재조회용 상태 저장
 
 const logEl=document.getElementById('log');
@@ -368,28 +328,153 @@ const [,m,d]=dateStr.split('-');
 return `${Number(m)}월 ${Number(d)}일`;
 }
 
-// ── driverId 캐시 (localStorage) ──
-function loadDriverCache(){
-try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); }
-catch(e){ return {}; }
+// ── 명단(roster): 이름/노선/driverId 고정값, 클릭으로 수정 가능 ──
+function loadRosterCache(){
+try{ const raw=localStorage.getItem(ROSTER_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+return null;
 }
-function saveDriverCache(cache){
-try{ localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); }
-catch(e){ log('캐시 저장 실패 (localStorage 사용 불가)'); }
+function saveRosterCache(){
+try{ localStorage.setItem(ROSTER_KEY, JSON.stringify(roster)); }catch(e){ log('명단 캐시 저장 실패 (localStorage 사용 불가)'); }
+}
+// 과거 1단계 조회로 저장된 driverId 캐시(레거시)가 있으면 초기 명단에 반영
+function loadLegacyDriverCache(){
+try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); }catch(e){ return {}; }
+}
+function defaultRoster(){
+const legacy=loadLegacyDriverCache();
+return TARGET_NAMES.map(t=>{
+const f=legacy[t.name];
+return {name:t.name, route:t.route, driverId:f?f.driverId:null};
+});
+}
+function initRoster(){
+const saved=loadRosterCache();
+roster=(saved&&saved.length)?saved:defaultRoster();
+if(!saved) saveRosterCache();
+renderRosterTable();
+}
+// driverId가 작은 순으로 위에서부터 정렬 (없는/숫자가 아닌 driverId는 맨 아래로)
+function rosterSortedIndexes(){
+return roster.map((r,idx)=>idx).sort((a,b)=>{
+const na=driverIdSortValue(roster[a].driverId);
+const nb=driverIdSortValue(roster[b].driverId);
+return na-nb;
+});
+}
+function driverIdSortValue(id){
+if(id===null||id===undefined||id==='') return Infinity;
+const n=Number(id);
+return isNaN(n)?Infinity:n;
+}
+function renderRosterTable(){
+let html='<table><tr><th>이름</th><th>노선</th><th>driverId</th></tr>';
+rosterSortedIndexes().forEach(idx=>{
+const r=roster[idx];
+const missing=!r.route||!r.driverId;
+html+=`<tr class="${missing?'missing':''}">`+
+`<td data-label="이름" class="editable" onclick="editRosterField(${idx},'name')">${r.name}</td>`+
+`<td data-label="노선" class="editable" onclick="editRosterField(${idx},'route')">${r.route??'null'}</td>`+
+`<td data-label="driverId" class="editable" onclick="editRosterField(${idx},'driverId')">${r.driverId??'null'}</td>`+
+`</tr>`;
+});
+html+='</table>';
+document.getElementById('idTable').innerHTML=html;
+}
+function editRosterField(idx,field){
+const label=field==='name'?'이름':field==='route'?'노선':'driverId';
+const cur=roster[idx][field];
+const input=prompt(`${roster[idx].name} — ${label} 수정`, cur===null||cur===undefined?'':String(cur));
+if(input===null) return;
+const val=input.trim();
+roster[idx][field]=val===''?null:val;
+saveRosterCache();
+saveRosterToFirebase();
+renderRosterTable();
+}
+async function saveRosterToFirebase(){
+if(!DinnerFB.ready) return;
+try{
+await DinnerFB.set(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/roster`),{data:roster, savedAt:new Date().toISOString()});
+}catch(e){
+log('Firebase 저장 실패 (명단): '+e.message);
+}
 }
 
-// 페이지 로드 시 캐시에 저장된 driverId가 있으면 바로 불러와서 2단계로 넘어갈 수 있게 함
-function tryLoadFromCache(){
-const cache=loadDriverCache();
-const names=Object.keys(cache);
-if(names.length===0) return;
-foundDrivers={...cache};
-renderIdTable();
-document.getElementById('btnStep2').disabled=false;
-const notice=document.getElementById('cacheNotice');
-notice.style.display='inline-block';
-notice.textContent=`저장된 driverId 캐시 ${names.length}명 불러옴 (바로 2단계 진행 가능)`;
-log(`캐시에서 driverId ${names.length}명 불러옴 — 1단계 생략하고 2단계로 진행할 수 있습니다.`);
+// ── 수동 상태 변경(칩 꾹눌러 이동) 캐시 ──
+function loadOverridesCache(){
+try{ return JSON.parse(localStorage.getItem(OVERRIDES_KEY)||'{}'); }catch(e){ return {}; }
+}
+function saveOverridesCache(){
+try{ localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overridesCache)); }catch(e){ log('수동 상태 캐시 저장 실패 (localStorage 사용 불가)'); }
+}
+function setOverride(mKey,dateStr,name,status){
+overridesCache[mKey]=overridesCache[mKey]||{};
+overridesCache[mKey][dateStr]=overridesCache[mKey][dateStr]||{};
+overridesCache[mKey][dateStr][name]=status;
+saveOverridesCache();
+saveOverrideToFirebase(mKey,dateStr,name,status);
+}
+async function saveOverrideToFirebase(mKey,dateStr,name,status){
+if(!DinnerFB.ready) return;
+try{
+await DinnerFB.update(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/months/${mKey}/overrides/${dateStr}`),{[name]:status});
+}catch(e){
+log('Firebase 저장 실패 (수동 상태 변경): '+e.message);
+}
+}
+// ── 이름 이동: 이름 칩을 한 번 클릭 → 파란 테두리로 선택 표시.
+// 그 상태에서 가능/AM/불가/미확인 라벨 중 하나를 클릭하면 그 상태로 이동(자동 저장)하고 선택 해제.
+// 선택된 칩을 다시 클릭하면 선택 취소. 다른 칩을 클릭하면 선택이 그 칩으로 옮겨감.
+let selectedChipEl=null;
+
+function clearChipSelection(){
+if(selectedChipEl){
+selectedChipEl.classList.remove('selected');
+const card=selectedChipEl.closest('.day-card');
+if(card) card.querySelectorAll('.chip-row.target-active').forEach(r=>r.classList.remove('target-active'));
+}
+selectedChipEl=null;
+}
+
+function selectChip(chipEl){
+clearChipSelection();
+selectedChipEl=chipEl;
+chipEl.classList.add('selected');
+const card=chipEl.closest('.day-card');
+if(card) card.querySelectorAll('.chip-row').forEach(r=>r.classList.add('target-active'));
+}
+
+function moveSelectedChipTo(targetStatus){
+if(!selectedChipEl) return;
+const dateStr=selectedChipEl.dataset.date;
+const name=selectedChipEl.dataset.name;
+const mKey=dateStr.slice(0,7);
+clearChipSelection();
+setOverride(mKey,dateStr,name,targetStatus);
+if(navigator.vibrate) navigator.vibrate(15);
+if(currentRender) renderResultRowsHtml(currentRender.rows,currentRender.unresolvedNames,currentRender.savedAtLabel,currentRender.monthKey);
+}
+
+function setupChipInteractions(){
+const container=document.getElementById('resultTable');
+container.addEventListener('click',e=>{
+const label=e.target.closest('.chip-label');
+if(label){
+if(!selectedChipEl) return; // 선택된 이름이 없으면 라벨 클릭은 무시
+const targetCard=label.closest('.day-card');
+if(targetCard!==selectedChipEl.closest('.day-card')){ clearChipSelection(); return; } // 다른 날짜 카드는 무시
+moveSelectedChipTo(label.dataset.status);
+return;
+}
+const chip=e.target.closest('.chip');
+if(chip){
+if(selectedChipEl===chip){ clearChipSelection(); return; } // 같은 칩 다시 클릭 → 선택 취소
+selectChip(chip);
+return;
+}
+// 그 외 영역 클릭 시 선택 해제
+if(selectedChipEl) clearChipSelection();
+});
 }
 
 function initMonthInput(){
@@ -398,11 +483,12 @@ document.getElementById('monthInput').value=`${now.getFullYear()}-${pad2(now.get
 }
 initMonthInput();
 updateMonthWarning();
-tryLoadFromCache();
+overridesCache=loadOverridesCache();
+initRoster();
+setupChipInteractions();
 
 initDinnerFirebase().then(ok=>{
 if(ok){
-log('Firebase 연결됨 — 실시간 동기화 시작');
 startDinnerFirebaseSync();
 }else{
 log('Firebase 연결 실패 — 로컬 캐시만 사용합니다');
@@ -452,108 +538,6 @@ throw new Error('not_json');
 }
 }
 
-function extractObjects(json){
-const o=json?.object;
-if(Array.isArray(o)) return o;
-if(o) return [o];
-return [];
-}
-
-// ── 1단계: 이름 → driverId 찾기 ──
-async function runStep1(){
-document.getElementById('btnStep1').disabled=true;
-document.getElementById('btnStep2').disabled=true;
-document.getElementById('btnRetryUnknown').disabled=true;
-document.getElementById('cacheNotice').style.display='none';
-logEl.innerHTML='';
-document.getElementById('idTable').innerHTML='';
-
-const {year,month,startDay,lastDay}=getQueryRange();
-
-const pending=new Map(
-TARGET_NAMES.filter(t=>t.route!==null).map(t=>[t.name,{...t}])
-);
-foundDrivers={};
-
-log(`기사님 ID 조회 시작... (${formatDate(year,month,startDay)} ~ ${formatDate(year,month,lastDay)})`);
-log('김병준: 검색 대상 아님 (driverId 없음, null로 표시)');
-
-for(let d=startDay; d<=lastDay && pending.size>0; d++){
-const dateStr=formatDate(year,month,d);
-const routesNeeded=[...new Set([...pending.values()].map(p=>p.route))];
-
-const results=await Promise.all(routesNeeded.map(async route=>{
-try{
-const json=await fetchJson(`https://api.kiki-bus.com/dispatch/${ROUTE_DISPATCH_ID[route]}/${dateStr}`);
-return {route, objects:extractObjects(json)};
-}catch(e){
-return {route, objects:[], error:String(e)};
-}
-}));
-
-results.forEach(({route,objects})=>{
-objects.forEach(o=>{
-const target=pending.get(o.driverName);
-if(target&&target.route===route){
-foundDrivers[o.driverName]={name:o.driverName,route,driverId:o.driverId,foundDate:dateStr};
-pending.delete(o.driverName);
-log(`찾음: ${o.driverName} (${route}) → driverId=${o.driverId}  [${dateStr} 기준]`);
-}
-});
-});
-
-await sleep(200);
-}
-
-if(pending.size>0){
-log(`--- 아래 ${pending.size}명은 데이터에서 못 찾았습니다 (해당 기간 전체 결근/이름 표기 차이 가능) ---`);
-[...pending.keys()].forEach(n=>log(`못 찾음: ${n}`));
-}
-
-// 새로 찾은 driverId를 캐시에 저장 (다음 실행부터는 1단계 생략 가능)
-saveDriverCache({...foundDrivers});
-if(Object.keys(foundDrivers).length>0){
-log(`driverId ${Object.keys(foundDrivers).length}명 캐시에 저장 완료 — 다음부터는 바로 2단계 진행 가능`);
-saveDriverTableToFirebase();
-}
-
-renderIdTable();
-document.getElementById('btnStep1').disabled=false;
-if(Object.keys(foundDrivers).length>0) document.getElementById('btnStep2').disabled=false;
-}
-
-function renderIdTable(){
-let html='<table><tr><th>이름</th><th>노선</th><th>driverId</th><th>확인된 날짜</th></tr>';
-TARGET_NAMES.forEach(t=>{
-if(t.route===null){
-html+=`<tr class="missing">
-<td data-label="이름">${t.name}</td>
-<td data-label="노선">null</td>
-<td data-label="driverId">null</td>
-<td data-label="확인된 날짜">null</td>
-</tr>`;
-return;
-}
-const f=foundDrivers[t.name];
-if(f){
-html+=`<tr>
-<td data-label="이름">${t.name}</td>
-<td data-label="노선">${t.route}</td>
-<td data-label="driverId">${f.driverId}</td>
-<td data-label="확인된 날짜">${f.foundDate}</td>
-</tr>`;
-}else{
-html+=`<tr class="missing">
-<td data-label="이름">${t.name}</td>
-<td data-label="노선">${t.route}</td>
-<td data-label="driverId/확인된날짜" colspan="2">못 찾음</td>
-</tr>`;
-}
-});
-html+='</table>';
-document.getElementById('idTable').innerHTML=html;
-}
-
 // ── 2단계: 스케줄 조회 & 회식 날짜 계산 ──
 // 상태값에 PM이 포함되면 무조건 불가(저녁 근무), AM이 포함되면 오전만 근무(저녁엔 참여 가능하니 AM으로 별도 표시),
 // LEAVE/ANNUAL 등 근무가 없으면 완전 참여 가능. 그 외 인식 불가한 값은 unknown으로 분류.
@@ -562,6 +546,7 @@ if(!status) return 'available';
 if(status.includes('PM')) return 'unavailable';
 if(status.includes('AM')) return 'am';
 if(status.includes('LEAVE')||status==='ANNUAL') return 'available';
+if(status.includes('WORK')) return 'unavailable'; // 22번처럼 AM/PM 구분 없이 WORK만 오는 종일 근무 상태
 return 'unknown';
 }
 
@@ -576,6 +561,7 @@ return raw;
 }
 if(category==='am') return 'AM';
 if(category==='unavailable') return 'PM';
+if(category==='unknown') return null; // 진짜 미확인(원본 조회 데이터 없음)이면 접미사 없음
 return '휴';
 }
 
@@ -585,60 +571,127 @@ const b=new Date(dateStrB+'T00:00:00');
 return Math.round((b-a)/86400000);
 }
 
-// 22번 격일제 기사 한 명의 anchor(foundDate) 상태를 확인하고 전체 날짜에 패리티를 적용
-async function resolveAlternatingDriver(driver,year,month,startDay,lastDay,dayData){
+// 22번(격일제)의 홀짝 근무 패턴을 정하기 위한 기준 창(window): 오늘 -7일 ~ +7일(15일).
+// 조회하는 달이 언제든 상관없이 항상 "오늘" 기준으로 패턴을 확보해둔다.
+function todayWindowDates(){
+const today=new Date();
+today.setHours(0,0,0,0);
+const dates=[];
+for(let offset=-7; offset<=7; offset++){
+const d=new Date(today);
+d.setDate(d.getDate()+offset);
+dates.push(`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`);
+}
+return dates;
+}
+
+// driver 한 명에 대해 오늘 -7일~+7일을 실제로 조회해서 {dateStr:{isWork:bool}} 형태의 홀짝 패턴 근거를 만든다.
+async function buildAlternatingParityModel(driver){
+const dates=todayWindowDates();
+const known={};
+await Promise.all(dates.map(async dateStr=>{
 try{
-const json=await fetchJson(`https://api.kiki-bus.com/work/driver/${driver.driverId}/${driver.foundDate}`);
+const json=await fetchJson(`https://api.kiki-bus.com/work/driver/${driver.driverId}/${dateStr}`);
 const obj=json?.object||json?.data||json;
 const status=obj?.status||'';
-const anchorIsWork=status.includes('WORK');
-log(`격일제 확인: ${driver.name} → ${driver.foundDate} 상태=${status||'(없음)'} (${anchorIsWork?'근무일':'휴무일'} 기준으로 계산)`);
+known[dateStr]={isWork:status.includes('WORK')};
+}catch(e){
+// 실패한 날짜는 모델에서 제외 (다른 날짜로 보충됨)
+}
+}));
+log(`격일제 패턴 확인: ${driver.name} → 오늘 기준 ±7일 중 ${Object.keys(known).length}/${dates.length}일 조회 성공`);
+return known;
+}
+
+// 이 날짜와 같은 홀짝 주기(2일 간격)의 조회 데이터를 모아 다수결로 근무/휴무를 판단한다.
+// 같은 주기에 데이터가 하나도 없으면, 격일제 특성(홀짝이 항상 반대)을 이용해 반대 주기 데이터를 뒤집어 판단한다.
+// known에 데이터가 하나라도 있으면 반드시 true/false 중 하나를 반환하고, 정말 아무 데이터가 없을 때만 null.
+function estimateWorkByParity(dateStr,known){
+const knownDates=Object.keys(known);
+if(knownDates.length===0) return null;
+
+const votesForParity=(wantSameParity)=>{
+for(let windowDays=7; windowDays<=400; windowDays+=7){
+const votes=knownDates
+.filter(k=>{
+const diff=daysBetween(dateStr,k);
+if(diff===0||Math.abs(diff)>windowDays) return false;
+const sameParity=(((diff%2)+2)%2)===0;
+return wantSameParity?sameParity:!sameParity;
+})
+.map(k=>known[k].isWork);
+if(votes.length>0) return votes;
+}
+return [];
+};
+
+const sameVotes=votesForParity(true);
+if(sameVotes.length>0){
+const workVotes=sameVotes.filter(Boolean).length;
+return workVotes*2>=sameVotes.length; // 다수결 (동률이면 근무로 보수적으로 판단)
+}
+const oppVotes=votesForParity(false); // 같은 주기 데이터가 없으면 반대 주기를 뒤집어서 사용
+if(oppVotes.length>0){
+const workVotes=oppVotes.filter(Boolean).length;
+const oppIsWork=workVotes*2>=oppVotes.length;
+return !oppIsWork;
+}
+return null;
+}
+
+// driver 한 명의 dayData가 채워진 뒤, ALTERNATING_ROUTES 소속이면서 그날 조회 자체가 실패해 unknown으로
+// 남은 날짜만 골라 채운다. parityModel(오늘 ±7일 실제 조회 결과)과 이번 조회 범위에서 성공한 날짜들을
+// 합쳐서 판단 근거로 쓰기 때문에, 22번은 원칙적으로 절대 미확인으로 남지 않는다.
+function fillAlternatingGaps(driver,year,month,startDay,lastDay,dayData,parityModel){
+const known={...(parityModel||{})};
 for(let d=startDay; d<=lastDay; d++){
 const dateStr=formatDate(year,month,d);
-const diff=daysBetween(driver.foundDate,dateStr);
-const sameTypeAsAnchor=(((diff%2)+2)%2)===0;
-const dayIsWork=sameTypeAsAnchor?anchorIsWork:!anchorIsWork;
-// anchor 날짜 자체는 실제 API에서 받은 원본 status를 보존, 나머지 추정일은 패리티로만 알 수 있어 raw 없음
-dayData[dateStr][driver.name]={status:dayIsWork?'unavailable':'available', raw:(dateStr===driver.foundDate?status:null)};
+const cell=dayData[dateStr][driver.name];
+if(cell&&cell.raw) known[dateStr]={isWork:cell.raw.includes('WORK')};
 }
-return true;
-}catch(e){
-log(`격일제 확인 실패: ${driver.name} (${driver.foundDate} 조회 오류)`);
+let filled=0;
 for(let d=startDay; d<=lastDay; d++){
-dayData[formatDate(year,month,d)][driver.name]={status:'unknown', raw:null};
+const dateStr=formatDate(year,month,d);
+if(dayData[dateStr][driver.name].status!=='unknown') continue;
+const estimate=estimateWorkByParity(dateStr,known);
+if(estimate!==null){
+dayData[dateStr][driver.name]={status:estimate?'unavailable':'available', raw:null};
+}else{
+// 이론상 거의 발생하지 않지만, 판단 근거가 정말 하나도 없으면 미확인 대신 보수적으로 '가능'으로 표시
+dayData[dateStr][driver.name]={status:'available', raw:null};
+log(`⚠️ ${driver.name} ${dateStr}: 홀짝 판단 근거가 전혀 없어 기본값(가능)으로 표시`);
 }
-return false;
+filled++;
 }
+if(filled>0) log(`격일제 추정 채움: ${driver.name} → 조회 실패 ${filled}일을 홀짝 패턴으로 추정 (미확인 없음)`);
 }
 
 async function runStep2(){
-document.getElementById('btnStep1').disabled=true;
 document.getElementById('btnStep2').disabled=true;
 document.getElementById('btnRetryUnknown').disabled=true;
 log('--- 스케줄 조회 시작 ---');
 
 const {year,month,startDay,lastDay}=getQueryRange();
-const driverList=Object.values(foundDrivers);
-const unresolvedNames=TARGET_NAMES.filter(t=>t.route===null).map(t=>t.name); // 김병준 등 검색 자체가 안 된 이름
+const driverList=roster.filter(d=>d.route&&d.driverId);
+const unresolvedNames=roster.filter(d=>!d.route||!d.driverId).map(d=>d.name); // 노선/driverId가 없는 이름
 
 log(`조회 범위: ${formatDate(year,month,startDay)} ~ ${formatDate(year,month,lastDay)}`);
 
-// dayData[dateStr][name] = {status:'available'|'am'|'unavailable'|'unknown', raw: API가 준 원본 status 문자열 (격일제 추정일은 raw=null)}
+// dayData[dateStr][name] = {status:'available'|'am'|'unavailable'|'unknown', raw: API가 준 원본 status 문자열 (조회 실패로 추정한 날짜는 raw=null)}
 const dayData={};
 for(let d=startDay; d<=lastDay; d++) dayData[formatDate(year,month,d)]={};
 
-const normalDrivers=driverList.filter(d=>!ALTERNATING_ROUTES.has(d.route));
+// 22번(격일제) 노선은 오늘 기준 ±7일을 먼저 실제 조회해서 홀짝 근무 패턴을 확보해둔다.
 const alternatingDrivers=driverList.filter(d=>ALTERNATING_ROUTES.has(d.route));
+const alternatingParityModels={};
+await Promise.all(alternatingDrivers.map(async driver=>{
+alternatingParityModels[driver.name]=await buildAlternatingParityModel(driver);
+}));
 
-// 22번(격일제)
-await Promise.all(alternatingDrivers.map(driver=>
-resolveAlternatingDriver(driver,year,month,startDay,lastDay,dayData)
-));
-
-// 나머지 노선: 매일 실제 상태 조회
+// 모든 노선(격일제 포함) 날짜 하나하나 실제 조회
 const BATCH=5;
-for(let i=0;i<normalDrivers.length;i+=BATCH){
-const batch=normalDrivers.slice(i,i+BATCH);
+for(let i=0;i<driverList.length;i+=BATCH){
+const batch=driverList.slice(i,i+BATCH);
 await Promise.all(batch.map(async driver=>{
 for(let d=startDay; d<=lastDay; d++){
 const dateStr=formatDate(year,month,d);
@@ -651,52 +704,42 @@ dayData[dateStr][driver.name]={status:classifyStatus(status), raw:status};
 dayData[dateStr][driver.name]={status:'unknown', raw:null};
 }
 }
+if(ALTERNATING_ROUTES.has(driver.route)) fillAlternatingGaps(driver,year,month,startDay,lastDay,dayData,alternatingParityModels[driver.name]);
 }));
 log(`조회 완료: ${batch.map(b=>b.name).join(', ')}`);
 await sleep(300);
 }
 
-lastRunContext={dayData,driverList,unresolvedNames,year,month,startDay,lastDay};
-renderResultTable('2단계 조회');
-document.getElementById('btnStep1').disabled=false;
+lastRunContext={dayData,driverList,unresolvedNames,year,month,startDay,lastDay,alternatingParityModels};
+renderResultTable('스케줄 재계산');
 document.getElementById('btnStep2').disabled=false;
 }
 
-// unknown으로 처리된 항목만 골라 재조회
+// unknown으로 처리된 항목만 골라 재조회 (22번은 runStep2에서 이미 전부 채워지므로 보통 여기 해당 없음)
 async function retryUnknown(){
-if(!lastRunContext){ log('먼저 2단계를 실행해주세요.'); return; }
-const {dayData,driverList,year,month,startDay,lastDay}=lastRunContext;
+if(!lastRunContext){ log('먼저 조회를 실행해주세요.'); return; }
+const {dayData,driverList,year,month,startDay,lastDay,alternatingParityModels}=lastRunContext;
 
-const unknownAlternating=driverList.filter(driver=>
-ALTERNATING_ROUTES.has(driver.route) &&
-dayData[formatDate(year,month,startDay)][driver.name].status==='unknown'
-);
-const unknownNormalCells=[];
+const unknownCells=[];
 driverList.forEach(driver=>{
-if(ALTERNATING_ROUTES.has(driver.route)) return;
 for(let d=startDay; d<=lastDay; d++){
 const dateStr=formatDate(year,month,d);
-if(dayData[dateStr][driver.name].status==='unknown') unknownNormalCells.push({driver,dateStr});
+if(dayData[dateStr][driver.name].status==='unknown') unknownCells.push({driver,dateStr});
 }
 });
 
-if(unknownAlternating.length===0 && unknownNormalCells.length===0){
+if(unknownCells.length===0){
 log('재조회할 미확인 항목이 없습니다.');
 return;
 }
 
 document.getElementById('btnRetryUnknown').disabled=true;
-document.getElementById('btnStep1').disabled=true;
 document.getElementById('btnStep2').disabled=true;
-log(`--- 미확인 항목 재조회 시작 (격일제 ${unknownAlternating.length}명, 일반 ${unknownNormalCells.length}건) ---`);
-
-await Promise.all(unknownAlternating.map(driver=>
-resolveAlternatingDriver(driver,year,month,startDay,lastDay,dayData)
-));
+log(`--- 미확인 항목 재조회 시작 (${unknownCells.length}건) ---`);
 
 const BATCH=5;
-for(let i=0;i<unknownNormalCells.length;i+=BATCH){
-const batch=unknownNormalCells.slice(i,i+BATCH);
+for(let i=0;i<unknownCells.length;i+=BATCH){
+const batch=unknownCells.slice(i,i+BATCH);
 await Promise.all(batch.map(async({driver,dateStr})=>{
 try{
 const json=await fetchJson(`https://api.kiki-bus.com/work/driver/${driver.driverId}/${dateStr}`);
@@ -704,21 +747,26 @@ const obj=json?.object||json?.data||json;
 const status=obj?.status||'';
 dayData[dateStr][driver.name]={status:classifyStatus(status), raw:status};
 }catch(e){
-// 여전히 실패하면 unknown 유지
+// 여전히 실패하면 일단 unknown 유지 (격일제는 아래에서 반드시 채워짐)
 }
 }));
 await sleep(300);
 }
 
+// 그래도 실패한 격일제(22번) 날짜는 예외 없이 홀짝 패턴으로 채운다 (미확인 금지)
+driverList.filter(d=>ALTERNATING_ROUTES.has(d.route)).forEach(driver=>{
+fillAlternatingGaps(driver,year,month,startDay,lastDay,dayData,alternatingParityModels&&alternatingParityModels[driver.name]);
+});
+
 log('--- 미확인 항목 재조회 완료 ---');
 renderResultTable('미확인 재조회');
-document.getElementById('btnStep1').disabled=false;
 document.getElementById('btnStep2').disabled=false;
 }
 
+
+
 function renderResultTable(actionLabel){
 const {dayData,driverList,unresolvedNames,year,month}=lastRunContext;
-const totalCandidates=driverList.length; // 참여 가능 인원 비율 계산용 (미확인 인원 제외)
 
 let hasUnknown=false;
 
@@ -742,37 +790,62 @@ return {dateStr, count, availableNames, amNames, unavailableNames, unknownNames}
 
 document.getElementById('btnRetryUnknown').disabled=!hasUnknown;
 
-const maxCount=renderResultRowsHtml(rows,totalCandidates,unresolvedNames,'방금 조회함');
+const monthKeyStr=monthKey(year,month);
+const maxCount=renderResultRowsHtml(rows,unresolvedNames,'방금 조회함',monthKeyStr);
 log(`--- 완료. 최대 참여 가능 인원: ${maxCount}명 ---`);
 
 // Firebase에 이번 달 결과 저장 (매달 조회건 저장 + 재조회 이력 기록)
-saveMonthResultToFirebase(year,month,rows,unresolvedNames,driverList.length,actionLabel||'2단계 조회',maxCount);
+saveMonthResultToFirebase(year,month,rows,unresolvedNames,driverList.length,actionLabel||'스케줄 재계산',maxCount);
 }
 
 // rows 배열(날짜별 집계 결과)을 받아 결과를 그린다 — 이 사이트의 핵심 화면.
 // 실시간으로 직접 조회한 경우와, Firebase에서 다른 사람이 저장한 스냅샷을 불러온 경우 모두 이 함수를 공유한다.
-function renderResultRowsHtml(rows,totalCandidates,unresolvedNames,savedAtLabel){
-const maxCount=Math.max(...rows.map(r=>r.count));
+// 사용자가 이름 칩을 꾹 눌러 수동으로 상태를 바꾼 내역(overridesCache)을 항상 마지막에 덧입혀서 그린다.
+function renderResultRowsHtml(rows,unresolvedNames,savedAtLabel,monthKeyStr){
+currentRender={rows,unresolvedNames,savedAtLabel,monthKey:monthKeyStr};
+const monthOverrides=overridesCache[monthKeyStr]||{};
 
-const sortedRows=[...rows].sort((a,b)=>b.count-a.count || (a.dateStr<b.dateStr?-1:1));
+// Firebase Realtime Database는 빈 배열([])을 저장하면 키 자체를 지우기 때문에,
+// 불러올 때 availableNames/amNames/unavailableNames/unknownNames가 undefined로 올 수 있다. 항상 배열로 보정.
+const enriched=rows.map(r=>{
+const nameMap={};
+(r.availableNames||[]).forEach(n=>{ nameMap[n.name]={status:'available', raw:n.raw}; });
+(r.amNames||[]).forEach(n=>{ nameMap[n.name]={status:'am', raw:n.raw}; });
+(r.unavailableNames||[]).forEach(n=>{ nameMap[n.name]={status:'unavailable', raw:n.raw}; });
+(r.unknownNames||[]).forEach(n=>{ nameMap[n]={status:'unknown', raw:null}; });
+(unresolvedNames||[]).forEach(n=>{ if(!(n in nameMap)) nameMap[n]={status:'unknown', raw:null}; });
+
+const dateOverride=monthOverrides[r.dateStr];
+if(dateOverride){
+Object.keys(dateOverride).forEach(name=>{
+// 수동으로 분류(가능/AM/불가/미확인)만 바꾸는 것이지, 이름 옆에 표시되는 실제 조회 상태(raw, 예: WORK_PM/ANNUAL/LEAVE)는 그대로 유지한다.
+if(nameMap[name]) nameMap[name]={status:dateOverride[name], raw:nameMap[name].raw};
+});
+}
+const count=Object.values(nameMap).filter(v=>v.status==='available'||v.status==='am').length;
+return {dateStr:r.dateStr, nameMap, count};
+});
+
+const maxCount=Math.max(...enriched.map(r=>r.count));
+const sortedRows=[...enriched].sort((a,b)=>b.count-a.count || (a.dateStr<b.dateStr?-1:1));
 
 let html='';
 sortedRows.forEach((r,idx)=>{
 const isBest=r.count===maxCount&&maxCount>0;
 const isTopRank=idx===0; // 1위만 기본으로 펼쳐서 보여주고, 나머지는 접어서 탭으로 열람
-// Firebase Realtime Database는 빈 배열([])을 저장하면 키 자체를 지우기 때문에,
-// 불러올 때 availableNames/amNames/unavailableNames/unknownNames가 undefined로 올 수 있다. 항상 배열로 보정.
-const availableNames=r.availableNames||[];
-const amNames=r.amNames||[];
-const unavailableNames=r.unavailableNames||[];
-const unknownAll=[...(r.unknownNames||[]), ...(unresolvedNames||[])];
 const pct=Math.round((r.count/TOTAL_MEMBER_COUNT)*100);
-const chip=(item,cls,category)=>{
-const name=typeof item==='string'?item:item.name;
-const raw=typeof item==='string'?null:item.raw;
-const suffix=category?statusSuffix(raw,category):null;
-return `<span class="chip ${cls}">${name}${suffix?`(${suffix})`:''}</span>`;
+
+const groups={available:[],am:[],unavailable:[],unknown:[]};
+Object.keys(r.nameMap).forEach(name=>{
+const info=r.nameMap[name];
+groups[info.status].push({name, raw:info.raw});
+});
+
+const chip=(item,status)=>{
+const suffix=statusSuffix(item.raw,status);
+return `<span class="chip ${STATUS_CLS[status]}" data-date="${r.dateStr}" data-name="${item.name}" data-status="${status}">${item.name}${suffix?`(${suffix})`:''}</span>`;
 };
+
 html+=`<div class="day-card${isBest?' best':''}">`+
 `<div class="day-top">`+
 `<div class="day-date">${shortDateLabel(r.dateStr)}<span class="dow">(${dowLabel(r.dateStr)})</span></div>`+
@@ -781,10 +854,10 @@ html+=`<div class="day-card${isBest?' best':''}">`+
 `</div>`+
 `<details class="day-detail"${isTopRank?' open':''}><summary></summary>`+
 `<div class="chip-rows">`+
-(availableNames.length?`<div class="chip-row"><span class="chip-label">가능</span><span class="chip-items">${availableNames.map(n=>chip(n,'avail','available')).join('')}</span></div>`:'')+
-(amNames.length?`<div class="chip-row"><span class="chip-label">AM</span><span class="chip-items">${amNames.map(n=>chip(n,'am','am')).join('')}</span></div>`:'')+
-(unavailableNames.length?`<div class="chip-row"><span class="chip-label">불가</span><span class="chip-items">${unavailableNames.map(n=>chip(n,'unavail','unavailable')).join('')}</span></div>`:'')+
-(unknownAll.length?`<div class="chip-row"><span class="chip-label">미확인</span><span class="chip-items">${unknownAll.map(n=>chip(n,'unknown')).join('')}</span></div>`:'')+
+`<div class="chip-row" data-status="available"><span class="chip-label avail" data-status="available">가능</span><span class="chip-items">${groups.available.map(n=>chip(n,'available')).join('')}</span></div>`+
+`<div class="chip-row" data-status="am"><span class="chip-label am" data-status="am">AM</span><span class="chip-items">${groups.am.map(n=>chip(n,'am')).join('')}</span></div>`+
+`<div class="chip-row" data-status="unavailable"><span class="chip-label unavail" data-status="unavailable">불가</span><span class="chip-items">${groups.unavailable.map(n=>chip(n,'unavailable')).join('')}</span></div>`+
+`<div class="chip-row" data-status="unknown"><span class="chip-label unknown" data-status="unknown">미확인</span><span class="chip-items">${groups.unknown.map(n=>chip(n,'unknown')).join('')}</span></div>`+
 `</div></details>`+
 `</div>`;
 });
