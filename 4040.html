@@ -47,10 +47,11 @@ box-shadow: inset 3px 3px 5px #c7ccda, inset -3px -3px 5px #ffffff;
 }
 .bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#818cf8,#6366f1);}
 .bar-fill.best{background:linear-gradient(90deg,#6366f1,#4338ca);}
-.chip-row{margin-bottom:4px;font-size:11.5px;}
-.chip-row .chip-label{display:inline-block;min-width:34px;font-weight:700;color:#9096ac;margin-right:4px;}
+.chip-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:11.5px;}
+.chip-row .chip-label{flex-shrink:0;width:32px;font-weight:700;color:#9096ac;padding-top:4px;}
+.chip-row .chip-items{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0;}
 .chip{
-display:inline-block;padding:3px 10px 3px 8px;margin:2px 3px 0 0;border-radius:7px;
+display:inline-block;padding:3px 10px 3px 8px;border-radius:7px;
 font-size:11.5px;font-weight:700;background:#fff;color:#3d4560;
 box-shadow: 2px 2px 5px #c7ccda, -2px -2px 5px #ffffff;
 border-left:2px solid #ccc;
@@ -780,10 +781,10 @@ html+=`<div class="day-card${isBest?' best':''}">`+
 `</div>`+
 `<details class="day-detail"${isTopRank?' open':''}><summary></summary>`+
 `<div class="chip-rows">`+
-(availableNames.length?`<div class="chip-row"><span class="chip-label">가능</span>${availableNames.map(n=>chip(n,'avail','available')).join('')}</div>`:'')+
-(amNames.length?`<div class="chip-row"><span class="chip-label">AM</span>${amNames.map(n=>chip(n,'am','am')).join('')}</div>`:'')+
-(unavailableNames.length?`<div class="chip-row"><span class="chip-label">불가</span>${unavailableNames.map(n=>chip(n,'unavail','unavailable')).join('')}</div>`:'')+
-(unknownAll.length?`<div class="chip-row"><span class="chip-label">미확인</span>${unknownAll.map(n=>chip(n,'unknown')).join('')}</div>`:'')+
+(availableNames.length?`<div class="chip-row"><span class="chip-label">가능</span><span class="chip-items">${availableNames.map(n=>chip(n,'avail','available')).join('')}</span></div>`:'')+
+(amNames.length?`<div class="chip-row"><span class="chip-label">AM</span><span class="chip-items">${amNames.map(n=>chip(n,'am','am')).join('')}</span></div>`:'')+
+(unavailableNames.length?`<div class="chip-row"><span class="chip-label">불가</span><span class="chip-items">${unavailableNames.map(n=>chip(n,'unavail','unavailable')).join('')}</span></div>`:'')+
+(unknownAll.length?`<div class="chip-row"><span class="chip-label">미확인</span><span class="chip-items">${unknownAll.map(n=>chip(n,'unknown')).join('')}</span></div>`:'')+
 `</div></details>`+
 `</div>`;
 });
