@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<title>회식 날짜 찾기</title>
+<style>
+:root{ color-scheme: light; }
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body{
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+padding:16px;
+padding-top:calc(16px + env(safe-area-inset-top));
+padding-bottom:calc(32px + env(safe-area-inset-bottom));
+padding-left:calc(16px + env(safe-area-inset-left));
+padding-right:calc(16px + env(safe-area-inset-right));
+background:#e8ecf3;color:#1f2937;
+max-width:640px;margin:0 auto;
+}
+
+/* ── 최상단: 결과가 이 사이트의 주인공 ── */
+.hero-title{font-size:22px;font-weight:800;text-align:center;margin:4px 0 2px;}
+.hero-sub{font-size:13px;color:#6b7488;text-align:center;margin-bottom:16px;}
+
+#loadingNote,#emptyNote{
+text-align:center;color:#8890a8;font-size:13px;padding:28px 10px;
+background:#e8ecf3;border-radius:14px;
+box-shadow: inset 3px 3px 6px #c7ccda, inset -3px -3px 6px #ffffff;
+}
+
+/* 날짜 카드 (결과) */
+.day-card{
+background:#e8ecf3;border-radius:18px;padding:14px 16px;margin-bottom:12px;
+box-shadow: 7px 7px 14px #c7ccda, -7px -7px 14px #ffffff;
+}
+.day-card.best{box-shadow: 7px 7px 14px #c7ccda, -7px -7px 14px #ffffff, inset 0 0 0 2px #6366f1;}
+.day-top{display:flex;align-items:center;gap:10px;margin-bottom:0;}
+.day-date{font-size:16px;font-weight:800;white-space:nowrap;color:#2c3350;}
+.day-date .dow{font-size:12.5px;font-weight:600;color:#8890a8;margin-left:4px;}
+.day-count{font-size:16px;font-weight:800;color:#4338ca;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.day-count .tot{font-size:12.5px;font-weight:600;color:#9096ac;}
+.day-count .star{color:#f59e0b;}
+.bar-wrap{
+flex:1;min-width:0;height:9px;border-radius:5px;overflow:hidden;
+background:#e8ecf3;
+box-shadow: inset 3px 3px 5px #c7ccda, inset -3px -3px 5px #ffffff;
+}
+.bar-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#818cf8,#6366f1);}
+.bar-fill.best{background:linear-gradient(90deg,#6366f1,#4338ca);}
+.chip-row{margin-bottom:4px;font-size:11.5px;}
+.chip-row .chip-label{display:inline-block;min-width:34px;font-weight:700;color:#9096ac;margin-right:4px;}
+.chip{
+display:inline-block;padding:3px 10px 3px 8px;margin:2px 3px 0 0;border-radius:7px;
+font-size:11.5px;font-weight:700;background:#fff;color:#3d4560;
+box-shadow: 2px 2px 5px #c7ccda, -2px -2px 5px #ffffff;
+border-left:2px solid #ccc;
+}
+.chip.avail{border-left-color:#22c55e;color:#15803d;}
+.chip.am{border-left-color:#f59e0b;color:#b45309;}
+.chip.unavail{border-left-color:#9aa3b5;color:#6b7280;}
+.chip.unknown{border-left-color:#a855f7;color:#9333ea;}
+#resultSavedNote{text-align:center;font-size:11.5px;color:#9aa3b5;margin:8px 0 22px;}
+
+.day-detail{margin-top:0;}
+.day-detail summary{
+cursor:pointer;list-style:none;font-size:11.5px;color:#9aa3b5;font-weight:600;
+display:inline-flex;align-items:center;gap:3px;margin-top:2px;user-select:none;
+}
+.day-detail summary::-webkit-details-marker{display:none;}
+.day-detail summary::before{content:'자세히 ▸';}
+.day-detail[open] summary::before{content:'접기 ▾';}
+.day-detail .chip-rows{margin-top:8px;}
+
+/* ── 하단: 관리자용 조회 과정 (접어서 시인성 낮춤) ── */
+details#adminPanel{
+margin:10px 0 18px;
+border-top:1px dashed #d7dbe6;
+border-bottom:1px dashed #d7dbe6;
+padding:14px 0 16px;
+}
+details#adminPanel summary{
+cursor:pointer;font-size:15px;color:#3b6cf0;font-weight:700;list-style:none;
+display:flex;align-items:center;gap:8px;
+background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;
+padding:13px 16px;min-height:46px;
+-webkit-tap-highlight-color:transparent;
+}
+details#adminPanel summary:active{background:#e0e7ff;}
+details#adminPanel summary::-webkit-details-marker{display:none;}
+details#adminPanel summary::before{
+content:'▶';font-size:15px;color:#3b6cf0;font-weight:700;
+display:inline-block;transition:transform .15s ease;
+}
+details#adminPanel[open] summary::before{transform:rotate(90deg);}
+.admin-inner{margin-top:14px;font-size:12.5px;color:#6b7488;}
+.row{margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+input,button,select{padding:8px 12px;font-size:13px;border-radius:8px;border:1px solid #d1d5db;}
+button{cursor:pointer;border:none;background:#3b6cf0;color:#fff;font-weight:600;min-height:38px;-webkit-appearance:none;appearance:none;}
+button:disabled{background:#c7ccda;cursor:not-allowed;}
+button.secondary{background:#e5e7eb;color:#1f2937;}
+button.small{min-height:32px;padding:6px 10px;font-size:12px;}
+#monthInput{min-height:38px;flex:1;min-width:130px;font-size:13px;}
+#monthWarning{font-size:11.5px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:5px 9px;display:none;width:100%;}
+#cacheNotice{font-size:11.5px;color:#3b6cf0;background:#eef2ff;border:1px solid #c7d2fe;border-radius:6px;padding:5px 9px;display:none;width:100%;}
+#log{white-space:pre-wrap;font-size:11px;background:#fff;padding:10px;border-radius:8px;max-height:26vh;overflow:auto;margin-top:8px;border:1px solid #e5e7eb;-webkit-overflow-scrolling:touch;color:#9aa3b5;}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12px;background:#fff;}
+th,td{border:1px solid #e5e7eb;padding:6px;text-align:center;}
+th{background:#f1f5f9;}
+tr.missing td{color:#dc2626;}
+.hist-box{font-size:11px;color:#9aa3b5;margin-top:8px;line-height:1.7;}
+.hist-title{font-weight:700;color:#3b6cf0;margin-bottom:2px;}
+
+@media (max-width:640px){
+#adminPanel table,#adminPanel thead,#adminPanel tbody{display:block;width:100%;}
+#adminPanel tr{display:block;margin-bottom:8px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}
+#adminPanel tr:first-child{display:none;}
+#adminPanel td{display:flex;justify-content:space-between;text-align:right;border:none;border-bottom:1px solid #f1f5f9;padding:6px 10px;}
+#adminPanel td:last-child{border-bottom:none;}
+#adminPanel td::before{content:attr(data-label);font-weight:600;color:#9aa3b5;text-align:left;}
+}
+</style>
+</head>
+<body>
+
+<div class="hero-title">🍻 참여 가능 인원이 가장 많은 회식 날짜</div>
+
+<details id="adminPanel">
+<summary>⚙️ 관리자 옵션 (조회 실행 / 진행 과정)</summary>
+<div class="admin-inner">
+
+<div class="row">
+대상 월: <input id="monthInput" type="month" onchange="onMonthChange()">
+<span id="monthWarning">⚠️ 이미 지난 달입니다. 지난 날짜 기준으로 조회됩니다.</span>
+<span id="cacheNotice"></span>
+</div>
+
+<div class="row">
+<button id="btnStep1" onclick="runStep1()">1단계: 기사님 ID 찾기</button>
+<button id="btnStep2" onclick="runStep2()" disabled>2단계: 스케줄 조회 & 회식 날짜 계산</button>
+</div>
+<div class="row">
+<button id="btnRetryUnknown" class="secondary small" onclick="retryUnknown()" disabled>미확인만 재조회</button>
+</div>
+
+<div id="log"></div>
+<div id="idTable"></div>
+<div id="driverHistoryLog" class="hist-box"></div>
+<div id="monthHistoryLog" class="hist-box"></div>
+
+</div>
+</details>
+
+<div id="resultTable"><div id="loadingNote">불러오는 중...</div></div>
+<div id="resultSavedNote"></div>
+
+<script>
+const WORKER='https://jolly-voice-134c.ach4343.workers.dev/';
+const CACHE_KEY='dinnerFinderDriverCache_v1';
+
+// ── Firebase 설정 (apppules.html과 같은 프로젝트, 별도 경로 사용) ──
+const FIREBASE_CONFIG={
+apiKey:'AIzaSyAcaIcwlhwAOgKPD5BKD3mAuXiAqLKHTu4',
+databaseURL:'https://parking22-886c6-default-rtdb.asia-southeast1.firebasedatabase.app',
+};
+const FB_PATH='dinnerFinder';
+
+window.DinnerFB={db:null,ready:false,ref:null,set:null,update:null,push:null,onValue:null,_monthUnsub:null};
+
+async function initDinnerFirebase(){
+try{
+const {initializeApp,getApp}=await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js');
+const {getDatabase,ref,set,update,push,onValue}=await import('https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js');
+let app;
+try{ app=initializeApp(FIREBASE_CONFIG); }
+catch(e){ app=getApp(); }
+DinnerFB.db=getDatabase(app);
+DinnerFB.ref=ref; DinnerFB.set=set; DinnerFB.update=update; DinnerFB.push=push; DinnerFB.onValue=onValue;
+DinnerFB.ready=true;
+return true;
+}catch(err){
+console.error('Firebase 초기화 실패:',err);
+DinnerFB.ready=false;
+return false;
+}
+}
+
+function monthKey(year,month){ return `${year}-${pad2(month+1)}`; }
+
+// 1단계 결과(이름/노선/driverId/확인된 날짜)를 Firebase에 저장 + 검색 이력 기록
+async function saveDriverTableToFirebase(){
+if(!DinnerFB.ready) return;
+const now=new Date().toISOString();
+try{
+await DinnerFB.set(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable`),{
+data:foundDrivers,
+savedAt:now
+});
+await DinnerFB.push(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverHistory`),{
+savedAt:now,
+action:'1단계 재검색',
+foundCount:Object.keys(foundDrivers).length
+});
+}catch(e){
+log('Firebase 저장 실패 (driverId 테이블): '+e.message);
+}
+}
+
+// 2단계 결과(날짜별 참여 가능 인원)를 월별로 Firebase에 저장 + 조회 이력 기록
+async function saveMonthResultToFirebase(year,month,rows,unresolvedNames,driverCount,actionLabel,maxCount){
+if(!DinnerFB.ready) return;
+const key=monthKey(year,month);
+const now=new Date().toISOString();
+try{
+await DinnerFB.update(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/months/${key}`),{
+resultRows:rows,
+unresolvedNames:unresolvedNames,
+driverCount:driverCount,
+savedAt:now
+});
+await DinnerFB.push(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/months/${key}/history`),{
+savedAt:now,
+action:actionLabel,
+maxCount:maxCount
+});
+}catch(e){
+log('Firebase 저장 실패 (조회 결과): '+e.message);
+}
+}
+
+function fmtTime(iso){
+try{ return new Date(iso).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+catch(e){ return iso; }
+}
+
+function historyObjToSortedArray(historyObj){
+if(!historyObj) return [];
+return Object.values(historyObj).sort((a,b)=>new Date(b.savedAt)-new Date(a.savedAt));
+}
+
+function renderHistoryList(elId,items,lineFn){
+const el=document.getElementById(elId);
+if(!el) return;
+if(!items||items.length===0){ el.innerHTML=''; return; }
+el.innerHTML='<div class="hist-title">최근 조회 기록</div>'+
+items.slice(0,10).map(lineFn).join('');
+}
+
+// 다른 사람이 사이트에 들어왔을 때 최신 저장 데이터를 실시간으로 반영
+function startDinnerFirebaseSync(){
+if(!DinnerFB.ready) return;
+
+DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverTable`),snap=>{
+const val=snap.exists()?snap.val():null;
+if(val&&val.data&&Object.keys(val.data).length>0){
+foundDrivers={...val.data};
+renderIdTable();
+document.getElementById('btnStep2').disabled=false;
+const notice=document.getElementById('cacheNotice');
+notice.style.display='inline-block';
+notice.textContent=`Firebase 최신 driverId ${Object.keys(val.data).length}명 (저장: ${fmtTime(val.savedAt)})`;
+}
+},err=>{
+log('Firebase 읽기 실패 (driverTable): '+err.message+' — Firebase 콘솔의 Realtime Database 규칙에서 dinnerFinder 경로 읽기/쓰기가 허용되어 있는지 확인해주세요.');
+});
+
+DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/driverHistory`),snap=>{
+const val=snap.exists()?snap.val():null;
+renderHistoryList('driverHistoryLog',historyObjToSortedArray(val),h=>
+`<div>${fmtTime(h.savedAt)} — ${h.action} (찾음 ${h.foundCount}명)</div>`
+);
+},err=>{
+log('Firebase 읽기 실패 (driverHistory): '+err.message);
+});
+
+subscribeMonthResult();
+}
+
+// 현재 선택된 월의 결과를 실시간 구독 (월 변경 시 재구독) — 사이트에 들어오면 버튼 클릭 없이 바로 결과가 뜨는 핵심 로직
+function subscribeMonthResult(){
+if(!DinnerFB.ready){
+document.getElementById('resultTable').innerHTML='<div id="emptyNote">Firebase에 연결되지 않아 저장된 결과를 불러올 수 없습니다.<br>관리자 옵션 하단 로그를 확인해주세요.</div>';
+return;
+}
+if(DinnerFB._monthUnsub){ DinnerFB._monthUnsub(); DinnerFB._monthUnsub=null; }
+const {year,month}=getYearMonth();
+const key=monthKey(year,month);
+document.getElementById('resultTable').innerHTML='<div id="loadingNote">불러오는 중...</div>';
+
+// 응답이 너무 오래 걸리면(네트워크 차단 등) 화면에 계속 "불러오는 중"만 뜨지 않도록 타임아웃 처리
+let responded=false;
+const timeoutId=setTimeout(()=>{
+if(!responded){
+document.getElementById('resultTable').innerHTML='<div id="emptyNote">Firebase 응답이 없습니다 (연결 시간 초과).<br>네트워크 상태를 확인하거나 새로고침 해주세요.</div>';
+}
+},8000);
+
+DinnerFB._monthUnsub=DinnerFB.onValue(DinnerFB.ref(DinnerFB.db,`${FB_PATH}/months/${key}`),snap=>{
+responded=true;
+clearTimeout(timeoutId);
+const val=snap.exists()?snap.val():null;
+renderHistoryList('monthHistoryLog',historyObjToSortedArray(val&&val.history),h=>
+`<div>${fmtTime(h.savedAt)} — ${h.action}${h.maxCount!=null?` (최대 ${h.maxCount}명)`:''}</div>`
+);
+// 로컬에서 방금 직접 조회한 결과가 이미 화면에 떠 있으면 Firebase 스냅샷으로 덮어쓰지 않음
+if(lastRunContext && lastRunContext.year===year && lastRunContext.month===month) return;
+if(val&&val.resultRows&&val.resultRows.length>0){
+renderResultRowsHtml(val.resultRows,val.driverCount||0,val.unresolvedNames||[],fmtTime(val.savedAt));
+}else{
+document.getElementById('resultTable').innerHTML='<div id="emptyNote">아직 저장된 조회 결과가 없습니다.<br>관리자 옵션에서 1·2단계를 실행하면 여기에 표시됩니다.</div>';
+document.getElementById('resultSavedNote').textContent='';
+}
+},err=>{
+responded=true;
+clearTimeout(timeoutId);
+document.getElementById('resultTable').innerHTML=`<div id="emptyNote">불러오기 실패: ${err.message}<br>Firebase 접근 권한(Realtime Database 규칙)을 확인해주세요.</div>`;
+document.getElementById('resultSavedNote').textContent='';
+log('Firebase 읽기 실패 (months/'+key+'): '+err.message);
+});
+}
+
+const ROUTE_DISPATCH_ID={
+'917':'123',
+'3030':'130',
+'11-2':'120',
+'11-5':'121',
+'10':'090',
+'22':'126'
+};
+
+// 22번은 격일제: 특정 날짜에 WORK(근무)면 그 전날/다음날은 휴무 → 휴무일은 회식 참여 가능
+const ALTERNATING_ROUTES=new Set(['22']);
+
+const TARGET_NAMES=[
+{name:'최형원',route:'10'},
+{name:'박흥섭',route:'11-2'},
+{name:'박제덕',route:'11-2'},
+{name:'최삼록',route:'11-2'},
+{name:'오창현',route:'11-5'},
+{name:'김도완',route:'22'},
+{name:'손진덕',route:'22'},
+{name:'안영춘',route:'22'},
+{name:'안창해',route:'3030'},
+{name:'최창순',route:'917'},
+{name:'김병준',route:null}
+];
+
+const TOTAL_MEMBER_COUNT=TARGET_NAMES.length; // 전체 대상 인원 수 (미확인 포함 항상 고정된 정원)
+
+let foundDrivers={}; // name -> {name,route,driverId,foundDate}
+let lastRunContext=null; // 2단계 결과 재조회용 상태 저장
+
+const logEl=document.getElementById('log');
+function log(msg){
+const line=document.createElement('div');
+line.textContent=msg;
+logEl.appendChild(line);
+logEl.scrollTop=logEl.scrollHeight;
+}
+
+function pad2(n){return String(n).padStart(2,'0');}
+function formatDate(y,m,d){return `${y}-${pad2(m+1)}-${pad2(d)}`;}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+const DOW=['일','월','화','수','목','금','토'];
+function dowLabel(dateStr){ return DOW[new Date(dateStr+'T00:00:00').getDay()]; }
+function shortDateLabel(dateStr){
+const [,m,d]=dateStr.split('-');
+return `${Number(m)}월 ${Number(d)}일`;
+}
+
+// ── driverId 캐시 (localStorage) ──
+function loadDriverCache(){
+try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); }
+catch(e){ return {}; }
+}
+function saveDriverCache(cache){
+try{ localStorage.setItem(CACHE_KEY, JSON.stringify(cache)); }
+catch(e){ log('캐시 저장 실패 (localStorage 사용 불가)'); }
+}
+
+// 페이지 로드 시 캐시에 저장된 driverId가 있으면 바로 불러와서 2단계로 넘어갈 수 있게 함
+function tryLoadFromCache(){
+const cache=loadDriverCache();
+const names=Object.keys(cache);
+if(names.length===0) return;
+foundDrivers={...cache};
+renderIdTable();
+document.getElementById('btnStep2').disabled=false;
+const notice=document.getElementById('cacheNotice');
+notice.style.display='inline-block';
+notice.textContent=`저장된 driverId 캐시 ${names.length}명 불러옴 (바로 2단계 진행 가능)`;
+log(`캐시에서 driverId ${names.length}명 불러옴 — 1단계 생략하고 2단계로 진행할 수 있습니다.`);
+}
+
+function initMonthInput(){
+const now=new Date();
+document.getElementById('monthInput').value=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+}
+initMonthInput();
+updateMonthWarning();
+tryLoadFromCache();
+
+initDinnerFirebase().then(ok=>{
+if(ok){
+log('Firebase 연결됨 — 실시간 동기화 시작');
+startDinnerFirebaseSync();
+}else{
+log('Firebase 연결 실패 — 로컬 캐시만 사용합니다');
+document.getElementById('resultTable').innerHTML='<div id="emptyNote">결과를 불러올 수 없습니다 (연결 오류).<br>관리자 옵션에서 조회를 실행해주세요.</div>';
+}
+});
+
+function onMonthChange(){
+updateMonthWarning();
+subscribeMonthResult();
+}
+
+function updateMonthWarning(){
+const {year,month}=getYearMonth();
+const now=new Date();
+const isPast = (year<now.getFullYear()) || (year===now.getFullYear() && month<now.getMonth());
+document.getElementById('monthWarning').style.display = isPast ? 'inline-block' : 'none';
+}
+
+function getYearMonth(){
+const val=document.getElementById('monthInput').value;
+const [y,m]=val.split('-').map(Number);
+return {year:y, month:m-1};
+}
+
+// 선택한 달이 이번 달이면 '오늘'부터, 그 외(과거/미래)에는 1일부터 마지막날까지 조회
+function getQueryRange(){
+const {year,month}=getYearMonth();
+const lastDay=new Date(year,month+1,0).getDate();
+const now=new Date();
+let startDay=1;
+if(year===now.getFullYear() && month===now.getMonth()){
+startDay=now.getDate();
+}
+return {year,month,startDay,lastDay};
+}
+
+async function fetchJson(url){
+const proxied=WORKER+'?url='+encodeURIComponent(url);
+const res=await fetch(proxied);
+if(!res.ok) throw new Error('http_'+res.status);
+const text=await res.text();
+try{
+return JSON.parse(text);
+}catch(e){
+throw new Error('not_json');
+}
+}
+
+function extractObjects(json){
+const o=json?.object;
+if(Array.isArray(o)) return o;
+if(o) return [o];
+return [];
+}
+
+// ── 1단계: 이름 → driverId 찾기 ──
+async function runStep1(){
+document.getElementById('btnStep1').disabled=true;
+document.getElementById('btnStep2').disabled=true;
+document.getElementById('btnRetryUnknown').disabled=true;
+document.getElementById('cacheNotice').style.display='none';
+logEl.innerHTML='';
+document.getElementById('idTable').innerHTML='';
+
+const {year,month,startDay,lastDay}=getQueryRange();
+
+const pending=new Map(
+TARGET_NAMES.filter(t=>t.route!==null).map(t=>[t.name,{...t}])
+);
+foundDrivers={};
+
+log(`기사님 ID 조회 시작... (${formatDate(year,month,startDay)} ~ ${formatDate(year,month,lastDay)})`);
+log('김병준: 검색 대상 아님 (driverId 없음, null로 표시)');
+
+for(let d=startDay; d<=lastDay && pending.size>0; d++){
+const dateStr=formatDate(year,month,d);
+const routesNeeded=[...new Set([...pending.values()].map(p=>p.route))];
+
+const results=await Promise.all(routesNeeded.map(async route=>{
+try{
+const json=await fetchJson(`https://api.kiki-bus.com/dispatch/${ROUTE_DISPATCH_ID[route]}/${dateStr}`);
+return {route, objects:extractObjects(json)};
+}catch(e){
+return {route, objects:[], error:String(e)};
+}
+}));
+
+results.forEach(({route,objects})=>{
+objects.forEach(o=>{
+const target=pending.get(o.driverName);
+if(target&&target.route===route){
+foundDrivers[o.driverName]={name:o.driverName,route,driverId:o.driverId,foundDate:dateStr};
+pending.delete(o.driverName);
+log(`찾음: ${o.driverName} (${route}) → driverId=${o.driverId}  [${dateStr} 기준]`);
+}
+});
+});
+
+await sleep(200);
+}
+
+if(pending.size>0){
+log(`--- 아래 ${pending.size}명은 데이터에서 못 찾았습니다 (해당 기간 전체 결근/이름 표기 차이 가능) ---`);
+[...pending.keys()].forEach(n=>log(`못 찾음: ${n}`));
+}
+
+// 새로 찾은 driverId를 캐시에 저장 (다음 실행부터는 1단계 생략 가능)
+saveDriverCache({...foundDrivers});
+if(Object.keys(foundDrivers).length>0){
+log(`driverId ${Object.keys(foundDrivers).length}명 캐시에 저장 완료 — 다음부터는 바로 2단계 진행 가능`);
+saveDriverTableToFirebase();
+}
+
+renderIdTable();
+document.getElementById('btnStep1').disabled=false;
+if(Object.keys(foundDrivers).length>0) document.getElementById('btnStep2').disabled=false;
+}
+
+function renderIdTable(){
+let html='<table><tr><th>이름</th><th>노선</th><th>driverId</th><th>확인된 날짜</th></tr>';
+TARGET_NAMES.forEach(t=>{
+if(t.route===null){
+html+=`<tr class="missing">
+<td data-label="이름">${t.name}</td>
+<td data-label="노선">null</td>
+<td data-label="driverId">null</td>
+<td data-label="확인된 날짜">null</td>
+</tr>`;
+return;
+}
+const f=foundDrivers[t.name];
+if(f){
+html+=`<tr>
+<td data-label="이름">${t.name}</td>
+<td data-label="노선">${t.route}</td>
+<td data-label="driverId">${f.driverId}</td>
+<td data-label="확인된 날짜">${f.foundDate}</td>
+</tr>`;
+}else{
+html+=`<tr class="missing">
+<td data-label="이름">${t.name}</td>
+<td data-label="노선">${t.route}</td>
+<td data-label="driverId/확인된날짜" colspan="2">못 찾음</td>
+</tr>`;
+}
+});
+html+='</table>';
+document.getElementById('idTable').innerHTML=html;
+}
+
+// ── 2단계: 스케줄 조회 & 회식 날짜 계산 ──
+// 상태값에 PM이 포함되면 무조건 불가(저녁 근무), AM이 포함되면 오전만 근무(저녁엔 참여 가능하니 AM으로 별도 표시),
+// LEAVE/ANNUAL 등 근무가 없으면 완전 참여 가능. 그 외 인식 불가한 값은 unknown으로 분류.
+function classifyStatus(status){
+if(!status) return 'available';
+if(status.includes('PM')) return 'unavailable';
+if(status.includes('AM')) return 'am';
+if(status.includes('LEAVE')||status==='ANNUAL') return 'available';
+return 'unknown';
+}
+
+// 이름 뒤에 붙일 상태 접미사. API가 준 원본 status 문자열(예: WORK_PM, WORK_AM, ANNUAL, LEAVE)을 그대로 활용한다.
+// raw가 없는 경우(격일제 추정일 등)는 분류된 카테고리 기준 기본값을 사용한다.
+function statusSuffix(raw,category){
+if(raw){
+if(raw==='ANNUAL') return '연차'; // 연차 사용 → 휴무와 같지만 구분 표시
+if(raw.includes('LEAVE')) return '휴';
+if(raw.includes('_')) return raw.split('_').pop(); // WORK_PM → PM, WORK_AM → AM
+return raw;
+}
+if(category==='am') return 'AM';
+if(category==='unavailable') return 'PM';
+return '휴';
+}
+
+function daysBetween(dateStrA,dateStrB){
+const a=new Date(dateStrA+'T00:00:00');
+const b=new Date(dateStrB+'T00:00:00');
+return Math.round((b-a)/86400000);
+}
+
+// 22번 격일제 기사 한 명의 anchor(foundDate) 상태를 확인하고 전체 날짜에 패리티를 적용
+async function resolveAlternatingDriver(driver,year,month,startDay,lastDay,dayData){
+try{
+const json=await fetchJson(`https://api.kiki-bus.com/work/driver/${driver.driverId}/${driver.foundDate}`);
+const obj=json?.object||json?.data||json;
+const status=obj?.status||'';
+const anchorIsWork=status.includes('WORK');
+log(`격일제 확인: ${driver.name} → ${driver.foundDate} 상태=${status||'(없음)'} (${anchorIsWork?'근무일':'휴무일'} 기준으로 계산)`);
+for(let d=startDay; d<=lastDay; d++){
+const dateStr=formatDate(year,month,d);
+const diff=daysBetween(driver.foundDate,dateStr);
+const sameTypeAsAnchor=(((diff%2)+2)%2)===0;
+const dayIsWork=sameTypeAsAnchor?anchorIsWork:!anchorIsWork;
+// anchor 날짜 자체는 실제 API에서 받은 원본 status를 보존, 나머지 추정일은 패리티로만 알 수 있어 raw 없음
+dayData[dateStr][driver.name]={status:dayIsWork?'unavailable':'available', raw:(dateStr===driver.foundDate?status:null)};
+}
+return true;
+}catch(e){
+log(`격일제 확인 실패: ${driver.name} (${driver.foundDate} 조회 오류)`);
+for(let d=startDay; d<=lastDay; d++){
+dayData[formatDate(year,month,d)][driver.name]={status:'unknown', raw:null};
+}
+return false;
+}
+}
+
+async function runStep2(){
+document.getElementById('btnStep1').disabled=true;
+document.getElementById('btnStep2').disabled=true;
+document.getElementById('btnRetryUnknown').disabled=true;
+log('--- 스케줄 조회 시작 ---');
+
+const {year,month,startDay,lastDay}=getQueryRange();
+const driverList=Object.values(foundDrivers);
+const unresolvedNames=TARGET_NAMES.filter(t=>t.route===null).map(t=>t.name); // 김병준 등 검색 자체가 안 된 이름
+
+log(`조회 범위: ${formatDate(year,month,startDay)} ~ ${formatDate(year,month,lastDay)}`);
+
+// dayData[dateStr][name] = {status:'available'|'am'|'unavailable'|'unknown', raw: API가 준 원본 status 문자열 (격일제 추정일은 raw=null)}
+const dayData={};
+for(let d=startDay; d<=lastDay; d++) dayData[formatDate(year,month,d)]={};
+
+const normalDrivers=driverList.filter(d=>!ALTERNATING_ROUTES.has(d.route));
+const alternatingDrivers=driverList.filter(d=>ALTERNATING_ROUTES.has(d.route));
+
+// 22번(격일제)
+await Promise.all(alternatingDrivers.map(driver=>
+resolveAlternatingDriver(driver,year,month,startDay,lastDay,dayData)
+));
+
+// 나머지 노선: 매일 실제 상태 조회
+const BATCH=5;
+for(let i=0;i<normalDrivers.length;i+=BATCH){
+const batch=normalDrivers.slice(i,i+BATCH);
+await Promise.all(batch.map(async driver=>{
+for(let d=startDay; d<=lastDay; d++){
+const dateStr=formatDate(year,month,d);
+try{
+const json=await fetchJson(`https://api.kiki-bus.com/work/driver/${driver.driverId}/${dateStr}`);
+const obj=json?.object||json?.data||json;
+const status=obj?.status||'';
+dayData[dateStr][driver.name]={status:classifyStatus(status), raw:status};
+}catch(e){
+dayData[dateStr][driver.name]={status:'unknown', raw:null};
+}
+}
+}));
+log(`조회 완료: ${batch.map(b=>b.name).join(', ')}`);
+await sleep(300);
+}
+
+lastRunContext={dayData,driverList,unresolvedNames,year,month,startDay,lastDay};
+renderResultTable('2단계 조회');
+document.getElementById('btnStep1').disabled=false;
+document.getElementById('btnStep2').disabled=false;
+}
+
+// unknown으로 처리된 항목만 골라 재조회
+async function retryUnknown(){
+if(!lastRunContext){ log('먼저 2단계를 실행해주세요.'); return; }
+const {dayData,driverList,year,month,startDay,lastDay}=lastRunContext;
+
+const unknownAlternating=driverList.filter(driver=>
+ALTERNATING_ROUTES.has(driver.route) &&
+dayData[formatDate(year,month,startDay)][driver.name].status==='unknown'
+);
+const unknownNormalCells=[];
+driverList.forEach(driver=>{
+if(ALTERNATING_ROUTES.has(driver.route)) return;
+for(let d=startDay; d<=lastDay; d++){
+const dateStr=formatDate(year,month,d);
+if(dayData[dateStr][driver.name].status==='unknown') unknownNormalCells.push({driver,dateStr});
+}
+});
+
+if(unknownAlternating.length===0 && unknownNormalCells.length===0){
+log('재조회할 미확인 항목이 없습니다.');
+return;
+}
+
+document.getElementById('btnRetryUnknown').disabled=true;
+document.getElementById('btnStep1').disabled=true;
+document.getElementById('btnStep2').disabled=true;
+log(`--- 미확인 항목 재조회 시작 (격일제 ${unknownAlternating.length}명, 일반 ${unknownNormalCells.length}건) ---`);
+
+await Promise.all(unknownAlternating.map(driver=>
+resolveAlternatingDriver(driver,year,month,startDay,lastDay,dayData)
+));
+
+const BATCH=5;
+for(let i=0;i<unknownNormalCells.length;i+=BATCH){
+const batch=unknownNormalCells.slice(i,i+BATCH);
+await Promise.all(batch.map(async({driver,dateStr})=>{
+try{
+const json=await fetchJson(`https://api.kiki-bus.com/work/driver/${driver.driverId}/${dateStr}`);
+const obj=json?.object||json?.data||json;
+const status=obj?.status||'';
+dayData[dateStr][driver.name]={status:classifyStatus(status), raw:status};
+}catch(e){
+// 여전히 실패하면 unknown 유지
+}
+}));
+await sleep(300);
+}
+
+log('--- 미확인 항목 재조회 완료 ---');
+renderResultTable('미확인 재조회');
+document.getElementById('btnStep1').disabled=false;
+document.getElementById('btnStep2').disabled=false;
+}
+
+function renderResultTable(actionLabel){
+const {dayData,driverList,unresolvedNames,year,month}=lastRunContext;
+const totalCandidates=driverList.length; // 참여 가능 인원 비율 계산용 (미확인 인원 제외)
+
+let hasUnknown=false;
+
+const rows=Object.keys(dayData).sort().map(dateStr=>{
+const statusMap=dayData[dateStr];
+const availableNames=[];
+const amNames=[];
+const unavailableNames=[];
+const unknownNames=[];
+driverList.forEach(d=>{
+const cell=statusMap[d.name]||{status:'unknown',raw:null};
+const s=cell.status;
+if(s==='available') availableNames.push({name:d.name, raw:cell.raw});
+else if(s==='am') amNames.push({name:d.name, raw:cell.raw});
+else if(s==='unavailable') unavailableNames.push({name:d.name, raw:cell.raw});
+else{ unknownNames.push(d.name); hasUnknown=true; }
+});
+const count=availableNames.length+amNames.length; // AM 근무자는 저녁엔 참여 가능하므로 참여 가능 인원에 포함
+return {dateStr, count, availableNames, amNames, unavailableNames, unknownNames};
+});
+
+document.getElementById('btnRetryUnknown').disabled=!hasUnknown;
+
+const maxCount=renderResultRowsHtml(rows,totalCandidates,unresolvedNames,'방금 조회함');
+log(`--- 완료. 최대 참여 가능 인원: ${maxCount}명 ---`);
+
+// Firebase에 이번 달 결과 저장 (매달 조회건 저장 + 재조회 이력 기록)
+saveMonthResultToFirebase(year,month,rows,unresolvedNames,driverList.length,actionLabel||'2단계 조회',maxCount);
+}
+
+// rows 배열(날짜별 집계 결과)을 받아 결과를 그린다 — 이 사이트의 핵심 화면.
+// 실시간으로 직접 조회한 경우와, Firebase에서 다른 사람이 저장한 스냅샷을 불러온 경우 모두 이 함수를 공유한다.
+function renderResultRowsHtml(rows,totalCandidates,unresolvedNames,savedAtLabel){
+const maxCount=Math.max(...rows.map(r=>r.count));
+
+const sortedRows=[...rows].sort((a,b)=>b.count-a.count || (a.dateStr<b.dateStr?-1:1));
+
+let html='';
+sortedRows.forEach((r,idx)=>{
+const isBest=r.count===maxCount&&maxCount>0;
+const isTopRank=idx===0; // 1위만 기본으로 펼쳐서 보여주고, 나머지는 접어서 탭으로 열람
+// Firebase Realtime Database는 빈 배열([])을 저장하면 키 자체를 지우기 때문에,
+// 불러올 때 availableNames/amNames/unavailableNames/unknownNames가 undefined로 올 수 있다. 항상 배열로 보정.
+const availableNames=r.availableNames||[];
+const amNames=r.amNames||[];
+const unavailableNames=r.unavailableNames||[];
+const unknownAll=[...(r.unknownNames||[]), ...(unresolvedNames||[])];
+const pct=Math.round((r.count/TOTAL_MEMBER_COUNT)*100);
+const chip=(item,cls,category)=>{
+const name=typeof item==='string'?item:item.name;
+const raw=typeof item==='string'?null:item.raw;
+const suffix=category?statusSuffix(raw,category):null;
+return `<span class="chip ${cls}">${name}${suffix?`(${suffix})`:''}</span>`;
+};
+html+=`<div class="day-card${isBest?' best':''}">`+
+`<div class="day-top">`+
+`<div class="day-date">${shortDateLabel(r.dateStr)}<span class="dow">(${dowLabel(r.dateStr)})</span></div>`+
+`<div class="bar-wrap"><div class="bar-fill${isBest?' best':''}" style="width:${pct}%;"></div></div>`+
+`<div class="day-count">${r.count}<span class="tot">/${TOTAL_MEMBER_COUNT}명</span>${isBest?' <span class="star">★</span>':''}</div>`+
+`</div>`+
+`<details class="day-detail"${isTopRank?' open':''}><summary></summary>`+
+`<div class="chip-rows">`+
+(availableNames.length?`<div class="chip-row"><span class="chip-label">가능</span>${availableNames.map(n=>chip(n,'avail','available')).join('')}</div>`:'')+
+(amNames.length?`<div class="chip-row"><span class="chip-label">AM</span>${amNames.map(n=>chip(n,'am','am')).join('')}</div>`:'')+
+(unavailableNames.length?`<div class="chip-row"><span class="chip-label">불가</span>${unavailableNames.map(n=>chip(n,'unavail','unavailable')).join('')}</div>`:'')+
+(unknownAll.length?`<div class="chip-row"><span class="chip-label">미확인</span>${unknownAll.map(n=>chip(n,'unknown')).join('')}</div>`:'')+
+`</div></details>`+
+`</div>`;
+});
+document.getElementById('resultTable').innerHTML=html;
+document.getElementById('resultSavedNote').textContent=savedAtLabel?`저장: ${savedAtLabel}`:'';
+return maxCount;
+}
+</script>
+</body>
+</html>
